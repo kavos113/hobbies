@@ -5,3 +5,4 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(sec1/q1)
 add_subdirectory(sec1/q2)
+add_subdirectory(sec1/q3)

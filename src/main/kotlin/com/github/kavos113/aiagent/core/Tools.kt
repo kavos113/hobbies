@@ -46,13 +46,13 @@ object Tools {
 
         if (recursive) {
             dir.walk().forEach {
-                if (it.isDirectory) {
+                if (!it.isDirectory) {
                     sb.append(it.absolutePath).append("\n")
                 }
             }
         } else {
             dir.listFiles()?.forEach {
-                if (it.isDirectory) {
+                if (!it.isDirectory) {
                     sb.append(it.absolutePath).append("\n")
                 }
             }
@@ -64,7 +64,11 @@ object Tools {
     fun executeCommand(command: String, path: String): String {
         val sb = StringBuilder()
 
-        val commandParts = command.split("\\s+".toRegex())
+        val commandParts = if (System.getProperty("os.name").lowercase().contains("win")) {
+            "cmd /c $command".replace("\\", "\\\\")
+        } else {
+            command
+        }.split("\\s+".toRegex())
 
         val commandLine = GeneralCommandLine(commandParts)
         commandLine.setWorkDirectory(path)

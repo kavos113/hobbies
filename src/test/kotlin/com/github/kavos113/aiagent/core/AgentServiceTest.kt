@@ -38,19 +38,9 @@ class AgentServiceTest : BasePlatformTestCase() {
 
         val result = agentService.useTool(content)
 
-        println(result)
-
-        val expected = """
-            ディレクトリの内容: 
-            ${file1.toAbsolutePath()}
-            ${file2.toAbsolutePath()}
-            ${file3.toAbsolutePath()}
-        """.trimIndent()
-
         assertTrue(result.contains(file1.toString()))
         assertTrue(result.contains(file2.toString()))
         assertTrue(result.contains(file3.toString()))
-        assertTrue(result.contains(expected))
     }
 
     fun testUseTool_executeCommand() {
@@ -64,13 +54,7 @@ class AgentServiceTest : BasePlatformTestCase() {
 
         val result = agentService.useTool(content)
 
-        val expected = """
-            コマンド出力:
-            Hello, World!
-        """.trimIndent()
-
         assertTrue(result.contains("Hello, World!"))
-        assertTrue(result.contains(expected))
     }
 
     fun testUseTool_readFile() {

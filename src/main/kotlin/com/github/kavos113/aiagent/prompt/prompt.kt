@@ -9,7 +9,7 @@ private fun getCwd(project: Project)
 private fun getShell()
     = System.getProperty("os.name").lowercase().let {
         when {
-            it.contains("win") -> "PowerShell"
+            it.contains("win") -> "cmd.exe"
             it.contains("nix") || it.contains("nux") -> "bash"
             else -> throw IllegalStateException("Unsupported OS: $it")
         }

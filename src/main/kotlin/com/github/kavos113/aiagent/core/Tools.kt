@@ -37,24 +37,28 @@ object Tools {
 
         val dir = File(path)
         if (!dir.exists()) {
-            return "Directory does not exist"
+            return "ディレクトリが存在しません。"
         }
 
         if (!dir.isDirectory) {
-            return "Path is not a directory"
+            return "与えられたパスはディレクトリではありません。"
         }
 
         if (recursive) {
             dir.walk().forEach {
-                sb.append(it.absolutePath).append("\n")
+                if (it.isDirectory) {
+                    sb.append(it.absolutePath).append("\n")
+                }
             }
         } else {
             dir.listFiles()?.forEach {
-                sb.append(it.absolutePath).append("\n")
+                if (it.isDirectory) {
+                    sb.append(it.absolutePath).append("\n")
+                }
             }
         }
 
-        return sb.toString()
+        return "ディレクトリの内容:\n$sb"
     }
 
     fun executeCommand(command: String, path: String): String {
@@ -83,17 +87,17 @@ object Tools {
         processHandler.startNotify()
         latch.await()
 
-        return "Command Output:\n$sb"
+        return "コマンド出力:\n$sb"
     }
 
     fun readFile(path: String): String {
         val file = File(path)
         if (!file.exists()) {
-            return "File does not exist"
+            return "ファイルが存在しません。"
         }
 
         if (!file.isFile) {
-            return "Path is not a file"
+            return "与えられたパスはファイルではありません。"
         }
 
         return file.readText()
@@ -103,15 +107,15 @@ object Tools {
         val file = File(path)
 
         if (!file.exists()) {
-            return "File does not exist"
+            return "ファイルが存在しません。"
         }
 
         if (!file.isFile) {
-            return "Path is not a file"
+            return "与えられたパスはファイルではありません。"
         }
 
         file.writeText(content)
-        return "File written successfully"
+        return "ファイルに書き込みました: $path"
     }
 
     fun askUser(question: String): String {

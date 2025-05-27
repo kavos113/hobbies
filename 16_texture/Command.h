@@ -19,9 +19,16 @@ public:
     void beginRender(uint32_t currentFrame);
     void endRender(uint32_t currentFrame, const Swapchain &swapchain);
 
-    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
     VkResult present(VkPresentInfoKHR &presentInfo, uint32_t currentFrame);
+
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+    void transitionImageLayout(
+        VkImage image,
+        VkFormat format,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout
+    );
 
     VkCommandBuffer commandBuffer(uint32_t currentFrame) const
     {
@@ -33,6 +40,9 @@ private:
     void createCommandPool(QueueFamilyIndices queueFamilyIndices);
     void createCommandBuffer();
     void createSyncObjects();
+
+    VkCommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
     VkDevice m_device = VK_NULL_HANDLE;
     VkCommandPool commandPool = VK_NULL_HANDLE;

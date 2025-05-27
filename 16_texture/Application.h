@@ -96,6 +96,18 @@ private:
     void createDescriptorPool();
     void createDescriptorSets();
 
+    void createImage(
+        uint32_t width,
+        uint32_t height,
+        VkFormat format,
+        VkImageTiling tiling,
+        VkImageUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkImage &image,
+        VkDeviceMemory &imageMemory
+    );
+    void createTextureImage();
+
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
     {
         auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
@@ -128,6 +140,9 @@ private:
     std::vector<VkBuffer> uniformBuffers;
     std::vector<VkDeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
+
+    VkImage textureImage = VK_NULL_HANDLE;
+    VkDeviceMemory textureImageMemory = VK_NULL_HANDLE;
 
     const std::vector<const char*> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,

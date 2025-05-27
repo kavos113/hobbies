@@ -6,12 +6,10 @@
 #include <glm/glm.hpp>
 
 #include <array>
-#include <optional>
 #include <vector>
 
 #include "Command.h"
 #include "DebugManager.h"
-#include "QueueFamilyIndices.h"
 #include "Swapchain.h"
 
 

@@ -3,6 +3,9 @@ project(vulkan_playground)
 
 set(CMAKE_CXX_STANDARD 20)
 
+set(THIRD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
+set(RESOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
+
 add_subdirectory(01_hello_glfw)
 add_subdirectory(02_hello_vulkan)
 add_subdirectory(03_phisical_device)

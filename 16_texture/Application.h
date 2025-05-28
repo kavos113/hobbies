@@ -107,6 +107,8 @@ private:
         VkDeviceMemory &imageMemory
     );
     void createTextureImage();
+    void createTextureImageView();
+    void createTextureSampler();
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
     {
@@ -143,6 +145,8 @@ private:
 
     VkImage textureImage = VK_NULL_HANDLE;
     VkDeviceMemory textureImageMemory = VK_NULL_HANDLE;
+    VkImageView textureImageView = VK_NULL_HANDLE;
+    VkSampler textureSampler = VK_NULL_HANDLE;
 
     const std::vector<const char*> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,

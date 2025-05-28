@@ -228,8 +228,8 @@ void Command::transitionImageLayout(VkImage image, VkFormat format, VkImageLayou
 
     vkCmdPipelineBarrier(
         commandBuffer,
-        0,
-        0,
+        srcStage,
+        dstStage,
         0,
         0,
         nullptr,

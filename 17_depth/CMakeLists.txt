@@ -28,16 +28,25 @@ target_include_directories(depth PRIVATE ${THIRD_PARTY_DIR})
 file(COPY ${RESOURCE_DIR}/square.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_command(
-        TARGET depth
-        PRE_BUILD
+        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
         COMMAND $ENV{VULKAN_SDK}/Bin/glslc.exe ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv ${CMAKE_CURRENT_BINARY_DIR}/vert.spv
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert
         COMMENT "Compiling vertex shader"
 )
 add_custom_command(
-        TARGET depth
-        PRE_BUILD
+        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
         COMMAND $ENV{VULKAN_SDK}/Bin/glslc.exe ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv ${CMAKE_CURRENT_BINARY_DIR}/frag.spv
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag
         COMMENT "Compiling fragment shader"
 )
+
+add_custom_target(
+        shaders ALL
+        DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
+)
+
+add_dependencies(depth shaders)

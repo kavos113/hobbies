@@ -9,6 +9,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+
 #include <array>
 #include <string>
 #include <vector>
@@ -28,8 +31,6 @@ public:
         mainLoop();
         cleanup();
     }
-
-private:
 
     struct Vertex
     {
@@ -73,7 +74,14 @@ private:
 
             return attributeDescriptions;
         }
+
+        bool operator==(const Vertex &other) const
+        {
+            return pos == other.pos && color == other.color && texCoord == other.texCoord;
+        }
     };
+
+private:
 
     struct UniformBufferObject
     {
@@ -103,6 +111,7 @@ private:
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
 
+    void loadModel();
     void createVertexBuffer();
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
@@ -201,6 +210,18 @@ private:
     const std::string TEXTURE_PATH = "textures/utility_box_02_diff_1k.jpg";
 };
 
-
+namespace std
+{
+template <>
+struct hash<Application::Vertex>
+{
+    size_t operator()(const Application::Vertex& vertex) const noexcept
+    {
+        return hash<glm::vec3>()(vertex.pos) ^
+               (hash<glm::vec3>()(vertex.color) << 1) ^
+               (hash<glm::vec2>()(vertex.texCoord) << 2);
+    }
+};
+}
 
 #endif //REFACTOR_APPLICATION_H

@@ -85,6 +85,7 @@ private:
     void initVulkan();
     void mainLoop();
     void cleanup();
+
     void createInstance();
     std::vector<const char *> getRequiredExtensions();
     void createSurface();
@@ -92,15 +93,20 @@ private:
     int rateDeviceSuitability(VkPhysicalDevice device);
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
     void createLogicalDevice();
+
     void createRenderPass();
+    void createFramebuffers();
     void createPipeline();
     VkShaderModule createShaderModule(const std::vector<char> &code);
+
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
+
     void createVertexBuffer();
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
     void createIndexBuffer();
+
     void createDescriptorSetLayout();
     void createUniformBuffer();
     void updateUniformBuffer(uint32_t currentImageIndex);
@@ -113,13 +119,22 @@ private:
         VkFormat format,
         VkImageTiling tiling,
         VkImageUsageFlags usage,
-        VkMemoryPropertyFlags properties,
+        VkMemoryPropertyFlags memProperties,
         VkImage &image,
         VkDeviceMemory &imageMemory
     );
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
     void createTextureImage();
     void createTextureImageView();
     void createTextureSampler();
+
+    void createDepthResources();
+    VkFormat findSupportedFormat(
+        const std::vector<VkFormat>& candidates,
+        VkImageTiling tiling,
+        VkFormatFeatureFlags flags
+    );
+    VkFormat findDepthFormat();
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
     {
@@ -139,13 +154,17 @@ private:
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device = VK_NULL_HANDLE;
     VkSurfaceKHR surface = VK_NULL_HANDLE;
+
     VkRenderPass renderPass = VK_NULL_HANDLE;
     VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
     VkPipeline graphicsPipeline = VK_NULL_HANDLE;
+    std::vector<VkFramebuffer> swapChainFramebuffers;
+
     VkBuffer vertexBuffer = VK_NULL_HANDLE;
     VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
     VkBuffer indexBuffer = VK_NULL_HANDLE;
     VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
+
     VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> descriptorSets;
@@ -158,6 +177,10 @@ private:
     VkDeviceMemory textureImageMemory = VK_NULL_HANDLE;
     VkImageView textureImageView = VK_NULL_HANDLE;
     VkSampler textureSampler = VK_NULL_HANDLE;
+
+    VkImage depthImage = VK_NULL_HANDLE;
+    VkDeviceMemory depthImageMemory = VK_NULL_HANDLE;
+    VkImageView depthImageView = VK_NULL_HANDLE;
 
     const std::vector<const char*> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,

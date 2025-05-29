@@ -1,6 +1,7 @@
 #include "Swapchain.h"
 
 #include <algorithm>
+#include <array>
 #include <iostream>
 #include <stdexcept>
 
@@ -24,12 +25,7 @@ void Swapchain::create(
 
 void Swapchain::cleanup() const
 {
-    for (int i = 0; i < swapChainFramebuffers.size(); ++i)
-    {
-        vkDestroyFramebuffer(m_device, swapChainFramebuffers[i], nullptr);
-    }
-
-    for (int i = 0; i < swapChainFramebuffers.size(); ++i)
+    for (int i = 0; i < swapChainImageViews.size(); ++i)
     {
         vkDestroyImageView(m_device, swapChainImageViews[i], nullptr);
     }
@@ -45,7 +41,7 @@ void Swapchain::cleanupSemaphore() const
     }
 }
 
-void Swapchain::recreate(VkRenderPass renderPass)
+void Swapchain::recreate()
 {
     int width = 0, height = 0;
     glfwGetFramebufferSize(window, &width, &height);
@@ -61,10 +57,9 @@ void Swapchain::recreate(VkRenderPass renderPass)
 
     createSwapChain();
     createImageView();
-    createFramebuffers(renderPass);
 }
 
-uint32_t Swapchain::currentImage(VkRenderPass renderPass, uint32_t currentFrame)
+uint32_t Swapchain::currentImage(uint32_t currentFrame)
 {
     uint32_t currentImageIndex = 0;
 
@@ -78,7 +73,6 @@ uint32_t Swapchain::currentImage(VkRenderPass renderPass, uint32_t currentFrame)
     );
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
-        recreate(renderPass);
         return -1;
     }
     else if (result != VK_SUCCESS)
@@ -179,33 +173,6 @@ void Swapchain::createImageView()
         if (vkCreateImageView(m_device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create image views");
-        }
-    }
-}
-
-void Swapchain::createFramebuffers(VkRenderPass renderPass)
-{
-    swapChainFramebuffers.resize(swapChainImageViews.size());
-
-    for (size_t i = 0; i < swapChainFramebuffers.size(); i++)
-    {
-        VkImageView attachments[] = {
-            swapChainImageViews[i],
-        };
-
-        VkFramebufferCreateInfo framebufferInfo = {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .renderPass = renderPass,
-            .attachmentCount = 1,
-            .pAttachments = attachments,
-            .width = swapChainExtent.width,
-            .height = swapChainExtent.height,
-            .layers = 1,
-        };
-
-        if (vkCreateFramebuffer(m_device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create framebuffer");
         }
     }
 }

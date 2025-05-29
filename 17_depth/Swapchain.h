@@ -23,18 +23,17 @@ public:
         VkDevice device,
         VkSurfaceKHR surface
     );
-    void createFramebuffers(VkRenderPass renderPass);
     void cleanup() const;
     void cleanupSemaphore() const;
-    void recreate(VkRenderPass renderPass);
+    void recreate();
 
-    uint32_t currentImage(VkRenderPass renderPass, uint32_t currentFrame);
+    uint32_t currentImage(uint32_t currentFrame);
 
     [[nodiscard]] VkFormat format() const { return swapChainImageFormat; }
     [[nodiscard]] VkExtent2D extent() const { return swapChainExtent; }
-    [[nodiscard]] VkFramebuffer framebuffer(uint32_t index) const { return swapChainFramebuffers[index]; }
     [[nodiscard]] VkSemaphore imageAvailableSemaphore(uint32_t index) const { return imageAvailableSemaphores[index]; }
     [[nodiscard]] VkSwapchainKHR handle() const { return swapChain; }
+    [[nodiscard]] const std::vector<VkImageView>& imageViews() const { return swapChainImageViews; }
 
 private:
 
@@ -53,7 +52,6 @@ private:
     std::vector<VkImageView> swapChainImageViews;
     VkFormat swapChainImageFormat = VK_FORMAT_UNDEFINED;
     VkExtent2D swapChainExtent = {};
-    std::vector<VkFramebuffer> swapChainFramebuffers;
 
     std::vector<VkSemaphore> imageAvailableSemaphores;
 

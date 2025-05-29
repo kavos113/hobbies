@@ -605,7 +605,7 @@ void Application::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
     VkExtent2D swapChainExtent = swapChain.extent();
     VkViewport viewport = {
@@ -1025,7 +1025,7 @@ void Application::createImage(
 void Application::createTextureImage()
 {
     int width, height, channels;
-    stbi_uc* pixels = stbi_load("square.png", &width, &height, &channels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &width, &height, &channels, STBI_rgb_alpha);
     if (!pixels)
     {
         throw std::runtime_error("failed to load texture image");

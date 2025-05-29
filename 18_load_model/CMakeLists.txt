@@ -26,6 +26,11 @@ target_link_libraries(load_model PRIVATE $ENV{VULKAN_SDK}/Lib/vulkan-1.lib)
 target_include_directories(load_model PRIVATE ${THIRD_PARTY_DIR})
 
 file(COPY ${RESOURCE_DIR}/square.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${RESOURCE_DIR}/models/utility_box.obj DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${RESOURCE_DIR}/models/utility_box.mtl DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${RESOURCE_DIR}/models/textures/utility_box_02_diff_1k.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
+file(COPY ${RESOURCE_DIR}/models/textures/utility_box_02_arm_1k.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
+file(COPY ${RESOURCE_DIR}/models/textures/utility_box_02_nor_gl_1k.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
 
 add_custom_command(
         OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv

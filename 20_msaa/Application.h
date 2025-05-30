@@ -127,6 +127,7 @@ private:
         uint32_t width,
         uint32_t height,
         uint32_t mipLevels,
+        VkSampleCountFlagBits numSamples,
         VkFormat format,
         VkImageTiling tiling,
         VkImageUsageFlags usage,
@@ -146,6 +147,11 @@ private:
         VkFormatFeatureFlags flags
     );
     VkFormat findDepthFormat();
+
+    VkSampleCountFlagBits getMaxUsableSampleCount();
+    void createMultisampledColorResources();
+
+    void beforeCleanupSwapchain();
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
     {
@@ -195,6 +201,11 @@ private:
     VkImage depthImage = VK_NULL_HANDLE;
     VkDeviceMemory depthImageMemory = VK_NULL_HANDLE;
     VkImageView depthImageView = VK_NULL_HANDLE;
+
+    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+    VkImage msaaColorImage = VK_NULL_HANDLE;
+    VkDeviceMemory msaaColorImageMemory = VK_NULL_HANDLE;
+    VkImageView msaaColorImageView = VK_NULL_HANDLE;
 
     const std::vector<const char*> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,

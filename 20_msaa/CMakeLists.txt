@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.28)
-project(mss)
+project(msaa)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(mss
+add_executable(msaa
         main.cpp
         Application.cpp
         Application.h
@@ -18,12 +18,12 @@ add_executable(mss
         Command.cpp
         Command.h
 )
-target_include_directories(mss PRIVATE $ENV{LIBRARY_DIR}/glfw-3.4.bin.WIN64/include)
-target_include_directories(mss PRIVATE $ENV{LIBRARY_DIR}/glm-1.0.1-light)
-target_include_directories(mss PRIVATE $ENV{VULKAN_SDK}/Include)
-target_link_libraries(mss PRIVATE $ENV{LIBRARY_DIR}/glfw-3.4.bin.WIN64/lib-vc2022/glfw3.lib)
-target_link_libraries(mss PRIVATE $ENV{VULKAN_SDK}/Lib/vulkan-1.lib)
-target_include_directories(mss PRIVATE ${THIRD_PARTY_DIR})
+target_include_directories(msaa PRIVATE $ENV{LIBRARY_DIR}/glfw-3.4.bin.WIN64/include)
+target_include_directories(msaa PRIVATE $ENV{LIBRARY_DIR}/glm-1.0.1-light)
+target_include_directories(msaa PRIVATE $ENV{VULKAN_SDK}/Include)
+target_link_libraries(msaa PRIVATE $ENV{LIBRARY_DIR}/glfw-3.4.bin.WIN64/lib-vc2022/glfw3.lib)
+target_link_libraries(msaa PRIVATE $ENV{VULKAN_SDK}/Lib/vulkan-1.lib)
+target_include_directories(msaa PRIVATE ${THIRD_PARTY_DIR})
 
 file(COPY ${RESOURCE_DIR}/models/utility_box.obj DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ${RESOURCE_DIR}/models/utility_box.mtl DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -47,10 +47,10 @@ add_custom_command(
 )
 
 add_custom_target(
-        shaders_mss ALL
+        shaders_msaa ALL
         DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
         ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
 )
 
-add_dependencies(mss shaders_mss)
+add_dependencies(msaa shaders_msaa)

@@ -12,8 +12,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
-#define VMA_IMPLEMENTATION
-#include <vk_mem_alloc.h>
+#include "vma.h"
 
 #include <array>
 #include <string>
@@ -123,7 +122,8 @@ private:
         VkBuffer &buffer,
         VmaAllocation
         &vmaAllocation,
-        VmaAllocationCreateInfo &vmaAllocationInfo
+        const VmaAllocationCreateInfo &vmaAllocationInfo,
+        VmaAllocationInfo *vmaAllocationInfoOut = nullptr
     );
     void createIndexBuffer();
 
@@ -143,7 +143,7 @@ private:
         VkImageUsageFlags usage,
         VkImage &image,
         VmaAllocation &imageAllocation,
-        VmaAllocationCreateInfo& imageAllocationInfo
+        const VmaAllocationCreateInfo& imageAllocationInfo
     );
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
     void createTextureImage();

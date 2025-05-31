@@ -17,6 +17,8 @@ add_executable(vma
         settings.h
         Command.cpp
         Command.h
+        vma.h
+        vma_impl.cpp
 )
 target_include_directories(vma PRIVATE $ENV{LIBRARY_DIR}/glfw-3.4.bin.WIN64/include)
 target_include_directories(vma PRIVATE $ENV{LIBRARY_DIR}/glm-1.0.1-light)

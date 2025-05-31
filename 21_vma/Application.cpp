@@ -741,8 +741,8 @@ void Application::createVertexBuffer()
     VkBuffer stagingBuffer;
     VmaAllocation stagingBufferMemory;
     VmaAllocationCreateInfo stagingBufferAllocationInfo = {
+        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO,
-        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
     };
     createBuffer(
         bufferSize,
@@ -761,8 +761,8 @@ void Application::createVertexBuffer()
     vmaUnmapMemory(allocator, stagingBufferMemory);
 
     VmaAllocationCreateInfo vertexBufferAllocationInfo = {
+        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO,
-        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
     };
     createBuffer(
         bufferSize,
@@ -797,7 +797,8 @@ void Application::createBuffer(
     VkBufferUsageFlags usage,
     VkBuffer &buffer,
     VmaAllocation &vmaAllocation,
-    VmaAllocationCreateInfo &vmaAllocationInfo
+    const VmaAllocationCreateInfo &vmaAllocationInfo,
+    VmaAllocationInfo *vmaAllocationInfoOut
 )
 {
     VkBufferCreateInfo bufferInfo = {
@@ -807,7 +808,7 @@ void Application::createBuffer(
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
 
-    if (vmaCreateBuffer(allocator, &bufferInfo, &vmaAllocationInfo, &buffer, &vmaAllocation, nullptr) != VK_SUCCESS)
+    if (vmaCreateBuffer(allocator, &bufferInfo, &vmaAllocationInfo, &buffer, &vmaAllocation, vmaAllocationInfoOut) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create buffer");
     }
@@ -820,8 +821,8 @@ void Application::createIndexBuffer()
     VkBuffer stagingBuffer;
     VmaAllocation stagingBufferMemory;
     VmaAllocationCreateInfo stagingBufferAllocationInfo = {
+        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO,
-        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
     };
     createBuffer(
         bufferSize,
@@ -840,8 +841,8 @@ void Application::createIndexBuffer()
     vmaUnmapMemory(allocator, stagingBufferMemory);
 
     VmaAllocationCreateInfo indexBufferAllocationInfo = {
+        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO,
-        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
     };
     createBuffer(
         bufferSize,
@@ -898,16 +899,20 @@ void Application::createUniformBuffer()
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         VmaAllocationCreateInfo uniformBuffersAllocationInfo = {
+            .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
             .usage = VMA_MEMORY_USAGE_AUTO,
-            .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT
         };
+        VmaAllocationInfo uniformBuffersAllocationInfoOut;
         createBuffer(
             bufferSize,
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             uniformBuffers[i],
             uniformBuffersAllocation[i],
-            uniformBuffersAllocationInfo
+            uniformBuffersAllocationInfo,
+            &uniformBuffersAllocationInfoOut
         );
+
+        uniformBuffersMapped[i] = uniformBuffersAllocationInfoOut.pMappedData;
     }
 }
 
@@ -1035,7 +1040,7 @@ void Application::createImage(
     VkImageUsageFlags usage,
     VkImage &image,
     VmaAllocation &imageAllocation,
-    VmaAllocationCreateInfo& imageAllocationInfo
+    const VmaAllocationCreateInfo& imageAllocationInfo
 )
 {
     VkImageCreateInfo imageInfo = {};
@@ -1076,8 +1081,8 @@ void Application::createTextureImage()
     VkBuffer stagingBuffer;
     VmaAllocation stagingBufferMemory;
     VmaAllocationCreateInfo stagingBufferAllocationInfo = {
+        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO,
-        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
     };
     createBuffer(
         imageSize,
@@ -1098,8 +1103,8 @@ void Application::createTextureImage()
     stbi_image_free(pixels);
 
     VmaAllocationCreateInfo textureImageAllocationInfo = {
+        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO,
-        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
     };
     createImage(
         static_cast<uint32_t>(width),
@@ -1192,8 +1197,8 @@ void Application::createDepthResources()
 {
     VkFormat depthFormat = findDepthFormat();
     VmaAllocationCreateInfo depthImageAllocationInfo = {
+        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO,
-        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
     };
     createImage(
         swapChain.extent().width,
@@ -1272,8 +1277,8 @@ void Application::createMultisampledColorResources()
 {
     VkFormat colorFormat = swapChain.format();
     VmaAllocationCreateInfo msaaColorImageAllocationInfo = {
+        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO,
-        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
     };
     createImage(
         swapChain.extent().width,
@@ -1311,7 +1316,7 @@ void Application::createVmaAllocator()
         .physicalDevice = physicalDevice,
         .device = device,
         .instance = instance,
-        .vulkanApiVersion = VK_API_VERSION_1_3,
+        .vulkanApiVersion = VK_API_VERSION_1_0,
     };
 
     if (vmaCreateAllocator(&allocatorInfo, &allocator) != VK_SUCCESS)

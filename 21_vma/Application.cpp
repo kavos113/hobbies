@@ -42,6 +42,7 @@ void Application::initVulkan()
     pickPhysicalDevice();
     createLogicalDevice();
     swapChain.create(physicalDevice, device, surface);
+    createVmaAllocator();
 
     createRenderPass();
     createDescriptorSetLayout();
@@ -1309,5 +1310,21 @@ void Application::beforeCleanupSwapchain()
     for (auto & swapChainFramebuffer : swapChainFramebuffers)
     {
         vkDestroyFramebuffer(device, swapChainFramebuffer, nullptr);
+    }
+}
+
+void Application::createVmaAllocator()
+{
+    VmaAllocatorCreateInfo allocatorInfo = {
+        .flags = 0,
+        .physicalDevice = physicalDevice,
+        .device = device,
+        .instance = instance,
+        .vulkanApiVersion = VK_API_VERSION_1_3,
+    };
+
+    if (vmaCreateAllocator(&allocatorInfo, &allocator) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create VMA allocator");
     }
 }

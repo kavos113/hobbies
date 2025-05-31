@@ -12,6 +12,9 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
+
 #include <array>
 #include <string>
 #include <vector>
@@ -153,6 +156,8 @@ private:
 
     void beforeCleanupSwapchain();
 
+    void createVmaAllocator();
+
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
     {
         auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
@@ -206,6 +211,8 @@ private:
     VkImage msaaColorImage = VK_NULL_HANDLE;
     VkDeviceMemory msaaColorImageMemory = VK_NULL_HANDLE;
     VkImageView msaaColorImageView = VK_NULL_HANDLE;
+
+    VmaAllocator allocator = VK_NULL_HANDLE;
 
     const std::vector<const char*> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,

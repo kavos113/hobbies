@@ -141,9 +141,9 @@ private:
         VkFormat format,
         VkImageTiling tiling,
         VkImageUsageFlags usage,
-        VkMemoryPropertyFlags memProperties,
         VkImage &image,
-        VkDeviceMemory &imageMemory
+        VmaAllocation &imageAllocation,
+        VmaAllocationCreateInfo& imageAllocationInfo
     );
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
     void createTextureImage();
@@ -201,22 +201,22 @@ private:
     std::vector<VkDescriptorSet> descriptorSets;
 
     std::vector<VkBuffer> uniformBuffers;
-    std::vector<VkDeviceMemory> uniformBuffersMemory;
+    std::vector<VmaAllocation> uniformBuffersAllocation;
     std::vector<void*> uniformBuffersMapped;
 
     uint32_t mipLevels = 1;
     VkImage textureImage = VK_NULL_HANDLE;
-    VkDeviceMemory textureImageMemory = VK_NULL_HANDLE;
+    VmaAllocation textureImageAllocation = VK_NULL_HANDLE;
     VkImageView textureImageView = VK_NULL_HANDLE;
     VkSampler textureSampler = VK_NULL_HANDLE;
 
     VkImage depthImage = VK_NULL_HANDLE;
-    VkDeviceMemory depthImageMemory = VK_NULL_HANDLE;
+    VmaAllocation depthImageAllocation = VK_NULL_HANDLE;
     VkImageView depthImageView = VK_NULL_HANDLE;
 
     VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
     VkImage msaaColorImage = VK_NULL_HANDLE;
-    VkDeviceMemory msaaColorImageMemory = VK_NULL_HANDLE;
+    VmaAllocation msaaColorImageAllocation = VK_NULL_HANDLE;
     VkImageView msaaColorImageView = VK_NULL_HANDLE;
 
     VmaAllocator allocator = VK_NULL_HANDLE;

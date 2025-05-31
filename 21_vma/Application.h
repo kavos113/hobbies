@@ -117,7 +117,14 @@ private:
     void loadModel();
     void createVertexBuffer();
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
+    void createBuffer(
+        VkDeviceSize size,
+        VkBufferUsageFlags usage,
+        VkBuffer &buffer,
+        VmaAllocation
+        &vmaAllocation,
+        VmaAllocationCreateInfo &vmaAllocationInfo
+    );
     void createIndexBuffer();
 
     void createDescriptorSetLayout();
@@ -185,9 +192,9 @@ private:
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
     VkBuffer vertexBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
+    VmaAllocation vertexBufferAllocation = VK_NULL_HANDLE;
     VkBuffer indexBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
+    VmaAllocation indexBufferAllocation = VK_NULL_HANDLE;
 
     VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;

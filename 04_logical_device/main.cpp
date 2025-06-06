@@ -6,6 +6,7 @@
 #include <optional>
 #include <sstream>
 #include <vector>
+#include <cstring>
 
 VkResult CreateDebugUtilsMessengerEXT(
     VkInstance instance,

@@ -6,6 +6,8 @@
 #include <optional>
 #include <set>
 #include <stdexcept>
+#include <cstring>
+#include <limits>
 
 #include "debugUtils.h"
 #include "utils.h"

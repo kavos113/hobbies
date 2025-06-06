@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
+#include <limits>
 
 #include "QueueFamilyIndices.h"
 #include "settings.h"

@@ -9,6 +9,8 @@
 #include <set>
 #include <sstream>
 #include <vector>
+#include <cstring>
+#include <limits>
 
 VkResult CreateDebugUtilsMessengerEXT(
     VkInstance instance,

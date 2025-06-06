@@ -18,33 +18,47 @@ add_executable(load_model
         Command.cpp
         Command.h
 )
-target_include_directories(load_model PRIVATE $ENV{LIBRARY_DIR}/glfw-3.4.bin.WIN64/include)
-target_include_directories(load_model PRIVATE $ENV{LIBRARY_DIR}/glm-1.0.1-light)
-target_include_directories(load_model PRIVATE $ENV{VULKAN_SDK}/Include)
-target_link_libraries(load_model PRIVATE $ENV{LIBRARY_DIR}/glfw-3.4.bin.WIN64/lib-vc2022/glfw3.lib)
-target_link_libraries(load_model PRIVATE $ENV{VULKAN_SDK}/Lib/vulkan-1.lib)
-target_include_directories(load_model PRIVATE ${THIRD_PARTY_DIR})
 
-file(COPY ${RESOURCE_DIR}/models/utility_box.obj DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${RESOURCE_DIR}/models/utility_box.mtl DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${RESOURCE_DIR}/models/textures/utility_box_02_diff_1k.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
-file(COPY ${RESOURCE_DIR}/models/textures/utility_box_02_arm_1k.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
-file(COPY ${RESOURCE_DIR}/models/textures/utility_box_02_nor_gl_1k.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
+if(WIN32)
+    target_include_directories(load_model PRIVATE $ENV{LIBRARY_DIR}/glfw-3.4.bin.WIN64/include)
+    target_include_directories(load_model PRIVATE $ENV{LIBRARY_DIR}/glm-1.0.1-light)
+    target_include_directories(load_model PRIVATE $ENV{VULKAN_SDK}/Include)
+    target_link_libraries(load_model PRIVATE $ENV{LIBRARY_DIR}/glfw-3.4.bin.WIN64/lib-vc2022/glfw3.lib)
+    target_link_libraries(load_model PRIVATE $ENV{VULKAN_SDK}/Lib/vulkan-1.lib)
 
-add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
-        COMMAND $ENV{VULKAN_SDK}/Bin/glslc.exe ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv ${CMAKE_CURRENT_BINARY_DIR}/vert.spv
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert
-        COMMENT "Compiling vertex shader"
-)
-add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
-        COMMAND $ENV{VULKAN_SDK}/Bin/glslc.exe ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv ${CMAKE_CURRENT_BINARY_DIR}/frag.spv
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag
-        COMMENT "Compiling fragment shader"
-)
+    add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
+            COMMAND $ENV{VULKAN_SDK}/Bin/glslc.exe ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv ${CMAKE_CURRENT_BINARY_DIR}/vert.spv
+            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert
+            COMMENT "Compiling vertex shader"
+    )
+    add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
+            COMMAND $ENV{VULKAN_SDK}/Bin/glslc.exe ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv ${CMAKE_CURRENT_BINARY_DIR}/frag.spv
+            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag
+            COMMENT "Compiling fragment shader"
+    )
+elseif(UNIX)
+    target_link_libraries(load_model PRIVATE glfw)
+    target_link_libraries(load_model PRIVATE vulkan)
+
+    add_custom_command(
+            TARGET load_model
+            PRE_BUILD
+            COMMAND glslc ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv ${CMAKE_CURRENT_BINARY_DIR}/vert.spv
+            COMMENT "Compiling vertex shader"
+    )
+    add_custom_command(
+            TARGET load_model
+            PRE_BUILD
+            COMMAND glslc ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv ${CMAKE_CURRENT_BINARY_DIR}/frag.spv
+            COMMENT "Compiling fragment shader"
+    )
+endif ()
 
 add_custom_target(
         shaders_load_model ALL
@@ -54,3 +68,10 @@ add_custom_target(
 )
 
 add_dependencies(load_model shaders_load_model)
+target_include_directories(load_model PRIVATE ${THIRD_PARTY_DIR})
+
+file(COPY ${RESOURCE_DIR}/models/utility_box.obj DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${RESOURCE_DIR}/models/utility_box.mtl DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${RESOURCE_DIR}/models/textures/utility_box_02_diff_1k.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
+file(COPY ${RESOURCE_DIR}/models/textures/utility_box_02_arm_1k.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)
+file(COPY ${RESOURCE_DIR}/models/textures/utility_box_02_nor_gl_1k.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/textures)

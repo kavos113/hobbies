@@ -1,8 +1,8 @@
 #include <fstream>
 #include <iostream>
 
-#include "color.h"
-#include "vec3.h"
+#include "src/color.h"
+#include "src/vec3.h"
 
 int main()
 {

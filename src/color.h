@@ -1,5 +1,5 @@
-#ifndef _COLOR_H
-#define _COLOR_H
+#ifndef SRC_COLOR_H
+#define SRC_COLOR_H
 
 #include <iostream>
 
@@ -11,4 +11,4 @@ inline void print_color(std::ostream &out, const color3& c) {
         << static_cast<int>(255.999 * c.z()) << '\n';
 }
 
-#endif //_COLOR_H
+#endif //SRC_COLOR_H

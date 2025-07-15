@@ -7,24 +7,31 @@
 
 // ray = a + tb (origin = a, direction = b)
 // (b . b) t^2 + 2tb . (a - c) + (a - c) . (a - c) - r^2 = 0
-bool hit_sphere(const point3& center, double radius, const ray& r)
+double hit_sphere(const point3& center, double radius, const ray& r)
 {
     vec3 oc = r.origin() - center; // a - c
     double a = r.direction().squared_length(); // b . b
     double half_b = dot(oc, r.direction()); // b . (a - c)
     double c = oc.squared_length() - radius * radius; // (a - c) . (a - c) - r^2
     double discriminant = half_b * half_b - a * c; // b^2 - ac
-    return discriminant > 0;
+    if (discriminant < 0) {
+        return -1.0; // No intersection
+    } else {
+        return (-half_b - std::sqrt(discriminant)) / a; // Return the nearest root
+    }
 }
 
 color3 ray_color(const ray& r)
 {
-    if (hit_sphere(point3(0, 0, -1), 0.5, r)) {
-        return {1.0, 0.0, 0.0};
+    point3 center(0, 0, -1); // Center of the sphere
+    double t = hit_sphere(center, 0.5, r);
+    if (t > 0.0) {
+        vec3 normal = (r.at(t) - center).unit(); // Normal at the intersection point. (x - c) / |x - c|
+        return 0.5 * color3(normal.x() + 1, normal.y() + 1, normal.z() + 1);
     }
 
     vec3 unit_direction = r.direction().unit();
-    double t = 0.5 * (unit_direction.y() + 1.0);
+    t = 0.5 * (unit_direction.y() + 1.0);
     return (1.0 - t) * color3(1.0, 1.0, 1.0) + t * color3(0.5, 0.7, 1.0);
 }
 
@@ -47,9 +54,11 @@ int main()
     vec3 vertical(0, viewport_height, 0);
     point3 lower_left_corner = origin - horizontal / 2 - vertical / 2 - vec3(0, 0, focal_length);
 
-    for (int y = height - 1; y >= 0; --y) {
+    for (int y = height - 1; y >= 0; --y)
+    {
         std::cout << "\rProgress: " << 100 - (y * 100) / (height - 1) << "%" << std::flush;
-        for (int x = 0; x < width; ++x) {
+        for (int x = 0; x < width; ++x)
+        {
             double u = static_cast<double>(x) / (width - 1);
             double v = static_cast<double>(y) / (height - 1);
             ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);

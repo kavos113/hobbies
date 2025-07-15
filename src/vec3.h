@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cmath>
+#include <numbers>
 
 #include "util.h"
 
@@ -112,6 +113,13 @@ public:
                 return p;
             }
         }
+    }
+
+    static vec3 random_unit_vector() {
+        double a = random_double(0, 2 * std::numbers::pi);
+        double z = random_double(-1, 1);
+        double r = std::sqrt(1 - z * z);
+        return {r * std::cos(a), r * std::sin(a), z};
     }
 
 private:

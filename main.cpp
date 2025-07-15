@@ -22,7 +22,7 @@ color3 ray_color(const ray& r, const hittable& obj, int depth)
     hit_record rec;
     if (obj.hit(r, 0.001, INFTY, rec)) {
         // random diffuse vector
-        point3 target = rec.p + rec.normal + vec3::random_in_unit_sphere();
+        point3 target = rec.p + rec.normal + vec3::random_unit_vector();
         return 0.5 * ray_color(ray(rec.p, target - rec.p), obj, depth - 1);
     }
     // Background color: gradient from blue to white
@@ -36,10 +36,10 @@ int main()
     constexpr double ASPECT = 16.0 / 9.0;
     constexpr int WIDTH = 512;
     constexpr int HEIGHT = static_cast<int>(WIDTH / ASPECT);
-    constexpr int SAMPLES = 10;
+    constexpr int SAMPLES = 100;
     constexpr int MAX_DEPTH = 50;
 
-    std::ofstream output("output5.ppm");
+    std::ofstream output("output7.ppm");
 
     output << "P3\n" << WIDTH << " " << HEIGHT << "\n255\n";
 

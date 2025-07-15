@@ -2,12 +2,14 @@
 #include <iostream>
 #include <limits>
 
+#include "src/camera.h"
 #include "src/color.h"
 #include "src/hittable.h"
 #include "src/hittable_list.h"
 #include "src/vec3.h"
 #include "src/ray.h"
 #include "src/sphere.h"
+#include "src/util.h"
 
 constexpr double INFTY = std::numeric_limits<double>::infinity();
 
@@ -29,36 +31,34 @@ int main()
     constexpr double aspect_ratio = 16.0 / 9.0;
     constexpr int width = 512;
     constexpr int height = static_cast<int>(width / aspect_ratio);
+    constexpr int samples_per_pixel = 100;
 
     std::ofstream output("output.ppm");
 
     output << "P3\n" << width << " " << height << "\n255\n";
 
-    double viewport_height = 2.0;
-    double viewport_width = aspect_ratio * viewport_height;
-    double focal_length = 1.0; // Distance from the camera to the viewport
-
-    point3 origin(0, 0, 0);
-    vec3 horizontal(viewport_width, 0, 0);
-    vec3 vertical(0, viewport_height, 0);
-    point3 lower_left_corner = origin - horizontal / 2 - vertical / 2 - vec3(0, 0, focal_length);
-
     hittable_list world;
     world.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5));
     world.add(std::make_shared<sphere>(point3(0, -100.5, -1), 100));
+
+    camera cam;
 
     for (int y = height - 1; y >= 0; --y)
     {
         std::cout << "\rProgress: " << 100 - (y * 100) / (height - 1) << "%" << std::flush;
         for (int x = 0; x < width; ++x)
         {
-            double u = static_cast<double>(x) / (width - 1);
-            double v = static_cast<double>(y) / (height - 1);
-            ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
+            color3 color(0, 0, 0);
 
-            color3 color = ray_color(r, world);
+            for (int s = 0; s < samples_per_pixel; ++s)
+            {
+                double u = (x + random_double()) / (width - 1);
+                double v = (y + random_double()) / (height - 1);
+                ray r = cam.get_ray(u, v);
+                color += ray_color(r, world);
+            }
 
-            print_color(output, color);
+            print_color(output, color, samples_per_pixel);
         }
     }
     output.close();

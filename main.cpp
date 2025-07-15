@@ -40,6 +40,26 @@ color3 ray_color(const ray& r, const hittable& obj, int depth)
     return (1.0 - t) * color3(1.0, 1.0, 1.0) + t * color3(0.5, 0.7, 1.0);
 }
 
+void output(const std::vector<color3>& image, int width, int height, int samples, const std::string& filename)
+{
+    std::ofstream output(filename);
+    if (!output) {
+        std::cerr << "Error opening file for output: " << filename << std::endl;
+        return;
+    }
+
+    output << "P3\n" << width << " " << height << "\n255\n";
+
+    for (int y = height - 1; y >= 0; --y) {
+        for (int x = 0; x < width; ++x) {
+            const color3& c = image[y * width + x];
+            print_color(output, c, samples);
+        }
+    }
+
+    output.close();
+}
+
 int main()
 {
     constexpr double ASPECT = 16.0 / 9.0;
@@ -50,10 +70,6 @@ int main()
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    std::ofstream output("output8.ppm");
-
-    output << "P3\n" << WIDTH << " " << HEIGHT << "\n255\n";
-
     hittable_list world;
     world.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5, std::make_shared<lambert>(color3(0.4, 0.6, 0.7))));
     world.add(std::make_shared<sphere>(point3(0, -100.5, -1), 100, std::make_shared<lambert>(color3(0.8, 0.8, 0.0))));
@@ -61,6 +77,8 @@ int main()
     world.add(std::make_shared<sphere>(point3(-1, 0, -1), 0.5, std::make_shared<metal>(color3(0.8, 0.8, 0.8))));
 
     camera cam;
+
+    std::vector<color3> image(WIDTH * HEIGHT);
 
     for (int y = HEIGHT - 1; y >= 0; --y)
     {
@@ -78,10 +96,11 @@ int main()
                 color += ray_color(r, world, MAX_DEPTH);
             }
 
-            print_color(output, color, SAMPLES);
+            image[y * WIDTH + x] = color;
         }
     }
-    output.close();
+
+    output(image, WIDTH, HEIGHT, SAMPLES, "output9.ppm");
 
     std::cout << "\nImage generation complete. Output saved to output.ppm\n";
 

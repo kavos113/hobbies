@@ -1,6 +1,9 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <memory>
+#include <chrono>
+#include <omp.h>
 
 #include "src/camera.h"
 #include "src/color.h"
@@ -10,6 +13,9 @@
 #include "src/ray.h"
 #include "src/sphere.h"
 #include "src/util.h"
+#include "src/material.h"
+#include "src/lambert.h"
+#include "src/metal.h"
 
 constexpr double INFTY = std::numeric_limits<double>::infinity();
 
@@ -21,9 +27,12 @@ color3 ray_color(const ray& r, const hittable& obj, int depth)
 
     hit_record rec;
     if (obj.hit(r, 0.001, INFTY, rec)) {
-        // random diffuse vector
-        point3 target = rec.p + rec.normal + vec3::random_unit_vector();
-        return 0.5 * ray_color(ray(rec.p, target - rec.p), obj, depth - 1);
+        ray scattered;
+        color3 attenuation;
+        if (rec.mat->scatter(r, rec, attenuation, scattered)) {
+            return attenuation * ray_color(scattered, obj, depth - 1);
+        }
+        return color3(0, 0, 0); // No scattering, return black
     }
     // Background color: gradient from blue to white
     vec3 unit_direction = r.direction().unit();
@@ -39,19 +48,24 @@ int main()
     constexpr int SAMPLES = 100;
     constexpr int MAX_DEPTH = 50;
 
-    std::ofstream output("output7.ppm");
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    std::ofstream output("output8.ppm");
 
     output << "P3\n" << WIDTH << " " << HEIGHT << "\n255\n";
 
     hittable_list world;
-    world.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5));
-    world.add(std::make_shared<sphere>(point3(0, -100.5, -1), 100));
+    world.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5, std::make_shared<lambert>(color3(0.4, 0.6, 0.7))));
+    world.add(std::make_shared<sphere>(point3(0, -100.5, -1), 100, std::make_shared<lambert>(color3(0.8, 0.8, 0.0))));
+    world.add(std::make_shared<sphere>(point3(1, 0, -1), 0.5, std::make_shared<metal>(color3(0.8, 0.6, 0.2))));
+    world.add(std::make_shared<sphere>(point3(-1, 0, -1), 0.5, std::make_shared<metal>(color3(0.8, 0.8, 0.8))));
 
     camera cam;
 
     for (int y = HEIGHT - 1; y >= 0; --y)
     {
         std::cout << "\rProgress: " << 100 - (y * 100) / (HEIGHT - 1) << "%" << std::flush;
+#pragma omp parallel for
         for (int x = 0; x < WIDTH; ++x)
         {
             color3 color(0, 0, 0);
@@ -70,6 +84,10 @@ int main()
     output.close();
 
     std::cout << "\nImage generation complete. Output saved to output.ppm\n";
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    std::cout << "Time taken: " << duration.count() << " ms\n";
 
     return 0;
 }

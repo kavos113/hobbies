@@ -7,8 +7,8 @@ class sphere : public hittable
 {
 public:
     sphere() = default;
-    sphere(const point3& center, double radius)
-        : m_center(center), m_radius(radius) {}
+    sphere(const point3& center, double radius, std::shared_ptr<material> mat)
+        : m_center(center), m_radius(radius), m_material(std::move(mat)) {}
 
     bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
 
@@ -18,6 +18,7 @@ public:
 private:
     point3 m_center;
     double m_radius;
+    std::shared_ptr<material> m_material;
 };
 
 #endif //SRC_SPHERE_H

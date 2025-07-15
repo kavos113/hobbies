@@ -139,6 +139,10 @@ public:
         return (dot(in_unit_sphere, normal) > 0.0) ? in_unit_sphere : -in_unit_sphere;
     }
 
+    static vec3 reflect(const vec3& v, const vec3& n) {
+        return v - n * dot(v, n) * 2.0;
+    }
+
 private:
     std::array<double, 3> data;
 };

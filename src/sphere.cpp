@@ -22,6 +22,7 @@ bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) cons
         rec.p = r.at(t);
         vec3 out_normal = (rec.p - m_center).unit(); // Normal at the intersection point. (x - c) / |x - c|
         rec.set_face_normal(r, out_normal);
+        rec.mat = m_material;
         return true;
     }
     t = (-half_b + std::sqrt(discriminant)) / a; // Check the second root
@@ -30,6 +31,7 @@ bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) cons
         rec.p = r.at(t);
         vec3 out_normal = (rec.p - m_center).unit();
         rec.set_face_normal(r, out_normal);
+        rec.mat = m_material;
         return true;
     }
 

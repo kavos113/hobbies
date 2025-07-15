@@ -20,7 +20,7 @@ color3 ray_color(const ray& r, const hittable& obj, int depth)
     }
 
     hit_record rec;
-    if (obj.hit(r, 0.0, INFTY, rec)) {
+    if (obj.hit(r, 0.001, INFTY, rec)) {
         // random diffuse vector
         point3 target = rec.p + rec.normal + vec3::random_in_unit_sphere();
         return 0.5 * ray_color(ray(rec.p, target - rec.p), obj, depth - 1);

@@ -24,7 +24,7 @@ int main()
 
     double viewport_height = 2.0;
     double viewport_width = aspect_ratio * viewport_height;
-    double focal_length = 1.0;
+    double focal_length = 1.0; // Distance from the camera to the viewport
 
     point3 origin(0, 0, 0);
     vec3 horizontal(viewport_width, 0, 0);

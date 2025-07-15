@@ -5,8 +5,24 @@
 #include "src/vec3.h"
 #include "src/ray.h"
 
+// ray = a + tb (origin = a, direction = b)
+// (b . b) t^2 + 2tb . (a - c) + (a - c) . (a - c) - r^2 = 0
+bool hit_sphere(const point3& center, double radius, const ray& r)
+{
+    vec3 oc = r.origin() - center; // a - c
+    double a = r.direction().squared_length(); // b . b
+    double half_b = dot(oc, r.direction()); // b . (a - c)
+    double c = oc.squared_length() - radius * radius; // (a - c) . (a - c) - r^2
+    double discriminant = half_b * half_b - a * c; // b^2 - ac
+    return discriminant > 0;
+}
+
 color3 ray_color(const ray& r)
 {
+    if (hit_sphere(point3(0, 0, -1), 0.5, r)) {
+        return {1.0, 0.0, 0.0};
+    }
+
     vec3 unit_direction = r.direction().unit();
     double t = 0.5 * (unit_direction.y() + 1.0);
     return (1.0 - t) * color3(1.0, 1.0, 1.0) + t * color3(0.5, 0.7, 1.0);
@@ -32,7 +48,7 @@ int main()
     point3 lower_left_corner = origin - horizontal / 2 - vertical / 2 - vec3(0, 0, focal_length);
 
     for (int y = height - 1; y >= 0; --y) {
-        std::cout << "\rProgress: " << (y * 100) / (height - 1) << "%" << std::flush;
+        std::cout << "\rProgress: " << 100 - (y * 100) / (height - 1) << "%" << std::flush;
         for (int x = 0; x < width; ++x) {
             double u = static_cast<double>(x) / (width - 1);
             double v = static_cast<double>(y) / (height - 1);

@@ -4,6 +4,8 @@
 #include <array>
 #include <cmath>
 
+#include "util.h"
+
 class vec3
 {
 public:
@@ -93,6 +95,23 @@ public:
             return *this / len;
         }
         return {0.0f, 0.0f, 0.0f}; // Return zero vector if length is zero
+    }
+
+    static vec3 random() {
+        return {random_double(), random_double(), random_double()};
+    }
+
+    static vec3 random(double min, double max) {
+        return {random_double(min, max), random_double(min, max), random_double(min, max)};
+    }
+
+    static vec3 random_in_unit_sphere() {
+        while (true) {
+            vec3 p = random(-1.0, 1.0);
+            if (p.squared_length() < 1.0) {
+                return p;
+            }
+        }
     }
 
 private:

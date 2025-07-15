@@ -13,12 +13,17 @@
 
 constexpr double INFTY = std::numeric_limits<double>::infinity();
 
-color3 ray_color(const ray& r, const hittable& obj)
+color3 ray_color(const ray& r, const hittable& obj, int depth)
 {
+    if (depth <= 0) {
+        return color3(0, 0, 0);
+    }
+
     hit_record rec;
     if (obj.hit(r, 0.0, INFTY, rec)) {
-        // If the ray hits an object, return a color based on the normal at the hit point
-        return 0.5 * (rec.normal + color3(1.0, 1.0, 1.0));
+        // random diffuse vector
+        point3 target = rec.p + rec.normal + vec3::random_in_unit_sphere();
+        return 0.5 * ray_color(ray(rec.p, target - rec.p), obj, depth - 1);
     }
     // Background color: gradient from blue to white
     vec3 unit_direction = r.direction().unit();
@@ -28,14 +33,15 @@ color3 ray_color(const ray& r, const hittable& obj)
 
 int main()
 {
-    constexpr double aspect_ratio = 16.0 / 9.0;
-    constexpr int width = 512;
-    constexpr int height = static_cast<int>(width / aspect_ratio);
-    constexpr int samples_per_pixel = 10;
+    constexpr double ASPECT = 16.0 / 9.0;
+    constexpr int WIDTH = 512;
+    constexpr int HEIGHT = static_cast<int>(WIDTH / ASPECT);
+    constexpr int SAMPLES = 10;
+    constexpr int MAX_DEPTH = 50;
 
-    std::ofstream output("output4.ppm");
+    std::ofstream output("output5.ppm");
 
-    output << "P3\n" << width << " " << height << "\n255\n";
+    output << "P3\n" << WIDTH << " " << HEIGHT << "\n255\n";
 
     hittable_list world;
     world.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5));
@@ -43,22 +49,22 @@ int main()
 
     camera cam;
 
-    for (int y = height - 1; y >= 0; --y)
+    for (int y = HEIGHT - 1; y >= 0; --y)
     {
-        std::cout << "\rProgress: " << 100 - (y * 100) / (height - 1) << "%" << std::flush;
-        for (int x = 0; x < width; ++x)
+        std::cout << "\rProgress: " << 100 - (y * 100) / (HEIGHT - 1) << "%" << std::flush;
+        for (int x = 0; x < WIDTH; ++x)
         {
             color3 color(0, 0, 0);
 
-            for (int s = 0; s < samples_per_pixel; ++s)
+            for (int s = 0; s < SAMPLES; ++s)
             {
-                double u = (x + random_double()) / (width - 1);
-                double v = (y + random_double()) / (height - 1);
+                double u = (x + random_double()) / (WIDTH - 1);
+                double v = (y + random_double()) / (HEIGHT - 1);
                 ray r = cam.get_ray(u, v);
-                color += ray_color(r, world);
+                color += ray_color(r, world, MAX_DEPTH);
             }
 
-            print_color(output, color, samples_per_pixel);
+            print_color(output, color, SAMPLES);
         }
     }
     output.close();

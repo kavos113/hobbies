@@ -31,9 +31,9 @@ int main()
     constexpr double aspect_ratio = 16.0 / 9.0;
     constexpr int width = 512;
     constexpr int height = static_cast<int>(width / aspect_ratio);
-    constexpr int samples_per_pixel = 100;
+    constexpr int samples_per_pixel = 10;
 
-    std::ofstream output("output.ppm");
+    std::ofstream output("output4.ppm");
 
     output << "P3\n" << width << " " << height << "\n255\n";
 

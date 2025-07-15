@@ -12,7 +12,7 @@ struct hit_record
 
     // ensure (normal . direction) < 0
     void set_face_normal(const ray& r, const vec3& outward_normal) {
-        front_face = dot(r.direction(), outward_normal) < 0;
+        front_face = vec3::dot(r.direction(), outward_normal) < 0;
         normal = front_face ? outward_normal : -outward_normal;
     }
 };

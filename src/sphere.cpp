@@ -8,7 +8,7 @@ bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) cons
 {
     vec3 oc = r.origin() - m_center; // a - c
     double a = r.direction().squared_length(); // b . b
-    double half_b = dot(oc, r.direction()); // b . (a - c)
+    double half_b = vec3::dot(oc, r.direction()); // b . (a - c)
     double c = oc.squared_length() - m_radius * m_radius; // (a - c) . (a - c) - r^2
     double discriminant = half_b * half_b - a * c; // b^2 - ac
 

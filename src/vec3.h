@@ -98,6 +98,18 @@ public:
         return {0.0f, 0.0f, 0.0f}; // Return zero vector if length is zero
     }
 
+    static double dot(const vec3& a, const vec3& b) {
+        return a.x() * b.x() + a.y() * b.y() + a.z() * b.z();
+    }
+
+    static vec3 cross(const vec3& a, const vec3& b) {
+        return {
+            a.y() * b.z() - a.z() * b.y(),
+            a.z() * b.x() - a.x() * b.z(),
+            a.x() * b.y() - a.y() * b.x()
+        };
+    }
+
     static vec3 random() {
         return {random_double(), random_double(), random_double()};
     }
@@ -122,24 +134,17 @@ public:
         return {r * std::cos(a), r * std::sin(a), z};
     }
 
+    static vec3 random_in_hemisphere(const vec3& normal) {
+        vec3 in_unit_sphere = random_in_unit_sphere();
+        return (dot(in_unit_sphere, normal) > 0.0) ? in_unit_sphere : -in_unit_sphere;
+    }
+
 private:
     std::array<double, 3> data;
 };
 
 inline vec3 operator*(double scalar, const vec3& v) {
     return v * scalar;
-}
-
-inline double dot(const vec3& a, const vec3& b) {
-    return a.x() * b.x() + a.y() * b.y() + a.z() * b.z();
-}
-
-inline vec3 cross(const vec3& a, const vec3& b) {
-    return {
-        a.y() * b.z() - a.z() * b.y(),
-        a.z() * b.x() - a.x() * b.z(),
-        a.x() * b.y() - a.y() * b.x()
-    };
 }
 
 using point3 = vec3;

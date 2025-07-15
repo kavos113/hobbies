@@ -73,8 +73,8 @@ int main()
     hittable_list world;
     world.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5, std::make_shared<lambert>(color3(0.4, 0.6, 0.7))));
     world.add(std::make_shared<sphere>(point3(0, -100.5, -1), 100, std::make_shared<lambert>(color3(0.8, 0.8, 0.0))));
-    world.add(std::make_shared<sphere>(point3(1, 0, -1), 0.5, std::make_shared<metal>(color3(0.8, 0.6, 0.2))));
-    world.add(std::make_shared<sphere>(point3(-1, 0, -1), 0.5, std::make_shared<metal>(color3(0.8, 0.8, 0.8))));
+    world.add(std::make_shared<sphere>(point3(1, 0, -1), 0.5, std::make_shared<metal>(color3(0.4, 0.2, 0.6), 0.0)));
+    world.add(std::make_shared<sphere>(point3(-1, 0, -1), 0.5, std::make_shared<metal>(color3(0.8, 0.8, 0.8), 0.7)));
 
     camera cam;
 
@@ -100,7 +100,7 @@ int main()
         }
     }
 
-    output(image, WIDTH, HEIGHT, SAMPLES, "output9.ppm");
+    output(image, WIDTH, HEIGHT, SAMPLES, "output10.ppm");
 
     std::cout << "\nImage generation complete. Output saved to output.ppm\n";
 

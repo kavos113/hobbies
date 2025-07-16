@@ -61,6 +61,48 @@ void output(const std::vector<color3>& image, int width, int height, int samples
     output.close();
 }
 
+hittable_list random_scene(int count)
+{
+    hittable_list world;
+
+    auto ground_material = std::make_shared<lambert>(color3(0.5, 0.5, 0.5));
+    world.add(std::make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
+
+    for (int x = -count; x < count; ++x)
+    {
+        for (int z = -count; z < count; ++z)
+        {
+            double choose_mat = random_double();
+            point3 center(x + 0.9 * random_double(), 0.2, z + 0.9 * random_double());
+
+            if ((center - point3(4, 0.2, 0)).length() > 0.9)
+            {
+                std::shared_ptr<material> mat;
+                if (choose_mat < 0.8) {
+                    // diffuse
+                    color3 albedo = color3::random() * color3::random();
+                    mat = std::make_shared<lambert>(albedo);
+                } else if (choose_mat < 0.95) {
+                    // metal
+                    color3 albedo = color3::random(0.5, 1);
+                    double fuzz = random_double(0, 0.5);
+                    mat = std::make_shared<metal>(albedo, fuzz);
+                } else {
+                    // glass
+                    mat = std::make_shared<dielectric>(1.5);
+                }
+                world.add(std::make_shared<sphere>(center, 0.2, mat));
+            }
+        }
+    }
+
+    world.add(std::make_shared<sphere>(point3(0, 1, 0), 1.0, std::make_shared<dielectric>(1.5)));
+    world.add(std::make_shared<sphere>(point3(-4, 1, 0), 1.0, std::make_shared<lambert>(color3(0.4, 0.2, 0.1))));
+    world.add(std::make_shared<sphere>(point3(4, 1, 0), 1.0, std::make_shared<metal>(color3(0.7, 0.6, 0.5), 0.0)));
+
+    return world;
+}
+
 int main()
 {
     constexpr double ASPECT = 16.0 / 9.0;
@@ -71,15 +113,11 @@ int main()
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    hittable_list world;
-    world.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5, std::make_shared<lambert>(color3(0.4, 0.6, 0.7))));
-    world.add(std::make_shared<sphere>(point3(0, -100.5, -1), 100, std::make_shared<lambert>(color3(0.8, 0.8, 0.0))));
-    world.add(std::make_shared<sphere>(point3(1, 0, -1), 0.5, std::make_shared<metal>(color3(0.4, 0.2, 0.6), 0.0)));
-    world.add(std::make_shared<sphere>(point3(-1, 0, -1), 0.5, std::make_shared<dielectric>(1.5)));
+    hittable_list world = random_scene(11);
 
     camera cam(
-        point3(-2, 1, 2),
-        point3(0, 0, -1),
+        point3(6, 2, 3),
+        point3(0, 0, 0),
         vec3(0, 1, 0),
         std::numbers::pi / 2.0, // Field of view in radians
         ASPECT // Aspect ratio
@@ -107,7 +145,7 @@ int main()
         }
     }
 
-    output(image, WIDTH, HEIGHT, SAMPLES, "output13.ppm");
+    output(image, WIDTH, HEIGHT, SAMPLES, "output14.ppm");
 
     std::cout << "\nImage generation complete. Output saved to output.ppm\n";
 

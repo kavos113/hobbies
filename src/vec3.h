@@ -151,6 +151,13 @@ inline vec3 operator*(double scalar, const vec3& v) {
     return v * scalar;
 }
 
+inline vec3 refract(const vec3& uv, const vec3& n, double ref_index) {
+    double cos_theta = vec3::dot(-uv, n);
+    vec3 r_out_perp = ref_index * (uv + cos_theta * n);
+    vec3 r_out_parallel = -std::sqrt(std::abs(1.0 - r_out_perp.squared_length())) * n;
+    return r_out_perp + r_out_parallel;
+}
+
 using point3 = vec3;
 using color3 = vec3;
 

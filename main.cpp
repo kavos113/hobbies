@@ -116,10 +116,10 @@ int main()
     hittable_list world = random_scene(11);
 
     camera cam(
-        point3(6, 2, 3),
+        point3(13, 2, 3),
         point3(0, 0, 0),
         vec3(0, 1, 0),
-        std::numbers::pi / 2.0, // Field of view in radians
+        20.0 * std::numbers::pi / 180.0, // Field of view in radians
         ASPECT // Aspect ratio
     );
 

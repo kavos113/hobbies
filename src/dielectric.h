@@ -34,12 +34,27 @@ public:
             return true;
         }
 
+        double reflect_prob = schlick(cos_theta, ref_index);
+        if (random_double() < reflect_prob) {
+            // Reflect
+            vec3 reflected = vec3::reflect(unit_direction, rec.normal);
+            scattered = ray(rec.p, reflected);
+            return true;
+        }
+
         vec3 refracted = refract(unit_direction, rec.normal, ref_index);
         scattered = ray(rec.p, refracted);
         return true;
     }
 
 private:
+    static double schlick(double cosine, double ref_idx)
+    {
+        double r0 = (1 - ref_idx) / (1 + ref_idx);
+        r0 = r0 * r0;
+        return r0 + (1 - r0) * std::pow(1 - cosine, 5);
+    }
+
     double m_ref_idx;
 };
 

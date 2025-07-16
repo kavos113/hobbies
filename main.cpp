@@ -77,7 +77,13 @@ int main()
     world.add(std::make_shared<sphere>(point3(1, 0, -1), 0.5, std::make_shared<metal>(color3(0.4, 0.2, 0.6), 0.0)));
     world.add(std::make_shared<sphere>(point3(-1, 0, -1), 0.5, std::make_shared<dielectric>(1.5)));
 
-    camera cam;
+    camera cam(
+        point3(-2, 1, 2),
+        point3(0, 0, -1),
+        vec3(0, 1, 0),
+        std::numbers::pi / 2.0, // Field of view in radians
+        ASPECT // Aspect ratio
+    );
 
     std::vector<color3> image(WIDTH * HEIGHT);
 
@@ -101,7 +107,7 @@ int main()
         }
     }
 
-    output(image, WIDTH, HEIGHT, SAMPLES, "output12.ppm");
+    output(image, WIDTH, HEIGHT, SAMPLES, "output13.ppm");
 
     std::cout << "\nImage generation complete. Output saved to output.ppm\n";
 

@@ -1,0 +1,3 @@
+# required libraries(vcpkg)
+
+- freetype

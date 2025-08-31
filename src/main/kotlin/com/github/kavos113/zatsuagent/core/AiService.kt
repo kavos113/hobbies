@@ -3,6 +3,24 @@ package com.github.kavos113.zatsuagent.core
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.openai.client.okhttp.OpenAIOkHttpClient
+import com.openai.models.chat.completions.ChatCompletionCreateParams
+import com.openai.models.chat.completions.ChatCompletionMessageFunctionToolCall
+import com.openai.models.chat.completions.ChatCompletionToolMessageParam
+import java.nio.file.Paths
+import kotlin.io.path.absolutePathString
+
+val PROMPT = """
+    あなたは熟練したソフトウェアエンジニアです。さまざまなプログラミング言語やフレームワークの知識を活用して，タスクを完了させてください。
+    
+    # スタイル
+    - **フォーマット**: GitHubのMarkdownスタイルを使用してください。
+    - **対応不可能な場合**: 正当化せず，簡潔にその旨を伝えてください。
+    
+    # ツール使用時のガイドライン
+    - **ファイルパス**: ツールを使用する際は、絶対パスを指定してください。なお，このプロジェクトのルートディレクトリは${Paths.get("src/agent").absolutePathString()}です。
+    - **ShellCommandでのユーザーの確認**: ShellCommandツールの実行にはユーザーの確認が必要です。ユーザーによってキャンセルされた場合には，その選択を尊重し，再度コマンド実行を試みず，別の方法を検討してください。
+    - **タスク完了**: 与えられたタスクが完了したら、必ずTaskCompleteツールを使用してタスク完了を報告してください。これにより、エージェントは次のタスクに進むことができます。
+""".trimIndent()
 
 @Service(Service.Level.PROJECT)
 class AiService(project: Project) {
@@ -12,7 +30,7 @@ class AiService(project: Project) {
         .build()
 
     fun sendRequest(prompt: String, onRecieveMessage: (String) -> Unit, onRecieveReasoning: (String) -> Unit) {
-        val params = com.openai.models.chat.completions.ChatCompletionCreateParams.builder()
+        val params = ChatCompletionCreateParams.builder()
             .model("gpt-oss:20b")
             .addUserMessage(prompt)
             .build()
@@ -32,6 +50,60 @@ class AiService(project: Project) {
                         }
                     }
                 }
+        }
+    }
+
+    fun runAgent(prompt: String) {
+        val paramBuilder = ChatCompletionCreateParams.builder()
+            .model("gpt-oss:20b")
+            .addTool(Tools.ReadFile::class.java)
+            .addTool(Tools.WriteFile::class.java)
+            .addTool(Tools.ListFiles::class.java)
+            .addTool(Tools.Replace::class.java)
+            .addTool(Tools.ShellCommand::class.java)
+            .addTool(Tools.TaskComplete::class.java)
+            .addSystemMessage(PROMPT)
+            .addUserMessage(prompt)
+
+        while (true) {
+            client.chat().completions().create(paramBuilder.build()).choices()
+                .asSequence()
+                .map { it.message() }
+                .onEach { paramBuilder.addMessage(it) }
+                .flatMap { message ->
+                    message.content().ifPresent { println(it) }
+                    message.toolCalls().orElse(emptyList())
+                }
+                .forEach { toolCall ->
+                    val function = toolCall.asFunction()
+
+                    val result = callFunction(function.function())
+                    println("Tool call result: $result")
+
+                    if (function.function().name() == "TaskComplete") {
+                        println("Task completed successfully.")
+                        return
+                    }
+
+                    paramBuilder.addMessage(
+                        ChatCompletionToolMessageParam.builder()
+                            .toolCallId(function.id())
+                            .contentAsJson(result)
+                            .build()
+                    )
+                }
+        }
+    }
+
+    fun callFunction(function: ChatCompletionMessageFunctionToolCall.Function): Any {
+        return when (function.name()) {
+            "ReadFile" -> function.arguments(Tools.ReadFile::class.java).execute()
+            "WriteFile" -> function.arguments(Tools.WriteFile::class.java).execute()
+            "ListFiles" -> function.arguments(Tools.ListFiles::class.java).execute()
+            "Replace" -> function.arguments(Tools.Replace::class.java).execute()
+            "ShellCommand" -> function.arguments(Tools.ShellCommand::class.java).execute()
+            "TaskComplete" -> function.arguments(Tools.TaskComplete::class.java).execute()
+            else -> "Unknown function: ${function.name()}"
         }
     }
 }

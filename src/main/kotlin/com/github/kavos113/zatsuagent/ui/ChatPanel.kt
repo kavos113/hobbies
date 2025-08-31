@@ -1,6 +1,6 @@
 package com.github.kavos113.zatsuagent.ui
 
-import com.github.kavos113.zatsuagent.services.AiService
+import com.github.kavos113.zatsuagent.core.AiService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project

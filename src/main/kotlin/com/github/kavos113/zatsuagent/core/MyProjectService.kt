@@ -1,4 +1,4 @@
-package com.github.kavos113.zatsuagent.services
+package com.github.kavos113.zatsuagent.core
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger

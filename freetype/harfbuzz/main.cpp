@@ -1,11 +1,14 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <hb.h>
+#include <hb-ft.h>
+
 #include <print>
 #include <string>
 #include <vector>
 
-struct glyph_info
+typedef struct
 {
     std::vector<unsigned char> bitmap_buffer;
     unsigned int width;
@@ -13,11 +16,11 @@ struct glyph_info
     int left;
     int top;
     int advance_x;
-};
+} GlyphInfo;
 
 int main()
 {
-    std::string text = "Hello, FreeType!";
+    std::string text = "final illustration";
 
     FT_Library library;
 
@@ -57,38 +60,67 @@ int main()
         return 1;
     }
 
-    std::vector<glyph_info> glyphs(text.size());
+    hb_font_t *hb_font = hb_ft_font_create_referenced(face);
+    hb_buffer_t *hb_buffer = hb_buffer_create();
+    hb_buffer_add_utf8(hb_buffer, text.c_str(), -1, 0, -1);
 
-    for (size_t i = 0; i < text.size(); ++i)
+    hb_buffer_set_direction(hb_buffer, HB_DIRECTION_LTR);
+    hb_buffer_set_script(hb_buffer, HB_SCRIPT_LATIN);
+    hb_buffer_set_language(hb_buffer, hb_language_from_string("en", -1));
+
+    hb_shape(hb_font, hb_buffer, nullptr, 0);
+
+    unsigned int glyph_count;
+    hb_glyph_info_t *glyph_info = hb_buffer_get_glyph_infos(hb_buffer, &glyph_count);
+    hb_glyph_position_t *glyph_pos = hb_buffer_get_glyph_positions(hb_buffer, &glyph_count);
+
+    float pen_x = 0;
+    float pen_y = 0;
+
+    std::vector<GlyphInfo> glyphs;
+    glyphs.reserve(glyph_count);
+
+    for (unsigned int i = 0; i < glyph_count; i++)
     {
-        FT_UInt glyph_index = FT_Get_Char_Index(face, static_cast<FT_ULong>(text[i]));
+        FT_UInt glyph_index = glyph_info[i].codepoint;
 
         error = FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT);
         if (error)
         {
-            std::println("Error loading glyph for character '{}': {}", text[i], error);
+            std::println("Error loading glyph index {}: {}", glyph_index, error);
             continue;
         }
 
         error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
         if (error)
         {
-            std::println("Error rendering glyph for character '{}': {}", text[i], error);
+            std::println("Error rendering glyph index {}: {}", glyph_index, error);
             continue;
         }
 
         FT_GlyphSlot slot = face->glyph;
 
-        glyphs[i].width = slot->bitmap.width;
-        glyphs[i].height = slot->bitmap.rows;
-        glyphs[i].left = slot->bitmap_left;
-        glyphs[i].top = slot->bitmap_top;
-        glyphs[i].advance_x = slot->advance.x >> 6; // Convert from 26.6 fixed point to integer
+        GlyphInfo g_info;
+        g_info.width = slot->bitmap.width;
+        g_info.height = slot->bitmap.rows;
+        g_info.left = slot->bitmap_left;
+        g_info.top = slot->bitmap_top;
+        g_info.advance_x = slot->advance.x >> 6; // Convert from 26.6 fixed point to integer
 
-        size_t buffer_size = slot->bitmap.width * slot->bitmap.rows;
-        glyphs[i].bitmap_buffer.resize(buffer_size);
-        std::copy_n(slot->bitmap.buffer, buffer_size, glyphs[i].bitmap_buffer.begin());
+        g_info.bitmap_buffer.resize(g_info.width * g_info.height);
+        std::memcpy(g_info.bitmap_buffer.data(), slot->bitmap.buffer, g_info.bitmap_buffer.size());
+
+        // Here you can use g_info as needed
+        std::println("Glyph {}: size={}x{}, left={}, top={}, advance_x={}",
+                     glyph_index, g_info.width, g_info.height, g_info.left, g_info.top, g_info.advance_x);
+
+        pen_x += (glyph_pos[i].x_advance >> 6); // Convert from 26.6 fixed point to integer
+        pen_y += (glyph_pos[i].y_advance >> 6);
+
+        glyphs.push_back(std::move(g_info));
     }
+
+    std::println("Total pen position after rendering: x={}, y={}", pen_x, pen_y);
 
     int top = 0;
     int bottom = 0;
@@ -130,6 +162,9 @@ int main()
         }
         std::println();
     }
+
+    hb_buffer_destroy(hb_buffer);
+    hb_font_destroy(hb_font);
 
     FT_Done_Face(face);
     FT_Done_FreeType(library);

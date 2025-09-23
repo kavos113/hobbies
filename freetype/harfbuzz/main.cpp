@@ -51,7 +51,7 @@ int main()
         return 1;
     }
 
-    error = FT_Set_Char_Size(face, 0, 16 * 64, 300, 300); // width: same as height
+    error = FT_Set_Pixel_Sizes(face, 0, 24);
     if (error)
     {
         std::println("Error setting character size: {}", error);

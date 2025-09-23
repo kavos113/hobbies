@@ -57,9 +57,9 @@ class BuildAction: AnAction() {
         processHandler.addProcessListener(object : ProcessAdapter() {
             override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
                 stringBuilder.append(event.text)
-                println(event.text)
+//                println(event.text)
                 if (event.text == "? ") {
-                    println("error")
+//                    println("error")
                     latch.countDown()
                 }
             }

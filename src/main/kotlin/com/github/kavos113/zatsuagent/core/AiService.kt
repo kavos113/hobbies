@@ -29,6 +29,7 @@ class AiService(project: Project) {
         .baseUrl("http://localhost:11434/v1")
         .build()
 
+    // --- 既存チャットストリーミング ---
     fun sendRequest(prompt: String, onRecieveMessage: (String) -> Unit, onRecieveReasoning: (String) -> Unit) {
         val params = ChatCompletionCreateParams.builder()
             .model("gpt-oss:20b")
@@ -53,45 +54,75 @@ class AiService(project: Project) {
         }
     }
 
+    // --- エージェント実行（従来シグネチャ互換） ---
     fun runAgent(prompt: String) {
-        val paramBuilder = ChatCompletionCreateParams.builder()
-            .model("gpt-oss:20b")
-            .addTool(Tools.ReadFile::class.java)
-            .addTool(Tools.WriteFile::class.java)
-            .addTool(Tools.ListFiles::class.java)
-            .addTool(Tools.Replace::class.java)
-            .addTool(Tools.ShellCommand::class.java)
-            .addTool(Tools.TaskComplete::class.java)
-            .addSystemMessage(PROMPT)
-            .addUserMessage(prompt)
+        runAgentInternal(
+            prompt = prompt,
+            onMessage = { println(it) },
+            onTool = { println(it) },
+            onComplete = { println("Task completed successfully.") }
+        )
+    }
+
+    // --- UI等から利用するコールバック付きエージェント実行 ---
+    fun runAgentAsync(
+        prompt: String,
+        onMessage: (String) -> Unit,
+        onTool: (String) -> Unit,
+        onComplete: () -> Unit
+    ) {
+        Thread { // 簡易: PooledThreadでも良いが依存を避ける
+            try {
+                runAgentInternal(prompt, onMessage, onTool, onComplete)
+            } catch (e: Exception) {
+                onMessage("[Agent Error] ${'$'}{e.message}")
+            }
+        }.start()
+    }
+
+    // 実際のループ本体
+    private fun runAgentInternal(
+        prompt: String,
+        onMessage: (String) -> Unit,
+        onTool: (String) -> Unit,
+        onComplete: () -> Unit
+    ) {
+        val paramBuilder = createAgentParams(prompt)
 
         while (true) {
-            client.chat().completions().create(paramBuilder.build()).choices()
+            val response = client.chat().completions().create(paramBuilder.build())
+            var taskCompleted = false
+            response.choices()
                 .asSequence()
                 .map { it.message() }
                 .onEach { paramBuilder.addMessage(it) }
-                .flatMap { message ->
-                    message.content().ifPresent { println(it) }
-                    message.toolCalls().orElse(emptyList())
-                }
-                .forEach { toolCall ->
-                    val function = toolCall.asFunction()
-
-                    val result = callFunction(function.function())
-                    println("Tool call result: $result")
-
-                    if (function.function().name() == "TaskComplete") {
-                        println("Task completed successfully.")
-                        return
+                .forEach { message ->
+                    message.content().ifPresent { content ->
+                        if (content.isNotBlank()) onMessage(content)
                     }
+                    val toolCalls = message.toolCalls().orElse(emptyList())
+                    toolCalls.forEach { toolCall ->
+                        val function = toolCall.asFunction()
+                        val result = callFunction(function.function())
+                        onTool("${'$'}{function.function().name()}: ${'$'}result")
 
-                    paramBuilder.addMessage(
-                        ChatCompletionToolMessageParam.builder()
-                            .toolCallId(function.id())
-                            .contentAsJson(result)
-                            .build()
-                    )
+                        if (function.function().name() == "TaskComplete") {
+                            taskCompleted = true
+                        }
+
+                        // ツール結果を会話にフィードバック
+                        paramBuilder.addMessage(
+                            ChatCompletionToolMessageParam.builder()
+                                .toolCallId(function.id())
+                                .contentAsJson(result)
+                                .build()
+                        )
+                    }
                 }
+            if (taskCompleted) {
+                onComplete()
+                return
+            }
         }
     }
 
@@ -103,7 +134,22 @@ class AiService(project: Project) {
             "Replace" -> function.arguments(Tools.Replace::class.java).execute()
             "ShellCommand" -> function.arguments(Tools.ShellCommand::class.java).execute()
             "TaskComplete" -> function.arguments(Tools.TaskComplete::class.java).execute()
-            else -> "Unknown function: ${function.name()}"
+            else -> "Unknown function: ${'$'}{function.name()}"
         }
+    }
+
+    companion object {
+        // テスト容易化: Builder生成を切り出し
+        fun createAgentParams(prompt: String): ChatCompletionCreateParams.Builder =
+            ChatCompletionCreateParams.builder()
+                .model("gpt-oss:20b")
+                .addTool(Tools.ReadFile::class.java)
+                .addTool(Tools.WriteFile::class.java)
+                .addTool(Tools.ListFiles::class.java)
+                .addTool(Tools.Replace::class.java)
+                .addTool(Tools.ShellCommand::class.java)
+                .addTool(Tools.TaskComplete::class.java)
+                .addSystemMessage(PROMPT)
+                .addUserMessage(prompt)
     }
 }

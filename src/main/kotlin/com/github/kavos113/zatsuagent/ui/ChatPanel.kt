@@ -47,6 +47,17 @@ class ChatPanel(val project: Project) : JPanel(BorderLayout()) {
         }
     }
 
+    private val agentButton = JButton("Run Agent").apply {
+        toolTipText = "ツールを利用するエージェントモードで実行"
+        addActionListener {
+            val text = inputArea.text.trim()
+            if (text.isEmpty()) return@addActionListener
+            inputArea.text = ""
+            appendUserMessage(text)
+            requestAgentRun(text)
+        }
+    }
+
     init {
         // Initialize existing messages once
         messages.forEach { addMessageComponent(it) }
@@ -65,6 +76,7 @@ class ChatPanel(val project: Project) : JPanel(BorderLayout()) {
             }
             row {
                 cell(sendButton)
+                cell(agentButton)
                     .align(AlignX.RIGHT)
             }
         }
@@ -167,8 +179,7 @@ class ChatPanel(val project: Project) : JPanel(BorderLayout()) {
                         }
                     },
                     onRecieveReasoning = { _ ->
-                        // For minimal change, ignore reasoning stream for now.
-                        // Could be surfaced in a separate message or tooltip later.
+                        // reasoning は現状未表示
                     }
                 )
             } catch (t: Throwable) {
@@ -178,5 +189,33 @@ class ChatPanel(val project: Project) : JPanel(BorderLayout()) {
                 }
             }
         }
+    }
+
+    private fun requestAgentRun(userText: String) {
+        val aiIndex = appendAiPlaceholder()
+        appendToAiMessage(aiIndex, "(Agent started)\n")
+        val scrollPane = findScrollPane()
+
+        aiService.runAgentAsync(
+            prompt = userText,
+            onMessage = { content ->
+                SwingUtilities.invokeLater {
+                    appendToAiMessage(aiIndex, content + "\n")
+                    scrollPane?.let { scrollToBottom(it) }
+                }
+            },
+            onTool = { info ->
+                SwingUtilities.invokeLater {
+                    appendToAiMessage(aiIndex, "🔧 $info\n")
+                    scrollPane?.let { scrollToBottom(it) }
+                }
+            },
+            onComplete = {
+                SwingUtilities.invokeLater {
+                    appendToAiMessage(aiIndex, "✅ TaskComplete")
+                    scrollPane?.let { scrollToBottom(it) }
+                }
+            }
+        )
     }
 }

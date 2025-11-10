@@ -1,46 +1,44 @@
-#include <cairo.h>
+#include <pango/pangocairo.h>
 #include <iostream>
-#include <numbers>
 
 int main() {
-    std::cout << "hello cairo" << std::endl;
-
     int width = 400;
     int height = 200;
-    const char *filename = "cairo_sample.png";
+    const char *filename = "pango_sample.png";
 
     cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
-
     cairo_t *cr = cairo_create(surface);
 
-    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+    cairo_set_source_rgb(cr, 1.0, 1.0, 0.5);
     cairo_paint(cr);
 
-    cairo_set_source_rgb(cr, 1.0, 0.0, 0.0); // red
-    cairo_rectangle(cr, 20, 20, 100, 60);
-    cairo_fill(cr);
+    PangoLayout *layout = pango_cairo_create_layout(cr);
 
-    cairo_set_source_rgb(cr, 0.0, 0.0, 1.0); // blue
-    cairo_set_line_width(cr, 4.0);
-    cairo_move_to(cr, 150, 40);
-    cairo_line_to(cr, 250, 100);
-    cairo_stroke(cr);
+    const char *markup_text =
+        "<span font_desc='Sans Bold 24' foreground='blue'>Pango サンプル</span>\n"
+        "これは <b>太字</b>、<i>斜体</i>、<u>下線</u>、<span foreground='red'>色付き</span> テキストです。\n"
+        "<small>小さいテキスト</small> や <big>大きいテキスト</big> も扱えます。\n"
+        "もちろん日本語とEnglishが混在しても、Pangoが適切に処理します。";
 
-    cairo_set_source_rgb(cr, 0.0, 0.8, 0.0); // green
-    cairo_set_line_width(cr, 6.0);
-    cairo_arc(cr, 300, 70, 50, 0, 2 * std::numbers::pi);
-    cairo_stroke(cr);
+    pango_layout_set_markup(layout, markup_text, -1);
 
+    pango_layout_set_width(layout, (width - 20) * PANGO_SCALE);
+
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0); // 黒
+
+    cairo_move_to(cr, 10, 10);
+    pango_cairo_show_layout(cr, layout);
+
+    g_object_unref(layout);
     cairo_destroy(cr);
 
     if (cairo_surface_write_to_png(surface, filename) != CAIRO_STATUS_SUCCESS) {
-        std::cerr << "PNGファイルの保存に失敗しました。" << std::endl;
+        fprintf(stderr, "PNGファイルの保存に失敗しました。\n");
         cairo_surface_destroy(surface);
         return 1;
     }
 
-    std::cout << "描画が完了しました。ファイル名: " << filename << std::endl;
-
+    printf("'%s' を生成しました。\n", filename);
     cairo_surface_destroy(surface);
 
     return 0;

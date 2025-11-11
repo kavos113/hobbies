@@ -9,7 +9,8 @@ lazy val root = (project in file("."))
   .aggregate(
     hello_world,
     swing_hello_world,
-    regexp
+    regexp,
+    jogl
   )
 
 lazy val hello_world = (project in file("hello-world"))
@@ -28,4 +29,19 @@ lazy val swing_hello_world = (project in file("swing-hello-world"))
 lazy val regexp = (project in file("regexp"))
   .settings(
     name := "regexp"
+  )
+
+lazy val jogl = (project in file("jogl"))
+  .settings(
+    name := "jogl",
+    libraryDependencies ++= Seq(
+      "org.jogamp.jogl" % "jogl-all-main" % "2.6.0",
+      "org.jogamp.gluegen" % "gluegen-rt-main" % "2.6.0"
+    ),
+    run / javaOptions ++= Seq(
+      "--enable-native-access=ALL-UNNAMED",
+      "--add-exports java.base/java.lang=ALL-UNNAMED",
+      "--add-exports java.desktop/sun.awt=ALL-UNNAMED",
+      "--add-exports java.desktop/sun.java2d=ALL-UNNAMED"
+    )
   )

@@ -2,6 +2,19 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.7.3"
 
+val fxVersion = "25.0.1"
+val osName = sys.props("os.name").toLowerCase
+val osArch = sys.props("os.arch").toLowerCase
+
+val osClassifier = (osName, osArch) match {
+  case (os, _) if os.contains("win")  => "win"
+  case (os, arch) if os.contains("mac") && arch.contains("aarch64") => "mac-aarch64"
+  case (os, _) if os.contains("mac")  => "mac"
+  case (os, arch) if os.contains("nux") && arch.contains("aarch64") => "linux-aarch64"
+  case (os, _) if os.contains("nux") => "linux"
+  case _ => throw new Exception(s"Unsupported OS: $osName, Arch: $osArch")
+}
+
 lazy val root = (project in file("."))
   .settings(
     name := "scala-playground"
@@ -43,5 +56,18 @@ lazy val jogl = (project in file("jogl"))
       "--add-exports java.base/java.lang=ALL-UNNAMED",
       "--add-exports java.desktop/sun.awt=ALL-UNNAMED",
       "--add-exports java.desktop/sun.java2d=ALL-UNNAMED"
+    )
+  )
+
+lazy val jfx3d = (project in file("jfx3d"))
+  .settings(
+    name := "jfx3d",
+    libraryDependencies ++= Seq(
+      "org.scalafx" %% "scalafx" % "24.0.2-R36",
+      "org.openjfx" % "javafx-base" % fxVersion classifier osClassifier,
+      "org.openjfx" % "javafx-graphics" % fxVersion classifier osClassifier,
+    ),
+    run / javaOptions ++= Seq(
+      "--enable-native-access=ALL-UNNAMED",
     )
   )

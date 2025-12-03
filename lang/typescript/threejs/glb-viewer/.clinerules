@@ -1,0 +1,3 @@
+# プロジェクト概要
+これは，three.jsを用いたGLTF(.glb)ファイルのビュワーです．
+vite + typescriptを利用してください．

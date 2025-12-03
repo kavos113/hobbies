@@ -1,0 +1,14 @@
+.idea
+
+*.exe
+*.dll
+*.so
+*.dylib
+*.log
+*.tmp
+*.bak
+*.swp
+*.class
+*.pdb
+*.glb
+*.db

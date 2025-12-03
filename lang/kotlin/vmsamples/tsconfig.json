@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext",
+    "outDir": "./build/resources/main",
+    "esModuleInterop": true, // CommonJSモジュールとの相互運用性を有効にする
+    "moduleResolution": "node" // Node.jsスタイルのモジュール解決を使用
+  },
+  "include": [
+    "src/main/resources/ts/sample.ts",
+    "src/main/resources/ts/stream.ts"
+  ]
+}

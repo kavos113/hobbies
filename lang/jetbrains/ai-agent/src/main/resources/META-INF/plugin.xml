@@ -1,0 +1,15 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <id>com.github.kavos113.aiagent</id>
+    <name>ai-agent</name>
+    <vendor>kavos113</vendor>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <resource-bundle>messages.MyBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow factoryClass="com.github.kavos113.aiagent.ui.MainWindowFactory" id="MyToolWindow"/>
+        <postStartupActivity implementation="com.github.kavos113.aiagent.startup.MyProjectActivity" />
+    </extensions>
+</idea-plugin>

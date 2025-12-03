@@ -1,5 +1,0 @@
-add_subdirectory(hello)
-add_subdirectory(pango/hello)
-add_subdirectory(pango/font)
-add_subdirectory(pango/align)
-add_subdirectory(pango/vertical)

@@ -16,4 +16,5 @@ required to set AWS credentials
     - time: `2006-01-02T15:04:05` format
 - cloudwatch list_streams <log-group-name> <start-time> <end-time>  
     - time: `2006-01-02T15:04:05` format
-- s3 download <bucket-name> <dir_name> <local_path>
+- s3 download <bucket-name> <dir-name> <local-path> --rewrite  
+    - rewrite: optional flag to rewrite existing files

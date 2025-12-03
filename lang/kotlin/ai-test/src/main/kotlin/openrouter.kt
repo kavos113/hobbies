@@ -4,7 +4,7 @@ import com.openai.models.chat.completions.ChatCompletionCreateParams
 
 fun main() {
   val client = OpenAIOkHttpClient.builder()
-    .apiKey("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")
+    .apiKey("")
     .baseUrl("https://openrouter.ai/api/v1")
     .build()
 

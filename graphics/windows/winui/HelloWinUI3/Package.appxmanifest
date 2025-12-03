@@ -9,14 +9,14 @@
 
   <Identity
     Name="e2843c53-58a4-4a17-8bf4-8ae5c26a0c66"
-    Publisher="CN=kouhe"
+    Publisher="CN=kavos113"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="e2843c53-58a4-4a17-8bf4-8ae5c26a0c66" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>HelloWinUI3</DisplayName>
-    <PublisherDisplayName>kouhe</PublisherDisplayName>
+    <PublisherDisplayName>kavos113</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 

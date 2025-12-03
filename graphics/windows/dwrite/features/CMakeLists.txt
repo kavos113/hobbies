@@ -1,0 +1,7 @@
+add_subdirectory(0_base)
+add_subdirectory(textformat_flow-direction)
+add_subdirectory(textformat_line-spacing)
+add_subdirectory(textformat_paragraph-alignment)
+add_subdirectory(textformat_text-alignment)
+add_subdirectory(textformat_trimming)
+add_subdirectory(textformat_word-wrapping)

@@ -1,0 +1,9 @@
+namespace HelloWinUI3
+{
+    [default_interface]
+    runtimeclass MainWindow : Microsoft.UI.Xaml.Window
+    {
+        MainWindow();
+        Windows.Foundation.Collections.Ivector<IInspectable> Images{ get; };
+    }
+}

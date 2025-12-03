@@ -52,3 +52,6 @@ add_subdirectory(d3d/33_dxr_instance)
 add_subdirectory(d3d/34_dxr_model)
 
 add_subdirectory(dwrite/01_list_system_fonts)
+add_subdirectory(dwrite/features)
+
+add_subdirectory(winrt/capture)

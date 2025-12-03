@@ -1,0 +1,20 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <id>com.github.kavos113.lualatexbuilder</id>
+    <name>lualatex-builder</name>
+    <vendor>kavos113</vendor>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <resource-bundle>messages.MyBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup displayType="BALLOON" id="LuaLaTeX Builder" />
+    </extensions>
+    
+    <actions>
+        <action class="com.github.kavos113.lualatexbuilder.BuildAction" id="BuildAction" text="Build LuaLatex" description="Build luaLatex">
+            <add-to-group group-id="BuildMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

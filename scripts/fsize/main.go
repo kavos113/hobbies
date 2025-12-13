@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -30,7 +31,7 @@ func main() {
 		}
 		dirs := make([]dirSize, 0, len(entries))
 		for i, entry := range entries {
-			size, err := getDirSize(filepath.Join(dirPath, entry.Name()))
+			size, err := getDirSizeSync(filepath.Join(dirPath, entry.Name()))
 			if err != nil {
 				log.Printf("サイズの取得に失敗しました: %v", err)
 				continue
@@ -45,7 +46,7 @@ func main() {
 			fmt.Printf("%10s: %s\n", formatSize(d.size), d.name)
 		}
 	} else {
-		size, err := getDirSize(dirPath)
+		size, err := getDirSizeSync(dirPath)
 		if err != nil {
 			log.Fatalf("サイズの取得に失敗しました: %v", err)
 		}
@@ -54,9 +55,29 @@ func main() {
 	}
 }
 
+func getDirSizeSync(path string) (int64, error) {
+	var size int64
+
+	_ = filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		size += info.Size()
+		return nil
+	})
+	return size, nil
+}
+
 func getDirSize(path string) (int64, error) {
 	var wg sync.WaitGroup
-	sizeChan := make(chan int64)
+	sizeChan := make(chan int64, 10)
 
 	wg.Add(1)
 	go walkDir(path, &wg, sizeChan)

@@ -47,6 +47,7 @@ foreach (_target
 
     target_link_libraries(${target_name} PRIVATE
             gRPC::grpc++
+            gRPC::grpc++_reflection
             protobuf::libprotobuf
     )
 endforeach ()

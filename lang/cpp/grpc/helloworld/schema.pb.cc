@@ -112,15 +112,15 @@ const char descriptor_table_protodef_schema_2eproto[] ABSL_ATTRIBUTE_SECTION_VAR
     protodesc_cold) = {
     "\n\014schema.proto\022\nhelloworld\"\034\n\014HelloReque"
     "st\022\014\n\004name\030\001 \001(\t\" \n\rHelloResponse\022\017\n\007mes"
-    "sage\030\001 \001(\t2P\n\013HelloServer\022A\n\010SayHello\022\030."
-    "helloworld.HelloRequest\032\031.helloworld.Hel"
-    "loResponse\"\000b\006proto3"
+    "sage\030\001 \001(\t2Q\n\014HelloService\022A\n\010SayHello\022\030"
+    ".helloworld.HelloRequest\032\031.helloworld.He"
+    "lloResponse\"\000b\006proto3"
 };
 static ::absl::once_flag descriptor_table_schema_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_schema_2eproto = {
     false,
     false,
-    180,
+    181,
     descriptor_table_protodef_schema_2eproto,
     "schema.proto",
     &descriptor_table_schema_2eproto_once,

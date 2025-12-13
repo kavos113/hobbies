@@ -49,4 +49,6 @@ int main()
     std::cout << "server is listening on" << server_address << std::endl;
 
     server->Wait();
+
+    return 0;
 }

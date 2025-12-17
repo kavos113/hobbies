@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Gemini Exporter",
+  "version": "1.0.0",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_width": 400
+  }
+}

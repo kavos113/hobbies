@@ -12,3 +12,5 @@
 *.pdb
 *.glb
 *.db
+
+build

@@ -75,8 +75,8 @@
     <ClInclude Include="DisplayMatrix.h">
       <Filter>ヘッダー ファイル\directx</Filter>
     </ClInclude>
-    <ClInclude Include="GlobalDescriptorHeap.h">
-      <Filter>ヘッダー ファイル\directx</Filter>
+    <ClInclude Include="GlobalDescriptorHeap1.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -131,8 +131,8 @@
     <ClCompile Include="DisplayMatrix.cpp">
       <Filter>ソース ファイル\directx</Filter>
     </ClCompile>
-    <ClCompile Include="GlobalDescriptorHeap.cpp">
-      <Filter>ソース ファイル\directx</Filter>
+    <ClCompile Include="GlobalDescriptorHeap1.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

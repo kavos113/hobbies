@@ -63,9 +63,6 @@
     <ClCompile Include="directx\DXUtil.cpp">
       <Filter>ソース ファイル\directx</Filter>
     </ClCompile>
-    <ClCompile Include="directx\GlobalDescriptorHeap.cpp">
-      <Filter>ソース ファイル\directx</Filter>
-    </ClCompile>
     <ClCompile Include="directx\buffer\ConstantBuffer.cpp">
       <Filter>ソース ファイル\directx\buffer</Filter>
     </ClCompile>
@@ -93,6 +90,9 @@
     <ClCompile Include="directx\resources\DXFence.cpp">
       <Filter>ソース ファイル\directx\resources</Filter>
     </ClCompile>
+    <ClCompile Include="directx\GlobalDescriptorHeap1.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Util.h">
@@ -114,9 +114,6 @@
       <Filter>ヘッダー ファイル\directx</Filter>
     </ClInclude>
     <ClInclude Include="directx\DXUtil.h">
-      <Filter>ヘッダー ファイル\directx</Filter>
-    </ClInclude>
-    <ClInclude Include="directx\GlobalDescriptorHeap.h">
       <Filter>ヘッダー ファイル\directx</Filter>
     </ClInclude>
     <ClInclude Include="directx\buffer\ConstantBuffer.h">
@@ -145,6 +142,9 @@
     </ClInclude>
     <ClInclude Include="directx\resources\DXFence.h">
       <Filter>ヘッダー ファイル\directx\resources</Filter>
+    </ClInclude>
+    <ClInclude Include="directx\GlobalDescriptorHeap1.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

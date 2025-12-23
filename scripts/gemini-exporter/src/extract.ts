@@ -26,13 +26,13 @@ export const filterResponses = (responses: Response[]): Response[] => {
     res.userQuery = res.userQuery
       .trim()
       .replaceAll(/\n[\t\r\f ]*<!---->[\t\r\f ]*\n/g, '')
-      .replaceAll("<!---->", '')
-      .replaceAll(/\n[ ]*([^\n]+)\n\n[ ]*```/g, "```$1")
+      .replaceAll('<!---->', '')
+      .replaceAll(/\n[ ]*([^\n]+)\n\n[ ]*```/g, '```$1')
     res.modelResponse = res.modelResponse
       .trim()
       .replaceAll(/\n[\t\r\f ]*<!---->[\t\r\f ]*\n/g, '')
-      .replaceAll("<!---->", '')
-      .replaceAll(/\n[ ]*([^\n]+)\n\n[ ]*```/g, "```$1")
+      .replaceAll('<!---->', '')
+      .replaceAll(/\n[ ]*([^\n]+)\n\n[ ]*```/g, '```$1')
     return res
   })
 }

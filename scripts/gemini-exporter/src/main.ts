@@ -2,12 +2,11 @@ import { extractResponses, buildResponses, filterResponses } from './extract'
 import { unified } from 'unified'
 import rehypeParse from 'rehype-parse'
 import rehypeRemark from 'rehype-remark'
+import remarkGfm from 'remark-gfm'
 import remarkStringify from 'remark-stringify'
-import './style.css' // 必要ならスタイル読み込み
+import './style.css'
 
-const converter = unified().use(rehypeParse).use(rehypeRemark).use(remarkStringify)
-
-// DOM要素の取得と型アサーション
+const converter = unified().use(rehypeParse).use(rehypeRemark).use(remarkGfm).use(remarkStringify)
 const extractBtn = document.getElementById('extractBtn') as HTMLButtonElement
 
 extractBtn.addEventListener('click', async () => {

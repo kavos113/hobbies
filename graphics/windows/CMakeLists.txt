@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.30)
 project(Win32D2DExamples)
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(D3D_RESOURCES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/d3d/resources")
 set(THIRD_PARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party")
 
@@ -51,6 +54,7 @@ add_subdirectory(d3d/31_compute_shader)
 add_subdirectory(d3d/32_dxr_init)
 add_subdirectory(d3d/33_dxr_instance)
 add_subdirectory(d3d/34_dxr_model)
+add_subdirectory(d3d/35_descriptor_management)
 
 add_subdirectory(dwrite/01_list_system_fonts)
 add_subdirectory(dwrite/features)

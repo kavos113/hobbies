@@ -11,15 +11,17 @@
 #include <D3D12MemAlloc.h>
 #include <string>
 
+#include "DescriptorHeap.h"
+
 
 class Model
 {
 public:
     Model(
         Microsoft::WRL::ComPtr<ID3D12Device> device,
-        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descHeap,
         Microsoft::WRL::ComPtr<D3D12MA::Allocator> allocator,
-        RECT rc
+        RECT rc,
+        DescriptorHeapManager *descHeapManager
     );
     void cleanup();
     void executeBarrier(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList) const;
@@ -123,8 +125,8 @@ private:
     );
 
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_descHeap;
     Microsoft::WRL::ComPtr<D3D12MA::Allocator> m_allocator;
+    DescriptorHeapManager *m_descHeapManager;
 
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_copyCommandAllocator;
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_copyCommandQueue;

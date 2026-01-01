@@ -35,6 +35,11 @@ GPUDescriptorHeap::DescriptorHandle GPUDescriptorHeap::allocate(const uint32_t c
     return {cpuHandle, gpuHandle};
 }
 
+void GPUDescriptorHeap::bind(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList)
+{
+    cmdList->SetDescriptorHeaps(1, m_heap.GetAddressOf());
+}
+
 uint32_t GPUDescriptorHeap::latestIndex() const
 {
     return m_latestIndex;
@@ -68,9 +73,17 @@ CPUDescriptorHeap::CPUDescriptorHeap(const Microsoft::WRL::ComPtr<ID3D12Device> 
 D3D12_CPU_DESCRIPTOR_HANDLE CPUDescriptorHeap::allocate(const uint32_t count)
 {
     D3D12_CPU_DESCRIPTOR_HANDLE handle = m_heap->GetCPUDescriptorHandleForHeapStart();
-    handle.ptr += m_latestIndex * m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    handle.ptr += m_latestIndex * m_device->GetDescriptorHandleIncrementSize(m_descHeapType);
 
     m_latestIndex += count;
+    return handle;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE CPUDescriptorHeap::cpuHandle(const UINT index) const
+{
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = m_heap->GetCPUDescriptorHandleForHeapStart();
+    handle.ptr += index * m_device->GetDescriptorHandleIncrementSize(m_descHeapType);
+
     return handle;
 }
 
@@ -214,7 +227,7 @@ std::vector<D3D12_ROOT_PARAMETER1> DescriptorBindingManager::rootParameter()
     };
 }
 
-void DescriptorHeapManager::init(Microsoft::WRL::ComPtr<ID3D12Device> device)
+DescriptorHeapManager::DescriptorHeapManager(Microsoft::WRL::ComPtr<ID3D12Device> device)
 {
     m_rtvHeap = std::make_unique<CPUDescriptorHeap>(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, DEFAULT_HEAP_SIZE);
     m_dsvHeap = std::make_unique<CPUDescriptorHeap>(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, DEFAULT_HEAP_SIZE);
@@ -222,4 +235,10 @@ void DescriptorHeapManager::init(Microsoft::WRL::ComPtr<ID3D12Device> device)
     m_gpuCbvHeap = std::make_unique<GPUDescriptorHeap>(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, DEFAULT_HEAP_SIZE);
     m_samplerHeap = std::make_unique<GPUDescriptorHeap>(device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, SAMPLER_HEAP_SIZE);
     m_cbvManager = std::make_unique<DescriptorBindingManager>(device);
+}
+
+void DescriptorHeapManager::bind(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList) const
+{
+    m_gpuCbvHeap->bind(cmdList);
+    m_cbvManager->copyAndSubmit(cmdList, m_gpuCbvHeap.get());
 }

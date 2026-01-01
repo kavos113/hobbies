@@ -22,6 +22,7 @@ public:
     ~GPUDescriptorHeap() = default;
 
     DescriptorHandle allocate(uint32_t count);
+    void bind(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList);
 
     D3D12_DESCRIPTOR_HEAP_TYPE type() const;
     uint32_t latestIndex() const;
@@ -42,6 +43,7 @@ public:
     ~CPUDescriptorHeap() = default;
 
     D3D12_CPU_DESCRIPTOR_HANDLE allocate(uint32_t count);
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle(UINT index) const;
 
 private:
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_heap;
@@ -86,13 +88,17 @@ private:
 class DescriptorHeapManager
 {
 public:
-    void init(Microsoft::WRL::ComPtr<ID3D12Device> device);
+    DescriptorHeapManager(Microsoft::WRL::ComPtr<ID3D12Device> device);
+    ~DescriptorHeapManager() = default;
+
+    void bind(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList) const;
 
     CPUDescriptorHeap *rtvHeap() const { return m_rtvHeap.get(); }
     CPUDescriptorHeap *dsvHeap() const { return m_dsvHeap.get(); }
     CPUDescriptorHeap *cbvHeap() const { return m_cbvHeap.get(); }
     GPUDescriptorHeap *gpuCbvHeap() const { return m_gpuCbvHeap.get(); }
     GPUDescriptorHeap *samplerHeap() const { return m_samplerHeap.get(); }
+    std::vector<D3D12_ROOT_PARAMETER1> rootParameter() const { return m_cbvManager->rootParameter(); }
 private:
     std::unique_ptr<CPUDescriptorHeap> m_rtvHeap;
     std::unique_ptr<CPUDescriptorHeap> m_dsvHeap;

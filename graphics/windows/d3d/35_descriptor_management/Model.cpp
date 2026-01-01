@@ -12,12 +12,12 @@
 
 Model::Model(
     Microsoft::WRL::ComPtr<ID3D12Device> device,
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descHeap,
     Microsoft::WRL::ComPtr<D3D12MA::Allocator> allocator,
-    RECT rc
+    RECT rc,
+    DescriptorHeapManager *descHeapManager
 ) : m_device(std::move(device)),
-    m_descHeap(std::move(descHeap)),
-    m_allocator(std::move(allocator))
+    m_allocator(std::move(allocator)),
+    m_descHeapManager(descHeapManager)
 {
     createCopyCommands();
 
@@ -336,7 +336,7 @@ void Model::createMatrixBuffer(RECT rc)
     m_matrixBufferData->view = view;
     m_matrixBufferData->projection = projection;
 
-    D3D12_CPU_DESCRIPTOR_HANDLE cbvHandle = m_descHeap->GetCPUDescriptorHandleForHeapStart();
+    D3D12_CPU_DESCRIPTOR_HANDLE cbvHandle = m_descHeapManager->cbvHeap()->allocate(1);
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {
         .BufferLocation = m_matrixBuffer->GetResource()->GetGPUVirtualAddress(),
         .SizeInBytes = AlignCBuffer(sizeof(MatrixBuffer))
@@ -346,6 +346,17 @@ void Model::createMatrixBuffer(RECT rc)
         &cbvDesc,
         cbvHandle
     );
+
+    DescriptorBindingManager::BindingParameter binding = {
+        .range = D3D12_DESCRIPTOR_RANGE1{
+            .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+            .NumDescriptors = 1,
+            .BaseShaderRegister = 0,
+            .RegisterSpace = 0,
+            .OffsetInDescriptorsFromTableStart = 0
+        },
+        .handle = cbvHandle
+    };
 }
 
 void Model::createLightBuffer()
@@ -393,8 +404,7 @@ void Model::createLightBuffer()
         D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
     );
 
-    D3D12_CPU_DESCRIPTOR_HANDLE cbvHandle = m_descHeap->GetCPUDescriptorHandleForHeapStart();
-    cbvHandle.ptr += m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    D3D12_CPU_DESCRIPTOR_HANDLE cbvHandle = m_descHeapManager->cbvHeap()->allocate(1);
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {
         .BufferLocation = m_lightBuffer->GetResource()->GetGPUVirtualAddress(),
         .SizeInBytes = AlignCBuffer(sizeof(LightBuffer))

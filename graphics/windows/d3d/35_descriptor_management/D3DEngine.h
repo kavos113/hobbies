@@ -18,6 +18,7 @@
 
 #include "Debug.h"
 #include "Model.h"
+#include "DescriptorHeap.h"
 
 class D3DEngine
 {
@@ -38,8 +39,6 @@ private:
     void createSwapChainResources();
     void createDepthResources(UINT width, UINT height);
     void createFence();
-
-    void createDescriptorHeap();
 
     static Microsoft::WRL::ComPtr<ID3D10Blob> compileShader(
         const wchar_t *fileName,
@@ -66,6 +65,7 @@ private:
 
     std::unique_ptr<Debug> m_debug;
     std::unique_ptr<Model> m_model;
+    std::unique_ptr<DescriptorHeapManager> m_descHeapManager;
 
     static constexpr UINT FRAME_COUNT = 2;
 
@@ -77,9 +77,7 @@ private:
 
     Microsoft::WRL::ComPtr<IDXGISwapChain4> m_swapchain;
     std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, FRAME_COUNT> m_backBuffers;
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
     std::array<float, 4> m_clearColor = {1.0f, 1.0f, 1.0f, 1.0f};
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
     std::array<Microsoft::WRL::ComPtr<D3D12MA::Allocation>, FRAME_COUNT> m_depthBuffers;
 
     std::array<Microsoft::WRL::ComPtr<ID3D12Fence>, FRAME_COUNT> m_fence;
@@ -91,8 +89,6 @@ private:
 
     D3D12_VIEWPORT m_viewport = {};
     D3D12_RECT m_scissorRect = {};
-
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_descHeap;
 
     Microsoft::WRL::ComPtr<D3D12MA::Allocator> m_allocator;
 };

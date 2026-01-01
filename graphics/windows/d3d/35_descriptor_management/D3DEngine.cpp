@@ -20,16 +20,16 @@ D3DEngine::D3DEngine(HWND hwnd)
     createSwapChain(hwnd);
     createFence();
 
-    createDescriptorHeap();
+    m_descHeapManager = std::make_unique<DescriptorHeapManager>(m_device);
 
     RECT rc;
     GetClientRect(hwnd, &rc);
 
     m_model = std::make_unique<Model>(
         m_device,
-        m_descHeap,
         m_allocator,
-        rc
+        rc,
+        m_descHeapManager.get()
     );
 
     createPipelineState();
@@ -61,18 +61,15 @@ void D3DEngine::cleanup()
     m_model->cleanup();
 
     m_commandList.Reset();
-    m_descHeap.Reset();
 
     m_rootSignature.Reset();
     m_pipelineState.Reset();
 
-    m_dsvHeap.Reset();
     for (auto& depthBuffer : m_depthBuffers)
     {
         depthBuffer.Reset();
     }
 
-    m_rtvHeap.Reset();
     for (auto& buffer : m_backBuffers)
     {
         buffer.Reset();
@@ -213,7 +210,7 @@ void D3DEngine::createDevice()
             allocatorDesc.Flags = D3D12MA_RECOMMENDED_ALLOCATOR_FLAGS;
             allocatorDesc.pDevice = m_device.Get();
             allocatorDesc.pAdapter = adapter.Get();
-            HRESULT hr = D3D12MA::CreateAllocator(&allocatorDesc, &m_allocator);
+            hr = D3D12MA::CreateAllocator(&allocatorDesc, &m_allocator);
             if (FAILED(hr))
             {
                 std::cerr << "Failed to create D3D12MA allocator." << std::endl;
@@ -313,29 +310,15 @@ void D3DEngine::createSwapChain(HWND hwnd)
 
 void D3DEngine::createSwapChainResources()
 {
-    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {
-        .Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-        .NumDescriptors = 2,
-        .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-        .NodeMask = 0
-    };
-    HRESULT hr = m_device->CreateDescriptorHeap(
-        &rtvHeapDesc,
-        IID_PPV_ARGS(&m_rtvHeap)
-    );
-    if (FAILED(hr))
-    {
-        std::cerr << "Failed to create RTV descriptor heap." << std::endl;
-        return;
-    }
-
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc;
-    hr = m_swapchain->GetDesc1(&swapChainDesc);
+    HRESULT hr = m_swapchain->GetDesc1(&swapChainDesc);
     if (FAILED(hr))
     {
         std::cerr << "Failed to get swap chain description." << std::endl;
         return;
     }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_descHeapManager->rtvHeap()->allocate(FRAME_COUNT);
 
     for (UINT i = 0; i < FRAME_COUNT; ++i)
     {
@@ -346,9 +329,7 @@ void D3DEngine::createSwapChainResources()
             return;
         }
 
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
         rtvHandle.ptr += i * m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
         m_device->CreateRenderTargetView(m_backBuffers[i].Get(), nullptr, rtvHandle);
     }
 }
@@ -406,10 +387,8 @@ void D3DEngine::beginFrame(UINT frameIndex)
     };
     m_commandList->ResourceBarrier(1, &barrier);
 
-    auto rtvHandle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
-    rtvHandle.ptr += frameIndex * m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    auto dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-    dsvHandle.ptr += frameIndex * m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    auto rtvHandle = m_descHeapManager->rtvHeap()->cpuHandle(frameIndex);
+    auto dsvHandle = m_descHeapManager->dsvHeap()->cpuHandle(frameIndex);
 
     m_commandList->OMSetRenderTargets(1, &rtvHandle, TRUE, &dsvHandle);
     m_commandList->ClearRenderTargetView(rtvHandle, m_clearColor.data(), 0, nullptr);
@@ -425,12 +404,8 @@ void D3DEngine::recordCommands(UINT frameIndex) const
     m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-    m_commandList->SetDescriptorHeaps(1, m_descHeap.GetAddressOf());
 
-    auto gpuHandle = m_descHeap->GetGPUDescriptorHandleForHeapStart();
-    m_commandList->SetGraphicsRootDescriptorTable(0, gpuHandle);
-    gpuHandle.ptr += m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    m_commandList->SetGraphicsRootDescriptorTable(1, gpuHandle);
+    m_descHeapManager->bind(m_commandList);
 
     m_commandList->SetPipelineState(m_pipelineState.Get());
 
@@ -562,48 +537,7 @@ void D3DEngine::createPipelineState()
     Microsoft::WRL::ComPtr<ID3D10Blob> signatureBlob;
     Microsoft::WRL::ComPtr<ID3D10Blob> errorBlob;
 
-    D3D12_DESCRIPTOR_RANGE vsRange = {
-        .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-        .NumDescriptors = 1,
-        .BaseShaderRegister = 0,
-        .RegisterSpace = 0,
-        .OffsetInDescriptorsFromTableStart = 0
-    };
-    std::array psRanges = {
-        D3D12_DESCRIPTOR_RANGE{
-            .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-            .NumDescriptors = 1,
-            .BaseShaderRegister = 1,
-            .RegisterSpace = 0,
-            .OffsetInDescriptorsFromTableStart = 0
-        },
-        D3D12_DESCRIPTOR_RANGE{
-            .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-            .NumDescriptors = 1,
-            .BaseShaderRegister = 0,
-            .RegisterSpace = 0,
-            .OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND
-        }
-    };
-
-    std::array rootParameters = {
-        D3D12_ROOT_PARAMETER{
-            .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-            .DescriptorTable = {
-                .NumDescriptorRanges = 1,
-                .pDescriptorRanges = &vsRange
-            },
-            .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX
-        },
-        D3D12_ROOT_PARAMETER{
-            .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-            .DescriptorTable = {
-                .NumDescriptorRanges = static_cast<UINT>(psRanges.size()),
-                .pDescriptorRanges = psRanges.data()
-            },
-            .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL
-        }
-    };
+    auto rootParameters = m_descHeapManager->rootParameter();
 
     D3D12_STATIC_SAMPLER_DESC samplerDesc = {
         .Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
@@ -619,16 +553,19 @@ void D3DEngine::createPipelineState()
         .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL
     };
 
-    D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {
+    D3D12_ROOT_SIGNATURE_DESC1 rootSignatureDesc = {
         .NumParameters = static_cast<UINT>(rootParameters.size()),
         .pParameters = rootParameters.data(),
         .NumStaticSamplers = 1,
         .pStaticSamplers = &samplerDesc,
         .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
     };
-    HRESULT hr = D3D12SerializeRootSignature(
-        &rootSignatureDesc,
-        D3D_ROOT_SIGNATURE_VERSION_1,
+    D3D12_VERSIONED_ROOT_SIGNATURE_DESC versionedDesc = {
+        .Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
+        .Desc_1_1 = rootSignatureDesc
+    };
+    HRESULT hr = D3D12SerializeVersionedRootSignature(
+        &versionedDesc,
         &signatureBlob,
         &errorBlob
     );
@@ -741,25 +678,6 @@ void D3DEngine::createViewport(HWND hwnd)
     };
 }
 
-void D3DEngine::createDescriptorHeap()
-{
-    D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {
-        .Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-        .NumDescriptors = 3,
-        .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-        .NodeMask = 0
-    };
-    HRESULT hr = m_device->CreateDescriptorHeap(
-        &heapDesc,
-        IID_PPV_ARGS(&m_descHeap)
-    );
-    if (FAILED(hr))
-    {
-        std::cerr << "Failed to create descriptor heap." << std::endl;
-        return;
-    }
-}
-
 void D3DEngine::barrier(
     const Microsoft::WRL::ComPtr<ID3D12Resource> &resource,
     D3D12_RESOURCE_STATES beforeState,
@@ -781,22 +699,6 @@ void D3DEngine::barrier(
 
 void D3DEngine::createDepthResources(UINT width, UINT height)
 {
-    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {
-        .Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-        .NumDescriptors = FRAME_COUNT,
-        .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-        .NodeMask = 0
-    };
-    HRESULT hr = m_device->CreateDescriptorHeap(
-        &dsvHeapDesc,
-        IID_PPV_ARGS(&m_dsvHeap)
-    );
-    if (FAILED(hr))
-    {
-        std::cerr << "Failed to create DSV descriptor heap." << std::endl;
-        return;
-    }
-
     D3D12MA::ALLOCATION_DESC allocDesc = {};
     allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
@@ -821,9 +723,10 @@ void D3DEngine::createDepthResources(UINT width, UINT height)
         }
     };
 
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_descHeapManager->dsvHeap()->allocate(FRAME_COUNT);
     for (UINT i = 0; i < FRAME_COUNT; ++i)
     {
-        hr = m_allocator->CreateResource(
+        HRESULT hr = m_allocator->CreateResource(
             &allocDesc,
             &resourceDesc,
             D3D12_RESOURCE_STATE_DEPTH_WRITE,
@@ -843,7 +746,6 @@ void D3DEngine::createDepthResources(UINT width, UINT height)
             .ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D,
             .Flags = D3D12_DSV_FLAG_NONE
         };
-        auto dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
         dsvHandle.ptr += i * m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
         m_device->CreateDepthStencilView(
             m_depthBuffers[i]->GetResource(),

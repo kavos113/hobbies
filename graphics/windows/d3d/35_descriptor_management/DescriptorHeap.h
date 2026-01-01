@@ -7,6 +7,7 @@
 #include <array>
 #include <cstdint>
 #include <vector>
+#include <memory>
 
 class GPUDescriptorHeap
 {
@@ -17,7 +18,7 @@ public:
         D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
     };
 
-    GPUDescriptorHeap(const Microsoft::WRL::ComPtr<ID3D12Device> &device, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    GPUDescriptorHeap(const Microsoft::WRL::ComPtr<ID3D12Device> &device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t heapSize);
     ~GPUDescriptorHeap() = default;
 
     DescriptorHandle allocate(uint32_t count);
@@ -31,13 +32,13 @@ private:
     D3D12_DESCRIPTOR_HEAP_TYPE m_descHeapType;
     uint32_t m_latestIndex = 0;
 
-    static constexpr uint32_t HEAP_SIZE = 131072;
+    uint32_t m_heapSize;
 };
 
 class CPUDescriptorHeap
 {
 public:
-    CPUDescriptorHeap(const Microsoft::WRL::ComPtr<ID3D12Device> &device, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    CPUDescriptorHeap(const Microsoft::WRL::ComPtr<ID3D12Device> &device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t heapSize);
     ~CPUDescriptorHeap() = default;
 
     D3D12_CPU_DESCRIPTOR_HANDLE allocate(uint32_t count);
@@ -48,7 +49,7 @@ private:
     D3D12_DESCRIPTOR_HEAP_TYPE m_descHeapType;
     uint32_t m_latestIndex = 0;
 
-    static constexpr uint32_t HEAP_SIZE = 131072;
+    uint32_t m_heapSize;
 };
 
 class DescriptorBindingManager
@@ -59,6 +60,9 @@ public:
         D3D12_DESCRIPTOR_RANGE1 range;
         D3D12_CPU_DESCRIPTOR_HANDLE handle;
     };
+
+    DescriptorBindingManager(const Microsoft::WRL::ComPtr<ID3D12Device> &device);
+    ~DescriptorBindingManager() = default;
 
     enum class DescriptorResourceType : uint8_t
     {
@@ -77,6 +81,28 @@ private:
     std::array<std::vector<BindingParameter>, static_cast<size_t>(DescriptorResourceType::EnumCount)> m_bindings;
 
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
+};
+
+class DescriptorHeapManager
+{
+public:
+    void init(Microsoft::WRL::ComPtr<ID3D12Device> device);
+
+    CPUDescriptorHeap *rtvHeap() const { return m_rtvHeap.get(); }
+    CPUDescriptorHeap *dsvHeap() const { return m_dsvHeap.get(); }
+    CPUDescriptorHeap *cbvHeap() const { return m_cbvHeap.get(); }
+    GPUDescriptorHeap *gpuCbvHeap() const { return m_gpuCbvHeap.get(); }
+    GPUDescriptorHeap *samplerHeap() const { return m_samplerHeap.get(); }
+private:
+    std::unique_ptr<CPUDescriptorHeap> m_rtvHeap;
+    std::unique_ptr<CPUDescriptorHeap> m_dsvHeap;
+    std::unique_ptr<CPUDescriptorHeap> m_cbvHeap;
+    std::unique_ptr<GPUDescriptorHeap> m_gpuCbvHeap;
+    std::unique_ptr<GPUDescriptorHeap> m_samplerHeap;
+    std::unique_ptr<DescriptorBindingManager> m_cbvManager;
+
+    static constexpr uint32_t DEFAULT_HEAP_SIZE = 131072;
+    static constexpr uint32_t SAMPLER_HEAP_SIZE = 2048;
 };
 
 

@@ -4,12 +4,12 @@
 #include <numeric>
 #include <iostream>
 
-GPUDescriptorHeap::GPUDescriptorHeap(const Microsoft::WRL::ComPtr<ID3D12Device> &device, const D3D12_DESCRIPTOR_HEAP_TYPE type)
-    : m_device(device), m_descHeapType(type)
+GPUDescriptorHeap::GPUDescriptorHeap(const Microsoft::WRL::ComPtr<ID3D12Device> &device, const D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t heapSize)
+    : m_device(device), m_descHeapType(type), m_heapSize(heapSize)
 {
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {
         .Type = type,
-        .NumDescriptors = HEAP_SIZE,
+        .NumDescriptors = heapSize,
         .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
         .NodeMask = 0
     };
@@ -45,12 +45,12 @@ D3D12_DESCRIPTOR_HEAP_TYPE GPUDescriptorHeap::type() const
     return m_descHeapType;
 }
 
-CPUDescriptorHeap::CPUDescriptorHeap(const Microsoft::WRL::ComPtr<ID3D12Device> &device, const D3D12_DESCRIPTOR_HEAP_TYPE type)
-    : m_device(device), m_descHeapType(type)
+CPUDescriptorHeap::CPUDescriptorHeap(const Microsoft::WRL::ComPtr<ID3D12Device> &device, const D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t heapSize)
+    : m_device(device), m_descHeapType(type), m_heapSize(heapSize)
 {
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {
         .Type = type,
-        .NumDescriptors = HEAP_SIZE,
+        .NumDescriptors = heapSize,
         .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
         .NodeMask = 0
     };
@@ -72,6 +72,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE CPUDescriptorHeap::allocate(const uint32_t count)
 
     m_latestIndex += count;
     return handle;
+}
+
+DescriptorBindingManager::DescriptorBindingManager(const Microsoft::WRL::ComPtr<ID3D12Device> &device)
+    : m_device(device), m_bindings({})
+{
 }
 
 void DescriptorBindingManager::registerBinding(const BindingParameter &binding, const D3D12_SHADER_VISIBILITY visibility)
@@ -207,4 +212,14 @@ std::vector<D3D12_ROOT_PARAMETER1> DescriptorBindingManager::rootParameter()
             .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL
         }
     };
+}
+
+void DescriptorHeapManager::init(Microsoft::WRL::ComPtr<ID3D12Device> device)
+{
+    m_rtvHeap = std::make_unique<CPUDescriptorHeap>(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, DEFAULT_HEAP_SIZE);
+    m_dsvHeap = std::make_unique<CPUDescriptorHeap>(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, DEFAULT_HEAP_SIZE);
+    m_cbvHeap = std::make_unique<CPUDescriptorHeap>(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, DEFAULT_HEAP_SIZE);
+    m_gpuCbvHeap = std::make_unique<GPUDescriptorHeap>(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, DEFAULT_HEAP_SIZE);
+    m_samplerHeap = std::make_unique<GPUDescriptorHeap>(device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, SAMPLER_HEAP_SIZE);
+    m_cbvManager = std::make_unique<DescriptorBindingManager>(device);
 }

@@ -59,30 +59,49 @@ class DescriptorBindingManager
 public:
     struct BindingParameter
     {
-        D3D12_DESCRIPTOR_RANGE1 range;
         D3D12_CPU_DESCRIPTOR_HANDLE handle;
+        UINT count;
+
+        bool isValid() const
+        {
+            return handle.ptr != NULL;
+        }
     };
 
     DescriptorBindingManager(const Microsoft::WRL::ComPtr<ID3D12Device> &device);
     ~DescriptorBindingManager() = default;
 
-    enum class DescriptorResourceType : uint8_t
+    enum DescriptorResourceType : uint8_t
     {
         VS_CBV = 0,
         VS_SRV = 1,
         PS_CBV = 2,
         PS_SRV = 3,
-        EnumCount = 4
+        ResourceTypeCount = 4
     };
 
-    void registerBinding(const BindingParameter &binding, D3D12_SHADER_VISIBILITY visibility);
-    void copyAndSubmit(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList, GPUDescriptorHeap *gpuHeap);
+    void setHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle, UINT registerIndex, DescriptorResourceType type);
+    void setHandleArray(D3D12_CPU_DESCRIPTOR_HANDLE startHandle, UINT count, UINT startRegisterIndex, DescriptorResourceType type);
 
-    std::vector<D3D12_ROOT_PARAMETER1> rootParameter();
+    void setNullCbv(D3D12_CPU_DESCRIPTOR_HANDLE handle);
+    void setNullSrv(D3D12_CPU_DESCRIPTOR_HANDLE handle);
+
+    void copyAndSubmit(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList, GPUDescriptorHeap *gpuHeap) const;
+
+    std::vector<D3D12_ROOT_PARAMETER1> rootParameter() const;
 private:
-    std::array<std::vector<BindingParameter>, static_cast<size_t>(DescriptorResourceType::EnumCount)> m_bindings;
+    std::array<std::vector<BindingParameter>, static_cast<size_t>(ResourceTypeCount)> m_bindings;
 
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
+    D3D12_CPU_DESCRIPTOR_HANDLE m_nullCbv;
+    D3D12_CPU_DESCRIPTOR_HANDLE m_nullSrv;
+
+    const std::array<uint32_t, static_cast<size_t>(ResourceTypeCount)> REGISTER_COUNT = {
+        8,  // VS_CBV
+        16, // VS_SRV
+        8,  // PS_CBV
+        16, // PS_SRV
+    };
 };
 
 class DescriptorHeapManager

@@ -27,12 +27,6 @@ public:
     void bind(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList);
 
     D3D12_DESCRIPTOR_HEAP_TYPE type() const;
-    uint32_t latestIndex() const;
-
-    D3D12_GPU_DESCRIPTOR_HANDLE handle()
-    {
-        return m_heap->GetGPUDescriptorHandleForHeapStart();
-    }
 
 private:
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_heap;
@@ -64,17 +58,6 @@ private:
 class DescriptorBindingManager
 {
 public:
-    struct BindingParameter
-    {
-        D3D12_CPU_DESCRIPTOR_HANDLE handle;
-        UINT count;
-
-        bool isValid() const
-        {
-            return handle.ptr != NULL;
-        }
-    };
-
     DescriptorBindingManager(const Microsoft::WRL::ComPtr<ID3D12Device> &device);
     ~DescriptorBindingManager() = default;
 
@@ -92,14 +75,33 @@ public:
 
     std::vector<D3D12_ROOT_PARAMETER1> rootParameter() const;
 private:
+    struct BindingParameter
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE handle;
+        UINT count;
+
+        bool isValid() const
+        {
+            return handle.ptr != NULL;
+        }
+    };
+
+    struct Bindings
+    {
+        std::vector<BindingParameter> bindings;
+
+        bool isDirty = true;
+        D3D12_GPU_DESCRIPTOR_HANDLE startGpuHandle{};
+    };
+
     friend DescriptorHeapManager;
 
     void setNullCbv(D3D12_CPU_DESCRIPTOR_HANDLE handle);
     void setNullSrv(D3D12_CPU_DESCRIPTOR_HANDLE handle);
 
-    void copyAndSubmit(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList, GPUDescriptorHeap *gpuHeap) const;
+    void copyAndSubmit(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList, GPUDescriptorHeap *gpuHeap);
 
-    std::array<std::vector<BindingParameter>, ResourceTypeCount> m_bindings;
+    std::array<Bindings, ResourceTypeCount> m_bindings;
 
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
     D3D12_CPU_DESCRIPTOR_HANDLE m_nullCbv;

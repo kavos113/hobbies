@@ -40,11 +40,6 @@ void GPUDescriptorHeap::bind(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandL
     cmdList->SetDescriptorHeaps(1, m_heap.GetAddressOf());
 }
 
-uint32_t GPUDescriptorHeap::latestIndex() const
-{
-    return m_latestIndex;
-}
-
 D3D12_DESCRIPTOR_HEAP_TYPE GPUDescriptorHeap::type() const
 {
     return m_descHeapType;
@@ -124,10 +119,10 @@ DescriptorBindingManager::DescriptorBindingManager(const Microsoft::WRL::ComPtr<
         },
     })
 {
-    m_bindings[VS_CBV].resize(REGISTER_COUNT[VS_CBV]);
-    m_bindings[VS_SRV].resize(REGISTER_COUNT[VS_SRV]);
-    m_bindings[PS_CBV].resize(REGISTER_COUNT[PS_CBV]);
-    m_bindings[PS_SRV].resize(REGISTER_COUNT[PS_SRV]);
+    m_bindings[VS_CBV].bindings.resize(REGISTER_COUNT[VS_CBV]);
+    m_bindings[VS_SRV].bindings.resize(REGISTER_COUNT[VS_SRV]);
+    m_bindings[PS_CBV].bindings.resize(REGISTER_COUNT[PS_CBV]);
+    m_bindings[PS_SRV].bindings.resize(REGISTER_COUNT[PS_SRV]);
 }
 
 void DescriptorBindingManager::setHandle(
@@ -136,7 +131,8 @@ void DescriptorBindingManager::setHandle(
     DescriptorResourceType type
 )
 {
-    m_bindings[type][registerIndex] = {handle, 1};
+    m_bindings[type].bindings[registerIndex] = {handle, 1};
+    m_bindings[type].isDirty = true;
 }
 
 void DescriptorBindingManager::setHandleArray(
@@ -146,24 +142,31 @@ void DescriptorBindingManager::setHandleArray(
     DescriptorResourceType type
 )
 {
-    m_bindings[type][startRegisterIndex] = {startHandle, count};
+    m_bindings[type].bindings[startRegisterIndex] = {startHandle, count};
+    m_bindings[type].isDirty = true;
 }
 
-void DescriptorBindingManager::copyAndSubmit(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList, GPUDescriptorHeap *gpuHeap) const
+void DescriptorBindingManager::copyAndSubmit(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList, GPUDescriptorHeap *gpuHeap)
 {
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> srcHandles;
     std::vector<UINT> srcSizes;
+    UINT dstSize = 0;
 
     for (uint8_t i = 0; i < m_bindings.size(); i++)
     {
-        for (uint32_t j = 0; j < m_bindings[i].size(); )
+        if (!m_bindings[i].isDirty)
         {
-            if (m_bindings[i][j].isValid())
-            {
-                srcHandles.push_back(m_bindings[i][j].handle);
-                srcSizes.push_back(m_bindings[i][j].count);
+            continue;
+        }
 
-                j += m_bindings[i][j].count;
+        for (uint32_t j = 0; j < m_bindings[i].bindings.size(); )
+        {
+            if (m_bindings[i].bindings[j].isValid())
+            {
+                srcHandles.push_back(m_bindings[i].bindings[j].handle);
+                srcSizes.push_back(m_bindings[i].bindings[j].count);
+
+                j += m_bindings[i].bindings[j].count;
             }
             else
             {
@@ -185,24 +188,52 @@ void DescriptorBindingManager::copyAndSubmit(const Microsoft::WRL::ComPtr<ID3D12
                 j++;
             }
         }
+
+        dstSize += REGISTER_COUNT[i];
     }
 
-    UINT dstSize = std::accumulate(srcSizes.begin(), srcSizes.end(), 0);
-    GPUDescriptorHeap::DescriptorHandle dstHandle = gpuHeap->allocate(dstSize);
-
-    m_device->CopyDescriptors(
-        1, &dstHandle.cpuHandle, &dstSize,
-        srcHandles.size(), srcHandles.data(), srcSizes.data(),
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-    );
-
+    std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> handles;
+    handles.reserve(m_bindings.size());
     UINT incrementSize = m_device->GetDescriptorHandleIncrementSize(gpuHeap->type());
 
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = dstHandle.gpuHandle;
-    for (uint8_t i = 0; i < static_cast<uint8_t>(ResourceTypeCount); i++)
+    if (dstSize > 0)
     {
-        cmdList->SetGraphicsRootDescriptorTable(i, gpuHandle);
-        gpuHandle.ptr += REGISTER_COUNT[i] * incrementSize;
+        GPUDescriptorHeap::DescriptorHandle dstHandle = gpuHeap->allocate(dstSize);
+        m_device->CopyDescriptors(
+            1, &dstHandle.cpuHandle, &dstSize,
+            srcHandles.size(), srcHandles.data(), srcSizes.data(),
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+        );
+
+        D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = dstHandle.gpuHandle;
+
+        for (uint8_t i = 0; i < ResourceTypeCount; i++)
+        {
+            if (m_bindings[i].isDirty)
+            {
+                handles.push_back(gpuHandle);
+                m_bindings[i].startGpuHandle = gpuHandle;
+
+                gpuHandle.ptr += REGISTER_COUNT[i] * incrementSize;
+            }
+            else
+            {
+                handles.push_back(m_bindings[i].startGpuHandle);
+            }
+        }
+    }
+    else
+    {
+        for (const auto &binding : m_bindings)
+        {
+            handles.push_back(binding.startGpuHandle);
+        }
+    }
+
+
+    for (uint8_t i = 0; i < ResourceTypeCount; i++)
+    {
+        cmdList->SetGraphicsRootDescriptorTable(i, handles[i]);
     }
 }
 

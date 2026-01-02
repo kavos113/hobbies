@@ -452,7 +452,7 @@ void Model::loadTexture(const std::wstring &path)
     hr = m_allocator->CreateResource(
         &allocDesc,
         &resourceDesc,
-        D3D12_RESOURCE_STATE_COPY_DEST,
+        D3D12_RESOURCE_STATE_COMMON,
         nullptr,
         &m_texture,
         IID_NULL,

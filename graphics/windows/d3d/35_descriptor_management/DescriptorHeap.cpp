@@ -88,12 +88,46 @@ D3D12_CPU_DESCRIPTOR_HANDLE CPUDescriptorHeap::cpuHandle(const UINT index) const
 }
 
 DescriptorBindingManager::DescriptorBindingManager(const Microsoft::WRL::ComPtr<ID3D12Device> &device)
-    : m_device(device), m_bindings({})
+    : m_bindings({}), m_device(device), m_nullCbv(), m_nullSrv(),
+    DESCRIPTOR_RANGES({
+        D3D12_DESCRIPTOR_RANGE1{
+            .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+            .NumDescriptors = REGISTER_COUNT[VS_CBV],
+            .BaseShaderRegister = 0,
+            .RegisterSpace = 0,
+            .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE,
+            .OffsetInDescriptorsFromTableStart = 0
+        },
+        D3D12_DESCRIPTOR_RANGE1{
+            .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+            .NumDescriptors = REGISTER_COUNT[VS_SRV],
+            .BaseShaderRegister = 0,
+            .RegisterSpace = 0,
+            .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE,
+            .OffsetInDescriptorsFromTableStart = 0
+        },
+        D3D12_DESCRIPTOR_RANGE1{
+            .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+            .NumDescriptors = REGISTER_COUNT[PS_CBV],
+            .BaseShaderRegister = 0,
+            .RegisterSpace = 0,
+            .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE,
+            .OffsetInDescriptorsFromTableStart = 0
+        },
+        D3D12_DESCRIPTOR_RANGE1{
+            .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+            .NumDescriptors = REGISTER_COUNT[PS_SRV],
+            .BaseShaderRegister = 0,
+            .RegisterSpace = 0,
+            .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE,
+            .OffsetInDescriptorsFromTableStart = 0
+        },
+    })
 {
-    m_bindings[VS_CBV].reserve(REGISTER_COUNT[VS_CBV]);
-    m_bindings[VS_SRV].reserve(REGISTER_COUNT[VS_SRV]);
-    m_bindings[PS_CBV].reserve(REGISTER_COUNT[PS_CBV]);
-    m_bindings[PS_SRV].reserve(REGISTER_COUNT[PS_SRV]);
+    m_bindings[VS_CBV].resize(REGISTER_COUNT[VS_CBV]);
+    m_bindings[VS_SRV].resize(REGISTER_COUNT[VS_SRV]);
+    m_bindings[PS_CBV].resize(REGISTER_COUNT[PS_CBV]);
+    m_bindings[PS_SRV].resize(REGISTER_COUNT[PS_SRV]);
 }
 
 void DescriptorBindingManager::setHandle(
@@ -120,18 +154,36 @@ void DescriptorBindingManager::copyAndSubmit(const Microsoft::WRL::ComPtr<ID3D12
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> srcHandles;
     std::vector<UINT> srcSizes;
 
-    std::array<uint32_t, static_cast<size_t>(ResourceTypeCount)> counts = {};
-
     for (uint8_t i = 0; i < m_bindings.size(); i++)
     {
         for (uint32_t j = 0; j < m_bindings[i].size(); )
         {
-            srcHandles.push_back(m_bindings[i][j].handle);
-            srcSizes.push_back(m_bindings[i][j].count);
+            if (m_bindings[i][j].isValid())
+            {
+                srcHandles.push_back(m_bindings[i][j].handle);
+                srcSizes.push_back(m_bindings[i][j].count);
 
-            counts[i] += m_bindings[i][j].count;
+                j += m_bindings[i][j].count;
+            }
+            else
+            {
+                switch (i)
+                {
+                case VS_CBV:
+                case PS_CBV:
+                    srcHandles.push_back(m_nullCbv);
+                    break;
+                case VS_SRV:
+                case PS_SRV:
+                    srcHandles.push_back(m_nullSrv);
+                    break;
+                default:
+                    break;
+                }
+                srcSizes.push_back(1);
 
-            j += m_bindings[i][j].count;
+                j++;
+            }
         }
     }
 
@@ -145,58 +197,23 @@ void DescriptorBindingManager::copyAndSubmit(const Microsoft::WRL::ComPtr<ID3D12
     );
 
     UINT incrementSize = m_device->GetDescriptorHandleIncrementSize(gpuHeap->type());
-    uint32_t firstIndex = gpuHeap->latestIndex() - dstSize;
 
     D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = dstHandle.gpuHandle;
-    gpuHandle.ptr += firstIndex * incrementSize;
     for (uint8_t i = 0; i < static_cast<uint8_t>(ResourceTypeCount); i++)
     {
         cmdList->SetGraphicsRootDescriptorTable(i, gpuHandle);
-        gpuHandle.ptr += counts[i] * incrementSize;
+        gpuHandle.ptr += REGISTER_COUNT[i] * incrementSize;
     }
 }
 
 std::vector<D3D12_ROOT_PARAMETER1> DescriptorBindingManager::rootParameter() const
 {
-    D3D12_DESCRIPTOR_RANGE1 vsCbvRange = {
-        .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-        .NumDescriptors = REGISTER_COUNT[VS_CBV],
-        .BaseShaderRegister = 0,
-        .RegisterSpace = 0,
-        .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
-        .OffsetInDescriptorsFromTableStart = 0
-    };
-    D3D12_DESCRIPTOR_RANGE1 vsSrvRange = {
-        .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-        .NumDescriptors = REGISTER_COUNT[VS_SRV],
-        .BaseShaderRegister = 0,
-        .RegisterSpace = 0,
-        .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
-        .OffsetInDescriptorsFromTableStart = 0
-    };
-    D3D12_DESCRIPTOR_RANGE1 psCbvRange = {
-        .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-        .NumDescriptors = REGISTER_COUNT[PS_CBV],
-        .BaseShaderRegister = 0,
-        .RegisterSpace = 0,
-        .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
-        .OffsetInDescriptorsFromTableStart = 0
-    };
-    D3D12_DESCRIPTOR_RANGE1 psSrvRange = {
-        .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-        .NumDescriptors = REGISTER_COUNT[PS_SRV],
-        .BaseShaderRegister = 0,
-        .RegisterSpace = 0,
-        .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
-        .OffsetInDescriptorsFromTableStart = 0
-    };
-
     return {
         D3D12_ROOT_PARAMETER1{
             .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
             .DescriptorTable = {
                 .NumDescriptorRanges = 1,
-                .pDescriptorRanges = &vsCbvRange
+                .pDescriptorRanges = &DESCRIPTOR_RANGES[VS_CBV]
             },
             .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX
         },
@@ -204,7 +221,7 @@ std::vector<D3D12_ROOT_PARAMETER1> DescriptorBindingManager::rootParameter() con
             .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
             .DescriptorTable = {
                 .NumDescriptorRanges = 1,
-                .pDescriptorRanges = &vsSrvRange
+                .pDescriptorRanges = &DESCRIPTOR_RANGES[VS_SRV]
             },
             .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX
         },
@@ -212,7 +229,7 @@ std::vector<D3D12_ROOT_PARAMETER1> DescriptorBindingManager::rootParameter() con
             .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
             .DescriptorTable = {
                 .NumDescriptorRanges = 1,
-                .pDescriptorRanges = &psCbvRange
+                .pDescriptorRanges = &DESCRIPTOR_RANGES[PS_CBV]
             },
             .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL
         },
@@ -220,7 +237,7 @@ std::vector<D3D12_ROOT_PARAMETER1> DescriptorBindingManager::rootParameter() con
             .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
             .DescriptorTable = {
                 .NumDescriptorRanges = 1,
-                .pDescriptorRanges = &psSrvRange
+                .pDescriptorRanges = &DESCRIPTOR_RANGES[PS_SRV]
             },
             .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL
         }
@@ -245,6 +262,25 @@ DescriptorHeapManager::DescriptorHeapManager(Microsoft::WRL::ComPtr<ID3D12Device
     m_gpuCbvHeap = std::make_unique<GPUDescriptorHeap>(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, DEFAULT_HEAP_SIZE);
     m_samplerHeap = std::make_unique<GPUDescriptorHeap>(device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, SAMPLER_HEAP_SIZE);
     m_cbvManager = std::make_unique<DescriptorBindingManager>(device);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE nullCbvHandle = m_cbvHeap->allocate(1);
+    D3D12_CPU_DESCRIPTOR_HANDLE nullSrvHandle = m_cbvHeap->allocate(1);
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC nullCbvDesc = {
+        .BufferLocation = 0,
+        .SizeInBytes = 0
+    };
+    device->CreateConstantBufferView(&nullCbvDesc, nullCbvHandle);
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC nullSrvDesc = {
+        .Format = DXGI_FORMAT_B8G8R8X8_UNORM,
+        .ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
+        .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING
+    };
+    device->CreateShaderResourceView(nullptr, &nullSrvDesc, nullSrvHandle);
+
+    m_cbvManager->setNullCbv(nullCbvHandle);
+    m_cbvManager->setNullSrv(nullSrvHandle);
 }
 
 void DescriptorHeapManager::bind(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList) const

@@ -9,6 +9,8 @@
 #include <vector>
 #include <memory>
 
+class DescriptorHeapManager;
+
 class GPUDescriptorHeap
 {
 public:
@@ -26,6 +28,11 @@ public:
 
     D3D12_DESCRIPTOR_HEAP_TYPE type() const;
     uint32_t latestIndex() const;
+
+    D3D12_GPU_DESCRIPTOR_HANDLE handle()
+    {
+        return m_heap->GetGPUDescriptorHandleForHeapStart();
+    }
 
 private:
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_heap;
@@ -83,25 +90,29 @@ public:
     void setHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle, UINT registerIndex, DescriptorResourceType type);
     void setHandleArray(D3D12_CPU_DESCRIPTOR_HANDLE startHandle, UINT count, UINT startRegisterIndex, DescriptorResourceType type);
 
+    std::vector<D3D12_ROOT_PARAMETER1> rootParameter() const;
+private:
+    friend DescriptorHeapManager;
+
     void setNullCbv(D3D12_CPU_DESCRIPTOR_HANDLE handle);
     void setNullSrv(D3D12_CPU_DESCRIPTOR_HANDLE handle);
 
     void copyAndSubmit(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &cmdList, GPUDescriptorHeap *gpuHeap) const;
 
-    std::vector<D3D12_ROOT_PARAMETER1> rootParameter() const;
-private:
-    std::array<std::vector<BindingParameter>, static_cast<size_t>(ResourceTypeCount)> m_bindings;
+    std::array<std::vector<BindingParameter>, ResourceTypeCount> m_bindings;
 
     Microsoft::WRL::ComPtr<ID3D12Device> m_device;
     D3D12_CPU_DESCRIPTOR_HANDLE m_nullCbv;
     D3D12_CPU_DESCRIPTOR_HANDLE m_nullSrv;
 
-    const std::array<uint32_t, static_cast<size_t>(ResourceTypeCount)> REGISTER_COUNT = {
+    const std::array<uint32_t, ResourceTypeCount> REGISTER_COUNT = {
         8,  // VS_CBV
         16, // VS_SRV
         8,  // PS_CBV
         16, // PS_SRV
     };
+
+    const std::array<D3D12_DESCRIPTOR_RANGE1, ResourceTypeCount> DESCRIPTOR_RANGES;
 };
 
 class DescriptorHeapManager
@@ -117,7 +128,7 @@ public:
     CPUDescriptorHeap *cbvHeap() const { return m_cbvHeap.get(); }
     GPUDescriptorHeap *gpuCbvHeap() const { return m_gpuCbvHeap.get(); }
     GPUDescriptorHeap *samplerHeap() const { return m_samplerHeap.get(); }
-    std::vector<D3D12_ROOT_PARAMETER1> rootParameter() const { return m_cbvManager->rootParameter(); }
+    DescriptorBindingManager *cbvHeapManager() const { return m_cbvManager.get(); }
 private:
     std::unique_ptr<CPUDescriptorHeap> m_rtvHeap;
     std::unique_ptr<CPUDescriptorHeap> m_dsvHeap;

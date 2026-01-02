@@ -16,11 +16,11 @@ D3DEngine::D3DEngine(HWND hwnd)
     createDevice();
     m_debug->setupCallback(m_device);
 
+    m_descHeapManager = std::make_unique<DescriptorHeapManager>(m_device);
+
     createCommandResources();
     createSwapChain(hwnd);
     createFence();
-
-    m_descHeapManager = std::make_unique<DescriptorHeapManager>(m_device);
 
     RECT rc;
     GetClientRect(hwnd, &rc);
@@ -393,7 +393,6 @@ void D3DEngine::beginFrame(UINT frameIndex)
     m_commandList->OMSetRenderTargets(1, &rtvHandle, TRUE, &dsvHandle);
     m_commandList->ClearRenderTargetView(rtvHandle, m_clearColor.data(), 0, nullptr);
     m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
 }
 
 void D3DEngine::recordCommands(UINT frameIndex) const
@@ -537,7 +536,7 @@ void D3DEngine::createPipelineState()
     Microsoft::WRL::ComPtr<ID3D10Blob> signatureBlob;
     Microsoft::WRL::ComPtr<ID3D10Blob> errorBlob;
 
-    auto rootParameters = m_descHeapManager->rootParameter();
+    auto rootParameters = m_descHeapManager->cbvHeapManager()->rootParameter();
 
     D3D12_STATIC_SAMPLER_DESC samplerDesc = {
         .Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,

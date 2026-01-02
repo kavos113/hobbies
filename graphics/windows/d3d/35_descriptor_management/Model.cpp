@@ -347,16 +347,7 @@ void Model::createMatrixBuffer(RECT rc)
         cbvHandle
     );
 
-    DescriptorBindingManager::BindingParameter binding = {
-        .range = D3D12_DESCRIPTOR_RANGE1{
-            .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-            .NumDescriptors = 1,
-            .BaseShaderRegister = 0,
-            .RegisterSpace = 0,
-            .OffsetInDescriptorsFromTableStart = 0
-        },
-        .handle = cbvHandle
-    };
+    m_descHeapManager->cbvHeapManager()->setHandle(cbvHandle, 0, DescriptorBindingManager::VS_CBV);
 }
 
 void Model::createLightBuffer()
@@ -413,6 +404,8 @@ void Model::createLightBuffer()
         &cbvDesc,
         cbvHandle
     );
+
+    m_descHeapManager->cbvHeapManager()->setHandle(cbvHandle, 1, DescriptorBindingManager::PS_CBV);
 }
 
 void Model::loadTexture(const std::wstring &path)
@@ -523,14 +516,15 @@ void Model::loadTexture(const std::wstring &path)
         }
     };
 
-    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = m_descHeap->GetCPUDescriptorHandleForHeapStart();
-    srvHandle.ptr += 2 * m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = m_descHeapManager->cbvHeap()->allocate(1);
 
     m_device->CreateShaderResourceView(
         m_texture->GetResource(),
         &srvDesc,
         srvHandle
     );
+
+    m_descHeapManager->cbvHeapManager()->setHandle(srvHandle, 0, DescriptorBindingManager::PS_SRV);
 }
 
 // unsupported D3D12_HEAP_TYPE_CUSTOM

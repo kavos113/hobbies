@@ -25,5 +25,7 @@ assert 5 "-10 + 15;"
 assert 6 "-3 * (-2);"
 assert 1 "3 + 5 == 8;"
 assert 0 "4 * 3 + 2 * (1+5) > 100;"
+assert 2 "a = 2;"
+assert 10 "a = 2; a * 5;"
 
 echo OK.

@@ -58,8 +58,10 @@ Token *consume_ident()
   if (token->kind != TK_IDENT)
     return NULL;
 
+  Token *prev = token;
+
   token = token->next;
-  return token;
+  return prev;
 }
 
 bool at_eof()
@@ -99,7 +101,7 @@ Token *tokenize(char *p)
       continue;
     }
 
-    if (strchr("+-*/()<>;", *p))
+    if (strchr("+-*/()<>;=", *p))
     {
       current = new_token(TK_RESERVED, current, p++, 1);
       continue;

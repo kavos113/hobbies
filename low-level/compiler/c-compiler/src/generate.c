@@ -218,7 +218,7 @@ void generate(Node *node)
     generate_lval(node);
     printf("  pop rax\n");
     printf("  mov rax, [rax]\n");
-    printf("  push rax");
+    printf("  push rax\n");
     return;
   case ND_ASSIGN:
     generate_lval(node->lhs);
@@ -227,7 +227,7 @@ void generate(Node *node)
     printf("  pop rdi\n");
     printf("  pop rax\n");
     printf("  mov [rax], rdi\n");
-    printf("  push rdi");
+    printf("  push rdi\n");
     return;
   }
 
@@ -280,7 +280,7 @@ void generate(Node *node)
 // 変数のアドレスをpush
 void generate_lval(Node* node)
 {
-  if (node->kind)
+  if (node->kind != ND_LVAR)
     error("not left value");
 
   printf("  mov rax, rbp\n");

@@ -3,37 +3,44 @@
 #include "token.h"
 #include "generate.h"
 #include "util.h"
+#include "io.h"
 
 int main(int argc, char **argv)
 {
-  if (argc != 2)
+  if (argc != 3)
   {
-    fprintf(stderr, "arg: number");
+    fprintf(stderr, "usage: acc <file_path> <output_path>");
     return 1;
   }
+  
+  char *source = read_file(argv[1]); 
 
-  set_token(tokenize(argv[1]));
-  set_user_input(argv[1]);
+  set_token(tokenize(source));
+  set_user_input(source);
 
   Node *code[100];
   program(code);
 
-  printf(".intel_syntax noprefix\n");
-  printf(".global main\n");
-  printf("main:\n");
+  open_output_file(argv[2]);
 
-  printf("  push rbp\n");
-  printf("  mov rbp, rsp\n");
-  printf("  sub rsp, %d\n", 26 * 8);
+  write_output(".intel_syntax noprefix\n");
+  write_output(".global main\n");
+  write_output("main:\n");
+
+  write_output("  push rbp\n");
+  write_output("  mov rbp, rsp\n");
+  write_output("  sub rsp, %d\n", 26 * 8);
 
   for (int i = 0; code[i]; i++)
   {
     generate(code[i]);
-    printf("  pop rax\n");
+    write_output("  pop rax\n");
   }
 
-  printf("  mov rsp, rbp\n");
-  printf("  pop rbp\n");
-  printf("  ret\n");
+  write_output("  mov rsp, rbp\n");
+  write_output("  pop rbp\n");
+  write_output("  ret\n");
+
+  close_file();
   return 0;
 }

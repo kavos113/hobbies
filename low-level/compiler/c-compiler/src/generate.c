@@ -4,6 +4,7 @@
 
 #include "token.h"
 #include "util.h"
+#include "io.h"
 
 void print_node(Node *node, int depth, FILE *s)
 {
@@ -211,70 +212,70 @@ void generate(Node *node)
   switch (node->kind)
   {
   case ND_NUM:
-    printf("  push %d\n", node->val);
+    write_output("  push %d\n", node->val);
     return;
   case ND_LVAR:
     // 変数の中身をスタックにpush
     generate_lval(node);
-    printf("  pop rax\n");
-    printf("  mov rax, [rax]\n");
-    printf("  push rax\n");
+    write_output("  pop rax\n");
+    write_output("  mov rax, [rax]\n");
+    write_output("  push rax\n");
     return;
   case ND_ASSIGN:
     generate_lval(node->lhs);
     generate(node->rhs);
 
-    printf("  pop rdi\n");
-    printf("  pop rax\n");
-    printf("  mov [rax], rdi\n");
-    printf("  push rdi\n");
+    write_output("  pop rdi\n");
+    write_output("  pop rax\n");
+    write_output("  mov [rax], rdi\n");
+    write_output("  push rdi\n");
     return;
   }
 
   generate(node->lhs);
   generate(node->rhs);
 
-  printf("  pop rdi\n");
-  printf("  pop rax\n");
+  write_output("  pop rdi\n");
+  write_output("  pop rax\n");
 
   switch (node->kind)
   {
   case ND_ADD:
-    printf("  add rax, rdi\n");
+    write_output("  add rax, rdi\n");
     break;
   case ND_SUB:
-    printf("  sub rax, rdi\n");
+    write_output("  sub rax, rdi\n");
     break;
   case ND_MUL:
-    printf("  imul rax, rdi\n");
+    write_output("  imul rax, rdi\n");
     break;
   case ND_DIV:
-    printf("  cqo\n");
-    printf("  idiv rdi\n");
+    write_output("  cqo\n");
+    write_output("  idiv rdi\n");
     break;
   case ND_LESS:
-    printf("  cmp rax, rdi\n");
-    printf("  setl al\n");
-    printf("  movzb rax, al\n");
+    write_output("  cmp rax, rdi\n");
+    write_output("  setl al\n");
+    write_output("  movzb rax, al\n");
     break;
   case ND_LESSEQ:
-    printf("  cmp rax, rdi\n");
-    printf("  setle al\n");
-    printf("  movzb rax, al\n");
+    write_output("  cmp rax, rdi\n");
+    write_output("  setle al\n");
+    write_output("  movzb rax, al\n");
     break;
   case ND_EQ:
-    printf("  cmp rax, rdi\n");
-    printf("  sete al\n");
-    printf("  movzb rax, al\n");
+    write_output("  cmp rax, rdi\n");
+    write_output("  sete al\n");
+    write_output("  movzb rax, al\n");
     break;
   case ND_NEQ:
-    printf("  cmp rax, rdi\n");
-    printf("  setne al\n");
-    printf("  movzb rax, al\n");
+    write_output("  cmp rax, rdi\n");
+    write_output("  setne al\n");
+    write_output("  movzb rax, al\n");
     break;
   }
 
-  printf("  push rax\n");
+  write_output("  push rax\n");
 }
 
 // 変数のアドレスをpush
@@ -283,7 +284,7 @@ void generate_lval(Node* node)
   if (node->kind != ND_LVAR)
     error("not left value");
 
-  printf("  mov rax, rbp\n");
-  printf("  sub rax, %d\n", node->offset);
-  printf("  push rax\n");
+  write_output("  mov rax, rbp\n");
+  write_output("  sub rax, %d\n", node->offset);
+  write_output("  push rax\n");
 }

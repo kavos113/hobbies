@@ -144,6 +144,22 @@ extern "C" void KernelMain(const FrameBufferConfig* config)
         reinterpret_cast<uint64_t>(int_handler_xhcl),
         cs
     );
+    LoadIDT(sizeof(idt) - 1, reinterpret_cast<uintptr_t>(&idt[0]));
+
+    // bsp: bootstrap processer
+    const uint8_t bsp_local_apic_id = *reinterpret_cast<const uint32_t *>(0xfee0020) >> 24;
+    err = pci::configure_msi_fixed_destination(
+        *xhc_dev,
+        bsp_local_apic_id,
+        pci::MSITriggerMode::kLevel,
+        pci::MSIDeliveryMode::kFixed,
+        InterruptVector::kXHCI,
+        0
+    );
+    if (err)
+    {
+        Log(LogLevel::ERROR, "failed to configure msi: %s\n", err.name());
+    }
 
     uint64_t xhc_bar;
     err = pci::read_bar(*xhc_dev, 0, &xhc_bar);

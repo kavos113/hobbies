@@ -28,6 +28,7 @@ public:
         INVALID_PHASE,
         UNKNOWN_XHCI_SPEED_ID,
         NO_WAITER,
+        NO_PCI_MSI,
         LAST_OF_CODE
     };
 

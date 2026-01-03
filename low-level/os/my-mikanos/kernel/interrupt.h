@@ -39,7 +39,7 @@ struct InterruptDescriptor
     uint32_t reserved;
 } __attribute__((packed));
 
-std::array<InterruptDescriptor, 256> idt;
+inline std::array<InterruptDescriptor, 256> idt;
 
 constexpr InterruptDescriptorAttribute
 make_idt_attr(

@@ -99,7 +99,86 @@ Error scan_bus(uint8_t bus)
 
     return Error::Code::SUCCESS;
 }
+
+MSICapability read_msi_capability(const Device& dev, uint8_t cap_addr)
+{
+    MSICapability cap{};
+
+    cap.header.data = read_config_register(dev, cap_addr);
+    cap.msg_addr = read_config_register(dev, cap_addr + 4);
+
+    uint8_t msg_data_addr = cap_addr + 8;
+    if (cap.header.bits.addr_64_capable)
+    {
+        cap.msg_upper_addr = read_config_register(dev, cap_addr + 8);
+        msg_data_addr = cap_addr + 12;
+    }
+
+    cap.msg_data = read_config_register(dev, msg_data_addr);
+
+    if (cap.header.bits.per_vector_mask_capable)
+    {
+        cap.mask_bits = read_config_register(dev, msg_data_addr + 4);
+        cap.pending_bits = read_config_register(dev, msg_data_addr + 8);
+    }
+
+    return cap;
 }
+
+void write_msi_capability(
+    const Device& dev,
+    uint8_t cap_addr,
+    const MSICapability& msi_cap
+)
+{
+    write_config_register(dev, cap_addr, msi_cap.header.data);
+    write_config_register(dev, cap_addr + 4, msi_cap.msg_addr);
+
+    uint8_t msg_data_addr = cap_addr + 8;
+    if (msi_cap.header.bits.addr_64_capable)
+    {
+        write_config_register(dev, cap_addr + 8, msi_cap.msg_upper_addr);
+        msg_data_addr = cap_addr + 12;
+    }
+
+    write_config_register(dev, msg_data_addr, msi_cap.msg_data);
+
+    if (msi_cap.header.bits.per_vector_mask_capable)
+    {
+        write_config_register(dev, msg_data_addr + 4, msi_cap.mask_bits);
+        write_config_register(dev, msg_data_addr + 8, msi_cap.pending_bits);
+    }
+}
+
+Error configure_msi_register(
+    const Device& dev,
+    uint8_t cap_addr,
+    uint32_t msg_addr,
+    uint32_t msg_data,
+    unsigned int num_vector_exponent
+)
+{
+    MSICapability msi_cap = read_msi_capability(dev, cap_addr);
+
+    if (msi_cap.header.bits.multi_msg_capable <= num_vector_exponent)
+    {
+        msi_cap.header.bits.multi_msg_enable = msi_cap.header.bits.multi_msg_capable;
+    }
+    else
+    {
+        msi_cap.header.bits.multi_msg_enable = num_vector_exponent;
+    }
+
+    msi_cap.header.bits.msi_enable = 1;
+    msi_cap.msg_addr = msg_addr;
+    msi_cap.msg_data = msg_data;
+
+    write_msi_capability(dev, cap_addr, msi_cap);
+
+    return Error::Code::SUCCESS;
+}
+
+} // anonymous
 
 namespace pci
 {
@@ -226,5 +305,60 @@ Error read_bar(Device& device, unsigned int bar_index, uint64_t* out)
     const auto bar_upper = read_config_register(device, addr + 4);
     *out = bar | (static_cast<uint64_t>(bar_upper) << 32);
     return Error::Code::SUCCESS;
+}
+
+CapabilityHeader read_capability_header(const Device& dev, uint8_t addr)
+{
+    CapabilityHeader header{};
+    header.data = read_config_register(dev, addr);
+    return header;
+}
+
+Error configure_msi(const Device& dev, uint32_t msg_addr, uint32_t msg_data, unsigned int num_vector_exponent)
+{
+    uint8_t cap_addr = read_config_register(dev, 0x34) & 0xffu;
+    uint8_t msi_cap_addr = 0;
+    uint8_t msix_cap_addr = 0;
+
+    while (cap_addr != 0)
+    {
+        CapabilityHeader header = read_capability_header(dev, cap_addr);
+        if (header.bits.cap_id == kCapabilityMSI)
+        {
+            msi_cap_addr = cap_addr;
+        }
+        else if (header.bits.cap_id == kCapabilityMSIX)
+        {
+            msix_cap_addr = cap_addr;
+        }
+
+        cap_addr = header.bits.next_ptr;
+    }
+
+    if (msi_cap_addr)
+    {
+        return configure_msi_register(dev, msi_cap_addr, msg_addr, msg_data, num_vector_exponent);
+    }
+    else if (msix_cap_addr)
+    {
+        return configure_msi_register(dev, msix_cap_addr, msg_addr, msg_data, num_vector_exponent);
+    }
+
+    return Error::Code::NO_PCI_MSI;
+}
+
+Error configure_msi_fixed_destination(
+    const Device& dev, uint8_t apic_id, MSITriggerMode trigger_mode, MSIDeliveryMode delivery_mode, uint8_t vector,
+    unsigned int num_vector_exponent
+)
+{
+    uint32_t msg_addr = 0xfee00000u | (apic_id << 12);
+    uint32_t msg_data = (static_cast<uint32_t>(delivery_mode) << 8) | vector;
+    if (trigger_mode == MSITriggerMode::kLevel)
+    {
+        msg_data |= 0xc000; // set 15, 14 bit
+    }
+
+    return configure_msi(dev, msg_addr, msg_data, num_vector_exponent);
 }
 }

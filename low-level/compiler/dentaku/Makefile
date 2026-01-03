@@ -1,6 +1,14 @@
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.o)
+
+CC=gcc
 CFLAGS=-std=c11 -g -static
 
-acc: acc.c
+acc: $(OBJS)
+	$(CC) -o acc $(OBJS) $(LDFLAGS)
+
+%.o: %.c %.h
+	$(CC) $(CFLAGS) -c $< -o $@
 
 test: acc
 	./test.sh

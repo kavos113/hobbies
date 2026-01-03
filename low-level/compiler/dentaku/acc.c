@@ -104,7 +104,7 @@ Token *tokenize(char *p)
       continue;
     }
 
-    if (*p == '+' || *p == '-')
+    if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')')
     {
       current = new_token(TK_RESERVED, current, p++);
       continue;
@@ -122,6 +122,14 @@ Token *tokenize(char *p)
 
   new_token(TK_EOF, current, p);
   return head.next;
+}
+
+void print_token(Token *token)
+{
+  fprintf(stdout, "%s, \n", token->str);
+
+  if (token->next)
+    print_token(token->next);
 }
 
 /*
@@ -266,24 +274,15 @@ int main(int argc, char **argv)
 
   token = tokenize(argv[1]);
   user_input = argv[1];
+  Node *node = expr();
 
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
   printf("main:\n");
 
-  printf("  mov rax, %d\n", expect_number());
+  generate(node);
 
-  while (!at_eof())
-  {
-    if (consume_op('+'))
-    {
-      printf("  add rax, %d\n", expect_number());
-    }
-
-    expect_op('-');
-    printf("  sub rax, %d\n", expect_number());
-  }
-
+  printf("  pop rax\n");
   printf("  ret\n");
   return 0;
 }

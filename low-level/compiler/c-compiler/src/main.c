@@ -1,8 +1,8 @@
 #include <stdio.h>
 
-#include "../token.h"
+#include "token.h"
 #include "generate.h"
-#include "../util.h"
+#include "util.h"
 
 int main(int argc, char **argv)
 {

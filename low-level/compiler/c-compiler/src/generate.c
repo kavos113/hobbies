@@ -1,8 +1,8 @@
-#include "../generate.h"
+#include "generate.h"
 
 #include <stdlib.h>
 
-#include "../token.h"
+#include "token.h"
 
 void print_node(Node *node, int depth, FILE *s)
 {

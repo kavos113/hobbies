@@ -1,11 +1,11 @@
-#include "../token.h"
+#include "token.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
-#include "../util.h"
+#include "util.h"
 
 static Token *token;
 
@@ -100,6 +100,12 @@ Token *tokenize(char *p)
     {
       current = new_token(TK_NUMBER, current, p, 0);
       current->val = strtol(p, &p, 10);
+      continue;
+    }
+
+    if ('a' <= *p && *p <= 'z')
+    {
+      current = new_token(TK_IDENT, current, p++, 1);
       continue;
     }
 

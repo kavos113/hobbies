@@ -137,7 +137,8 @@ void print_token(Token *token)
 grammer rules
 
 expr    = mul ("+" mul | "-" mul)*
-mul     = primary ("*" primary | "/" primary)*
+mul     = unary ("*" unary | "/" unary)*
+unary   = ("+" | "-")? primary
 primary = num | "(" expr ")"
 
 */
@@ -192,20 +193,33 @@ Node *primary()
   return new_node_num(expect_number());
 }
 
+Node *unary()
+{
+  // "+"?
+  if (consume_op('+'))
+    return primary();
+  
+  // "-"?
+  if (consume_op('-'))
+    return new_node_op(ND_SUB, new_node_num(0), primary());
+
+  return primary();
+}
+
 Node *mul()
 {
   // primary
-  Node *node = primary();
+  Node *node = unary();
 
   // ()*
   for (;;)
   {
     // "*" primary
     if (consume_op('*'))
-      node = new_node_op(ND_MUL, node, primary());
+      node = new_node_op(ND_MUL, node, unary());
     // "/" primary
     else if (consume_op('/'))
-      node = new_node_op(ND_DIV, node, primary());
+      node = new_node_op(ND_DIV, node, unary());
     else 
       return node;
   }

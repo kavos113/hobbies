@@ -1,9 +1,12 @@
 #!/bin/bash
+
+# file paths
 assert() {
-    expected="$1"
+    expected=$(<"$1")
+    expected=$(echo "$expected" | tr -d '[:space:]')
     input="$2"
 
-    ./acc "$input" > tmp.s
+    ./acc "$input" tmp.s
     gcc -o tmp tmp.s
     ./tmp
     actual="$?"
@@ -16,16 +19,19 @@ assert() {
     fi
 }
 
-assert 34 "10-4+28;"
-assert 18 "  29 - 10+ 4  - 5;"
-assert 13 "3 + 2*5;"
-assert 39 "(3 + 10) * (4 - 1);"
-assert 4 "(6 + 2 * 3) / 3;"
-assert 5 "-10 + 15;"
-assert 6 "-3 * (-2);"
-assert 1 "3 + 5 == 8;"
-assert 0 "4 * 3 + 2 * (1+5) > 100;"
-assert 2 "a = 2;"
-assert 10 "a = 2; a * 5;"
+tc_name="01_single_local_var"
+
+tc_dir="./testcase/$tc_name"
+
+for src_file in "$tc_dir"/*.src; do
+    [ -e "$src_file" ] || continue
+
+    test_name="${src_file%.src}"
+    ans_file="${test_name}.ans"
+
+    if [ -f "$ans_file" ]; then
+        assert $ans_file $src_file
+    fi
+done
 
 echo OK.

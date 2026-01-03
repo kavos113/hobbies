@@ -16,6 +16,6 @@ test: acc
 	./test.sh
 
 clean:
-	rm -f acc *.o *~ tmp*
+	rm -f acc src/*.o *~ tmp*
 
 .PHONY: test clean

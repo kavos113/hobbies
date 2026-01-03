@@ -20,6 +20,7 @@ struct Token
   Token *next;
   int val;
   char *str;
+  int len;
 };
 
 Token *token;
@@ -49,9 +50,18 @@ void error_at(char *loc, char *fmt, ...)
   exit(1);
 }
 
-bool consume_op(char op)
+// if b starts with a
+bool starts_with(char *a, char *b)
 {
-  if (token->kind != TK_RESERVED || token->str[0] != op)
+  return memcmp(a, b, strlen(a)) == 0;
+}
+
+bool consume_op(char *op)
+{
+  if (token->kind != TK_RESERVED 
+    || strlen(op) != token->len
+    || memcmp(token->str, op, token->len)
+  )
     return false;
   
   token = token->next;
@@ -60,7 +70,10 @@ bool consume_op(char op)
 
 void expect_op(char op)
 {
-  if (token->kind != TK_RESERVED || token->str[0] != op)
+  if (token->kind != TK_RESERVED 
+    || strlen(op) != token->len
+    || memcmp(token->str, op, token->len)
+  )
     error_at(token->str, token->str, "op is not '%c'", op);
   token = token->next;
 }
@@ -104,7 +117,14 @@ Token *tokenize(char *p)
       continue;
     }
 
-    if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')')
+    if (starts_with("==", p) || starts_with("!=", p) || starts_with("<=", p) || starts_with(">=", p))
+    { 
+      current = new_token(TK_RESERVED, current, p);
+      p += 2;
+      continue;
+    }
+
+    if (strchr("+-*/()<>", *p))
     {
       current = new_token(TK_RESERVED, current, p++);
       continue;
@@ -182,10 +202,10 @@ Node *expr();
 Node *primary()
 {
   // "(" expr ")"
-  if (consume_op('('))
+  if (consume_op("("))
   {
     Node *node = expr();
-    expect_op(')');
+    expect_op(")");
     return node;
   }
 
@@ -196,11 +216,11 @@ Node *primary()
 Node *unary()
 {
   // "+"?
-  if (consume_op('+'))
+  if (consume_op("+"))
     return primary();
   
   // "-"?
-  if (consume_op('-'))
+  if (consume_op("-"))
     return new_node_op(ND_SUB, new_node_num(0), primary());
 
   return primary();
@@ -215,10 +235,10 @@ Node *mul()
   for (;;)
   {
     // "*" primary
-    if (consume_op('*'))
+    if (consume_op("*"))
       node = new_node_op(ND_MUL, node, unary());
     // "/" primary
-    else if (consume_op('/'))
+    else if (consume_op("/"))
       node = new_node_op(ND_DIV, node, unary());
     else 
       return node;
@@ -234,10 +254,10 @@ Node *expr()
   for (;;)
   {
     // "+" mul
-    if (consume_op('+'))
+    if (consume_op("+"))
       node = new_node_op(ND_ADD, node, mul());
     // "-" mul
-    else if (consume_op('-'))
+    else if (consume_op("-"))
       node = new_node_op(ND_SUB, node, mul());
     else 
       return node;

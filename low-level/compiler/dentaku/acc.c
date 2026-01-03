@@ -124,6 +124,138 @@ Token *tokenize(char *p)
   return head.next;
 }
 
+/*
+
+grammer rules
+
+expr    = mul ("+" mul | "-" mul)*
+mul     = primary ("*" primary | "/" primary)*
+primary = num | "(" expr ")"
+
+*/
+typedef enum {
+  ND_ADD,
+  ND_SUB,
+  ND_MUL,
+  ND_DIV,
+  ND_NUM,
+} NodeKind;
+
+typedef struct Node Node;
+
+struct Node 
+{
+  NodeKind kind;
+  Node *lhs;
+  Node *rhs;
+  int val;
+};
+
+Node *new_node_op(NodeKind kind, Node *lhs, Node *rhs)
+{
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = kind;
+  node->lhs = lhs;
+  node->rhs = rhs;
+  return node;
+}
+
+Node *new_node_num(int val)
+{
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = ND_NUM;
+  node->val = val;
+  return node;
+}
+
+Node *expr();
+
+Node *primary()
+{
+  // "(" expr ")"
+  if (consume_op('('))
+  {
+    Node *node = expr();
+    expect_op(')');
+    return node;
+  }
+
+  // num
+  return new_node_num(expect_number());
+}
+
+Node *mul()
+{
+  // primary
+  Node *node = primary();
+
+  // ()*
+  for (;;)
+  {
+    // "*" primary
+    if (consume_op('*'))
+      node = new_node_op(ND_MUL, node, primary());
+    // "/" primary
+    else if (consume_op('/'))
+      node = new_node_op(ND_DIV, node, primary());
+    else 
+      return node;
+  }
+}
+
+Node *expr() 
+{
+  // mul
+  Node *node = mul();
+
+  // ()*
+  for (;;)
+  {
+    // "+" mul
+    if (consume_op('+'))
+      node = new_node_op(ND_ADD, node, mul());
+    // "-" mul
+    else if (consume_op('-'))
+      node = new_node_op(ND_SUB, node, mul());
+    else 
+      return node;
+  }
+}
+
+void generate(Node *node) 
+{
+  if (node->kind == ND_NUM)
+  {
+    printf("  push %d\n", node->val);
+    return;
+  }
+
+  generate(node->lhs);
+  generate(node->rhs);
+
+  printf("  pop rdi\n");
+  printf("  pop rax\n");
+
+  switch (node->kind)
+  {
+  case ND_ADD:
+    printf("  add rax, rdi\n");
+    break;
+  case ND_SUB:
+    printf("  sub rax, rdi\n");
+    break;
+  case ND_MUL:
+    printf("  imul rax, rdi\n");
+    break;
+  case ND_DIV:
+    printf("  cqo\n");
+    printf("  idiv rdi\n");
+    break;
+  }
+
+  printf("  push rax\n");
+}
+
 int main(int argc, char **argv)
 {
   if (argc != 2)

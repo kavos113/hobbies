@@ -47,8 +47,6 @@ struct Node
 };
 
 void print_node(Node *node, int depth, FILE *s);
-Node *new_node_op(NodeKind kind, Node *lhs, Node *rhs);
-Node *new_node_num(int val);
 
 typedef struct LVar LVar;
 
@@ -60,22 +58,9 @@ struct LVar
   int offset;
 };
 
-LVar *find_lvar(Token *tok);
-LVar *new_lvar(Token *tok);
 int get_offsets();
 
 void program(Node **dst);
-Node *stmt();
-Node *expr();
-Node *assign();
-Node *equal();
-Node *compare();
-Node *add();
-Node *mul();
-Node *unary();
-Node *primary();
-
 void generate(Node *node);
-void generate_lval(Node *node);
 
 #endif

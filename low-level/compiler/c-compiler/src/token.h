@@ -30,7 +30,6 @@ int expect_number();
 Token *consume_ident();
 bool at_eof();
 
-Token *new_token(TokenKind kind, Token *current, char *str, int len);
 Token *tokenize(char *p);
 
 void print_token(Token *token);

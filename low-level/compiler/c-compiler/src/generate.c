@@ -6,6 +6,23 @@
 #include "util.h"
 #include "io.h"
 
+Node *new_node_op(NodeKind kind, Node *lhs, Node *rhs);
+Node *new_node_num(int val);
+LVar *find_lvar(Token *tok);
+LVar *new_lvar(Token *tok);
+
+Node *stmt();
+Node *expr();
+Node *assign();
+Node *equal();
+Node *compare();
+Node *add();
+Node *mul();
+Node *unary();
+Node *primary();
+
+void generate_lval(Node *node);
+
 static LVar *locals;
 
 void print_node(Node *node, int depth, FILE *s)

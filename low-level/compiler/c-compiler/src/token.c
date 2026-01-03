@@ -7,6 +7,8 @@
 
 #include "util.h"
 
+Token *new_token(TokenKind kind, Token *current, char *str, int len);
+
 static Token *token;
 
 void set_token(Token *tok)

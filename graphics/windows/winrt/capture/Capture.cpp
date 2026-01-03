@@ -6,6 +6,8 @@
 #include <winrt/base.h>
 #include <windows.graphics.directx.direct3d11.interop.h>
 #include <windows.graphics.capture.interop.h>
+#include <winrt/windows.graphics.capture.h>
+#include <windows.foundation.h>
 
 Capture::Capture(ID3D11Device *device)
 {
@@ -58,18 +60,7 @@ Capture::Capture(ID3D11Device *device)
     m_graphicsCaptureSession = m_framePool.CreateCaptureSession(m_graphicsCaptureItem);
 }
 
-Capture::~Capture()
-{
-    m_frameArrivedRevoker.revoke();
-
-    m_graphicsCaptureSession.Close();
-    m_graphicsCaptureSession = nullptr;
-    m_framePool.Close();
-    m_framePool = nullptr;
-
-    m_device = nullptr;
-    m_graphicsCaptureItem = nullptr;
-}
+Capture::~Capture() = default;
 
 void Capture::StartCapture()
 {

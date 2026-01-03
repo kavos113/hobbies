@@ -27,6 +27,7 @@ void set_token(Token *tok);
 bool consume_op(char *op);
 void expect_op(char *op);
 int expect_number();
+Token *consume_ident();
 bool at_eof();
 
 Token *new_token(TokenKind kind, Token *current, char *str, int len);

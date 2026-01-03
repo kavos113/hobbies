@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "token.h"
+#include "util.h"
 
 void print_node(Node *node, int depth, FILE *s)
 {
@@ -36,6 +37,12 @@ void print_node(Node *node, int depth, FILE *s)
   case ND_NEQ:
     fprintf(s, "ND_NEQ\n");
     break;
+  case ND_ASSIGN:
+    fprintf(s, "ND_ASSIGN\n");
+    break;
+  case ND_LVAR:
+    fprintf(s, "ND_LVAR\n");
+    break;
   }
 
   if (node->lhs)
@@ -61,9 +68,33 @@ Node *new_node_num(int val)
   return node;
 }
 
+void program(Node **dst)
+{
+  int i = 0;
+  while (!at_eof())
+    dst[i++] = stmt();
+  dst[i] = NULL;
+}
+
+Node* stmt()
+{
+  Node *node = expr();
+  expect_op(";");
+  return node;
+}
+
 Node *expr()
 {
-  return equal();
+  return assign();
+}
+
+Node* assign()
+{
+  Node *node = equal();
+
+  if (consume_op("="))
+    node = new_node_op(ND_ASSIGN, node, assign());
+  return node;
 }
 
 Node *equal()
@@ -161,15 +192,42 @@ Node *primary()
     return node;
   }
 
+  // ident
+  Token *tok = consume_ident();
+  if (tok)
+  {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+    node->offset = (tok->str[0] - 'a' + 1) * 8;
+    return node;
+  }
+
   // num
   return new_node_num(expect_number());
 }
 
 void generate(Node *node) 
 {
-  if (node->kind == ND_NUM)
+  switch (node->kind)
   {
+  case ND_NUM:
     printf("  push %d\n", node->val);
+    return;
+  case ND_LVAR:
+    // 変数の中身をスタックにpush
+    generate_lval(node);
+    printf("  pop rax\n");
+    printf("  mov rax, [rax]\n");
+    printf("  push rax");
+    return;
+  case ND_ASSIGN:
+    generate_lval(node->lhs);
+    generate(node->rhs);
+
+    printf("  pop rdi\n");
+    printf("  pop rax\n");
+    printf("  mov [rax], rdi\n");
+    printf("  push rdi");
     return;
   }
 
@@ -216,5 +274,16 @@ void generate(Node *node)
     break;
   }
 
+  printf("  push rax\n");
+}
+
+// 変数のアドレスをpush
+void generate_lval(Node* node)
+{
+  if (node->kind)
+    error("not left value");
+
+  printf("  mov rax, rbp\n");
+  printf("  sub rax, %d\n", node->offset);
   printf("  push rax\n");
 }

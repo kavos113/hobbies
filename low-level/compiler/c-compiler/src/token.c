@@ -53,6 +53,15 @@ int expect_number()
   return val;
 }
 
+Token *consume_ident()
+{
+  if (token->kind != TK_IDENT)
+    return NULL;
+
+  token = token->next;
+  return token;
+}
+
 bool at_eof()
 {
   return token->kind == TK_EOF;

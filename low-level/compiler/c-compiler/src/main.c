@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 
   write_output("  push rbp\n");
   write_output("  mov rbp, rsp\n");
-  write_output("  sub rsp, %d\n", 26 * 8);
+  write_output("  sub rsp, %d\n", get_offsets());
 
   for (int i = 0; code[i]; i++)
   {

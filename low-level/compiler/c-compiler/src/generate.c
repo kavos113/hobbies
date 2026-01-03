@@ -97,6 +97,14 @@ LVar* new_lvar(Token* tok)
   return var;
 }
 
+int get_offsets()
+{
+  if (locals)
+    return locals->offset;
+  else
+    return 0;
+}
+
 void program(Node **dst)
 {
   int i = 0;

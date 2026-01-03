@@ -62,6 +62,7 @@ struct LVar
 
 LVar *find_lvar(Token *tok);
 LVar *new_lvar(Token *tok);
+int get_offsets();
 
 void program(Node **dst);
 Node *stmt();

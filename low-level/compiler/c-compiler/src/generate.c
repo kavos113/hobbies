@@ -1,10 +1,12 @@
 #include "generate.h"
 
 #include <stdlib.h>
+#include <string.h>
 
-#include "token.h"
 #include "util.h"
 #include "io.h"
+
+static LVar *locals;
 
 void print_node(Node *node, int depth, FILE *s)
 {
@@ -67,6 +69,32 @@ Node *new_node_num(int val)
   node->kind = ND_NUM;
   node->val = val;
   return node;
+}
+
+LVar *find_lvar(Token* tok)
+{
+  for (LVar *var = locals; var; var = var->next)
+    if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+      return var;
+
+  return NULL;
+}
+
+LVar* new_lvar(Token* tok)
+{
+  LVar *var = calloc(1, sizeof(LVar));
+
+  if (locals)
+  {
+    var->next = locals;
+    var->offset = locals->offset + 8;
+  }
+
+  var->name = tok->str;
+  var->len = tok->len;
+  locals = var;
+
+  return var;
 }
 
 void program(Node **dst)
@@ -199,7 +227,18 @@ Node *primary()
   {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
-    node->offset = (tok->str[0] - 'a' + 1) * 8;
+
+    LVar *var = find_lvar(tok);
+    if (var)
+    {
+      node->offset = var->offset;
+    }
+    else
+    {
+      var = new_lvar(tok);
+      node->offset = var->offset;
+    }
+
     return node;
   }
 

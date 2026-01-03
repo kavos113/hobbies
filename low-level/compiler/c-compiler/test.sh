@@ -19,7 +19,7 @@ assert() {
     fi
 }
 
-tc_name="01_single_local_var"
+tc_name="01_local_var"
 
 tc_dir="./testcase/$tc_name"
 

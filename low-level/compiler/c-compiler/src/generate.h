@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include "token.h"
+
 /*
 
 grammer rules
@@ -47,6 +49,19 @@ struct Node
 void print_node(Node *node, int depth, FILE *s);
 Node *new_node_op(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
+
+typedef struct LVar LVar;
+
+struct LVar
+{
+  LVar *next;
+  char *name;
+  int len;
+  int offset;
+};
+
+LVar *find_lvar(Token *tok);
+LVar *new_lvar(Token *tok);
 
 void program(Node **dst);
 Node *stmt();

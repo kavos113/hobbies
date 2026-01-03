@@ -114,9 +114,21 @@ Token *tokenize(char *p)
       continue;
     }
 
-    if ('a' <= *p && *p <= 'z')
+    if (isalpha(*p))
     {
-      current = new_token(TK_IDENT, current, p++, 1);
+      char *ident_first = p;
+
+      int len = 1;
+      p++;
+
+      while (isalpha(*p))
+      {
+        len++;
+        p++;
+      }
+
+      current = new_token(TK_IDENT, current, ident_first, len);
+      p++;
       continue;
     }
 

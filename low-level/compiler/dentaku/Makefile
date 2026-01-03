@@ -1,6 +1,6 @@
 CFLAGS=-std=c11 -g -static
 
-acc: main.c
+acc: acc.c
 
 test: acc
 	./test.sh

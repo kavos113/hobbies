@@ -24,10 +24,26 @@ struct Token
 
 Token *token;
 
+char *user_input;
+
 void error(char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  exit(1);
+}
+
+void error_at(char *loc, char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+
+  int pos = loc - user_input;
+  fprintf(stderr, "%s\n", user_input);
+  fprintf(stderr, "%*s", pos, " ");
+  fprintf(stderr, "^ ");
   vfprintf(stderr, fmt, ap);
   fprintf(stderr, "\n");
   exit(1);
@@ -45,14 +61,14 @@ bool consume_op(char op)
 void expect_op(char op)
 {
   if (token->kind != TK_RESERVED || token->str[0] != op)
-    error("op is not '%c'", op);
+    error_at(token->str, token->str, "op is not '%c'", op);
   token = token->next;
 }
 
 int expect_number() 
 {
   if (token->kind != TK_NUMBER)
-    error("not number");
+    error_at(token->str, "not number");
   
   int val = token->val;
   token = token->next;
@@ -117,6 +133,7 @@ int main(int argc, char **argv)
   }
 
   token = tokenize(argv[1]);
+  user_input = argv[1];
 
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");

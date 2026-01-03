@@ -54,6 +54,9 @@ add_executable(my_mikanos
         kernel/logger.h
         kernel/register.h
         kernel/libcxx_support.cpp
+        kernel/interrupt.cpp
+        kernel/interrupt.h
+        kernel/idt.h
 )
 
 target_include_directories(my_mikanos PRIVATE

@@ -69,7 +69,7 @@ void expect_op(char *op)
     || strlen(op) != token->len
     || memcmp(token->str, op, token->len)
   )
-    error_at(token->str, token->str, "op is not '%s'", op);
+    error_at(token->str, "op is not '%s'", op);
   token = token->next;
 }
 
@@ -131,8 +131,19 @@ Token *tokenize(char *p)
     // number
     if (isdigit(*p))
     {
+      char *base = p;
+
       current = new_token(TK_NUMBER, current, p, 0);
       current->val = strtol(p, &p, 10);
+      current->len = p - base;
+      continue;
+    }
+
+    // return
+    if (strncmp(p, "return", 6) == 0 && !is_token_str(p[6]))
+    {
+      current = new_token(TK_RETURN, current, p, 6);
+      p += 6;
       continue;
     }
 
@@ -155,14 +166,6 @@ Token *tokenize(char *p)
       continue;
     }
 
-    // return
-    if (strncmp(p, "return", 6) == 0 && !is_token_str(p[6]))
-    {
-      current = new_token(TK_RETURN, current, p, 6);
-      p += 6;
-      continue;
-    }
-
     error("cannot tokenize");
   }
 
@@ -170,10 +173,29 @@ Token *tokenize(char *p)
   return head.next;
 }
 
-void print_token(Token *token)
+void print_token(Token *token, FILE* s)
 {
-  fprintf(stdout, "%s, \n", token->str);
+  switch (token->kind)
+  {
+  case TK_RESERVED:
+    fprintf(s, "TK_RESERVED: ");
+    break;
+  case TK_NUMBER:
+    fprintf(s, "TK_NUMBER: ");
+    break;
+  case TK_IDENT:
+    fprintf(s, "TK_IDENT: ");
+    break;
+  case TK_RETURN:
+    fprintf(s, "TK_RETURN: ");
+    break;
+  case TK_EOF:
+    fprintf(s, "TK_EOF: ");
+    break;
+  }
+
+  fprintf(stdout, "%.*s\n", token->len, token->str);
 
   if (token->next)
-    print_token(token->next);
+    print_token(token->next, s);
 }

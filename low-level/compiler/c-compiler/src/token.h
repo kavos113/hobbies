@@ -2,6 +2,7 @@
 #define TOKEN_H
 
 #include <stdbool.h>
+#include <stdio.h>
 
 typedef enum
 {
@@ -34,6 +35,6 @@ bool at_eof();
 
 Token *tokenize(char *p);
 
-void print_token(Token *token);
+void print_token(Token *token, FILE* s);
 
 #endif

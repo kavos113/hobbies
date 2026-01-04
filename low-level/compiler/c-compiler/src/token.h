@@ -6,6 +6,7 @@
 typedef enum
 {
   TK_RESERVED,
+  TK_RETURN,
   TK_IDENT,
   TK_NUMBER,
   TK_EOF,
@@ -25,9 +26,10 @@ struct Token
 void set_token(Token *tok);
 
 bool consume_op(char *op);
+Token *consume_ident();
+bool consume_return();
 void expect_op(char *op);
 int expect_number();
-Token *consume_ident();
 bool at_eof();
 
 Token *tokenize(char *p);

@@ -6,7 +6,7 @@
 #include "util.h"
 #include "io.h"
 
-Node *new_node_op(NodeKind kind, Node *lhs, Node *rhs);
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 LVar *find_lvar(Token *tok);
 LVar *new_lvar(Token *tok);
@@ -63,6 +63,9 @@ void print_node(Node *node, int depth, FILE *s)
   case ND_LVAR:
     fprintf(s, "ND_LVAR\n");
     break;
+  case ND_RETURN:
+    fprintf(s, "ND_RETURN\n");
+    break;
   }
 
   if (node->lhs)
@@ -71,7 +74,7 @@ void print_node(Node *node, int depth, FILE *s)
     print_node(node->rhs, depth + 2, s);
 }
 
-Node *new_node_op(NodeKind kind, Node *lhs, Node *rhs)
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 {
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
@@ -132,7 +135,13 @@ void program(Node **dst)
 
 Node* stmt()
 {
-  Node *node = expr();
+  Node *node;
+
+  if (consume_return())
+    node = new_node(ND_RETURN, expr(), NULL);
+  else
+    node = expr();
+
   expect_op(";");
   return node;
 }
@@ -147,7 +156,7 @@ Node* assign()
   Node *node = equal();
 
   if (consume_op("="))
-    node = new_node_op(ND_ASSIGN, node, assign());
+    node = new_node(ND_ASSIGN, node, assign());
   return node;
 }
 
@@ -158,9 +167,9 @@ Node *equal()
   for (;;)
   {
     if (consume_op("=="))
-      node = new_node_op(ND_EQ, node, compare());
+      node = new_node(ND_EQ, node, compare());
     else if (consume_op("!="))
-      node = new_node_op(ND_NEQ, node, compare());
+      node = new_node(ND_NEQ, node, compare());
     else 
       return node;
   }
@@ -173,13 +182,13 @@ Node *compare()
   for (;;)
   {
     if (consume_op("<"))
-      node = new_node_op(ND_LESS, node, add());
+      node = new_node(ND_LESS, node, add());
     else if (consume_op("<="))
-      node = new_node_op(ND_LESSEQ, node, add());
+      node = new_node(ND_LESSEQ, node, add());
     else if (consume_op(">"))
-      node = new_node_op(ND_LESS, add(), node);
+      node = new_node(ND_LESS, add(), node);
     else if (consume_op(">="))
-      node = new_node_op(ND_LESSEQ, add(), node);
+      node = new_node(ND_LESSEQ, add(), node);
     else 
       return node;
   }
@@ -195,10 +204,10 @@ Node *add()
   {
     // "+" mul
     if (consume_op("+"))
-      node = new_node_op(ND_ADD, node, mul());
+      node = new_node(ND_ADD, node, mul());
     // "-" mul
     else if (consume_op("-"))
-      node = new_node_op(ND_SUB, node, mul());
+      node = new_node(ND_SUB, node, mul());
     else 
       return node;
   }
@@ -214,10 +223,10 @@ Node *mul()
   {
     // "*" primary
     if (consume_op("*"))
-      node = new_node_op(ND_MUL, node, unary());
+      node = new_node(ND_MUL, node, unary());
     // "/" primary
     else if (consume_op("/"))
-      node = new_node_op(ND_DIV, node, unary());
+      node = new_node(ND_DIV, node, unary());
     else 
       return node;
   }
@@ -231,7 +240,7 @@ Node *unary()
   
   // "-"?
   if (consume_op("-"))
-    return new_node_op(ND_SUB, new_node_num(0), primary());
+    return new_node(ND_SUB, new_node_num(0), primary());
 
   return primary();
 }
@@ -293,6 +302,14 @@ void generate(Node *node)
     write_output("  pop rax\n");
     write_output("  mov [rax], rdi\n");
     write_output("  push rdi\n");
+    return;
+  case ND_RETURN:
+    generate(node->lhs);
+
+    write_output("  pop rax\n");
+    write_output("  mov rsp, rbp\n");
+    write_output("  pop rbp\n");
+    write_output("  ret\n");
     return;
   }
 

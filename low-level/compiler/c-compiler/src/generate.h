@@ -10,7 +10,7 @@
 grammer rules
 
 program = stmt*
-stmt    = expr ";"
+stmt    = expr ";" | "return" expr ";"
 expr    = assign
 assign  = equal ("=" assign)?
 equal   = compare ("==" compare | "!= compare")*
@@ -26,13 +26,14 @@ typedef enum {
   ND_SUB,
   ND_MUL,
   ND_DIV,
-  ND_NUM,
+  ND_NUM,    // val: number value. lhs=rhs=null
   ND_LESS,   // <
   ND_LESSEQ, // <=
   ND_EQ,
   ND_NEQ,
-  ND_ASSIGN,
-  ND_LVAR, // local variable
+  ND_ASSIGN, // lhs: variable, rhs: value
+  ND_LVAR,   // offset: offset from rbp. lhs=rhs=null
+  ND_RETURN, // lhs: expr, rhs=null
 } NodeKind;
 
 typedef struct Node Node;
@@ -43,7 +44,7 @@ struct Node
   Node *lhs;
   Node *rhs;
   int val; // only ND_NUM
-  int offset; // only ND_LVAR, offset from rbp
+  int offset; // only ND_LVAR
 };
 
 void print_node(Node *node, int depth, FILE *s);

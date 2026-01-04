@@ -9,6 +9,14 @@
 
 Token *new_token(TokenKind kind, Token *current, char *str, int len);
 
+bool is_token_str(char c)
+{
+  return ('a' <= c && c <= 'z')
+      || ('A' <= c && c <= 'Z')
+      || ('0' <= c && c <= '9')
+      || (c == '_');
+}
+
 static Token *token;
 
 void set_token(Token *tok)
@@ -35,6 +43,26 @@ bool consume_op(char *op)
   return true;
 }
 
+Token *consume_ident()
+{
+  if (token->kind != TK_IDENT)
+    return NULL;
+
+  Token *prev = token;
+
+  token = token->next;
+  return prev;
+}
+
+bool consume_return()
+{
+  if (token->kind != TK_RETURN)
+    return false;
+
+  token = token->next;
+  return true;
+}
+
 void expect_op(char *op)
 {
   if (token->kind != TK_RESERVED 
@@ -53,17 +81,6 @@ int expect_number()
   int val = token->val;
   token = token->next;
   return val;
-}
-
-Token *consume_ident()
-{
-  if (token->kind != TK_IDENT)
-    return NULL;
-
-  Token *prev = token;
-
-  token = token->next;
-  return prev;
 }
 
 bool at_eof()
@@ -96,6 +113,7 @@ Token *tokenize(char *p)
       continue;
     }
 
+    // multi chars operator
     if (starts_with("==", p) || starts_with("!=", p) || starts_with("<=", p) || starts_with(">=", p))
     { 
       current = new_token(TK_RESERVED, current, p, 2);
@@ -103,12 +121,14 @@ Token *tokenize(char *p)
       continue;
     }
 
+    // single char operator
     if (strchr("+-*/()<>;=", *p))
     {
       current = new_token(TK_RESERVED, current, p++, 1);
       continue;
     }
 
+    // number
     if (isdigit(*p))
     {
       current = new_token(TK_NUMBER, current, p, 0);
@@ -116,6 +136,7 @@ Token *tokenize(char *p)
       continue;
     }
 
+    // variable
     if (isalpha(*p))
     {
       char *ident_first = p;
@@ -131,6 +152,14 @@ Token *tokenize(char *p)
 
       current = new_token(TK_IDENT, current, ident_first, len);
       p++;
+      continue;
+    }
+
+    // return
+    if (strncmp(p, "return", 6) == 0 && !is_token_str(p[6]))
+    {
+      current = new_token(TK_RETURN, current, p, 6);
+      p += 6;
       continue;
     }
 

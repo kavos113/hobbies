@@ -1,0 +1,3 @@
+aaa = 5;
+bbb = 22;
+return aaa + bbb - 10;

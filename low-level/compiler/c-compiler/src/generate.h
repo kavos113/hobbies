@@ -3,14 +3,14 @@
 
 #include <stdio.h>
 
-#include "token.h"
-
 /*
 
 grammer rules
 
 program = stmt*
-stmt    = expr ";" | "return" expr ";"
+stmt    = expr ";"
+          | "return" expr ";"
+          | "if" "(" expr ")" stmt ("else" stmt)?
 expr    = assign
 assign  = equal ("=" assign)?
 equal   = compare ("==" compare | "!= compare")*
@@ -34,6 +34,7 @@ typedef enum {
   ND_ASSIGN, // lhs: variable, rhs: value
   ND_LVAR,   // offset: offset from rbp. lhs=rhs=null
   ND_RETURN, // lhs: expr, rhs=null
+  ND_IF,     // cond: condition, lhs: if stmt, rhs: else stmt(nullable)
 } NodeKind;
 
 typedef struct Node Node;
@@ -45,6 +46,7 @@ struct Node
   Node *rhs;
   int val; // only ND_NUM
   int offset; // only ND_LVAR
+  Node *cond; // only ND_IF
 };
 
 void print_node(Node *node, int depth, FILE *s);

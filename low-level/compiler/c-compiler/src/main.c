@@ -37,10 +37,6 @@ int main(int argc, char **argv)
     write_output("  pop rax\n");
   }
 
-  write_output("  mov rsp, rbp\n");
-  write_output("  pop rbp\n");
-  write_output("  ret\n");
-
   close_file();
   return 0;
 }

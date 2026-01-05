@@ -5,6 +5,7 @@
 
 #include "util.h"
 #include "io.h"
+#include "token.h"
 
 Node *new_node_op(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
@@ -24,6 +25,7 @@ Node *primary();
 void generate_lval(Node *node);
 
 static LVar *locals;
+static unsigned int label_latest = 0;
 
 void print_node(Node *node, int depth, FILE *s)
 {
@@ -65,6 +67,9 @@ void print_node(Node *node, int depth, FILE *s)
     break;
   case ND_RETURN:
     fprintf(s, "ND_RETURN\n");
+    break;
+  case ND_IF:
+    fprintf(s, "ND_IF\n");
     break;
   }
 
@@ -135,16 +140,37 @@ void program(Node **dst)
 
 Node* stmt()
 {
-  Node *node;
-
-  if (consume_return())
+  // "return" expr ";"
+  if (consume(TK_RETURN))
   {
-    node = calloc(1, sizeof(Node));
+    Node *node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
     node->lhs = expr();
+
+    expect_op(";");
+    return node;
   }
-  else
-    node = expr();
+
+  // "if" "(" expr ")" stmt ("else" stmt)?
+  if (consume(TK_IF))
+  {
+    expect_op("(");
+    Node *cond = expr();
+    expect_op(")");
+
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_IF;
+    node->cond = cond;
+    node->lhs = stmt();
+
+    if (consume(TK_ELSE))
+      node->rhs = stmt();
+
+    return node;
+  }
+
+  // expr ";"
+  Node *node = expr();
 
   expect_op(";");
   return node;
@@ -314,6 +340,33 @@ void generate(Node *node)
     write_output("  mov rsp, rbp\n");
     write_output("  pop rbp\n");
     write_output("  ret\n");
+    return;
+  case ND_IF:
+    // if-else
+    if (node->rhs)
+    {
+      generate(node->cond);
+
+      write_output("  pop rax\n");
+      write_output("  cmp rax, 0\n");
+      write_output("  je .Lelse%d\n", label_latest);
+      generate(node->lhs);
+      write_output("  jmp .Lend%d\n", label_latest);
+      write_output(".Lelse%d:\n", label_latest);
+      generate(node->rhs);
+      write_output(".Lend%d:\n", label_latest++);
+    }
+    // if
+    else
+    {
+      generate(node->cond);
+
+      write_output("  pop rax\n");
+      write_output("  cmp rax, 0\n");
+      write_output("  je .Lend%d\n", label_latest);
+      generate(node->lhs);
+      write_output(".Lend%d:\n", label_latest++);
+    }
     return;
   }
 

@@ -38,7 +38,7 @@ bool consume_op(char *op)
     || memcmp(token->str, op, token->len)
   )
     return false;
-  
+
   token = token->next;
   return true;
 }
@@ -54,9 +54,9 @@ Token *consume_ident()
   return prev;
 }
 
-bool consume_return()
+bool consume(TokenKind kind)
 {
-  if (token->kind != TK_RETURN)
+  if (token->kind != kind)
     return false;
 
   token = token->next;
@@ -70,6 +70,7 @@ void expect_op(char *op)
     || memcmp(token->str, op, token->len)
   )
     error_at(token->str, "op is not '%s'", op);
+
   token = token->next;
 }
 
@@ -147,26 +148,41 @@ Token *tokenize(char *p)
       continue;
     }
 
+    // if
+    if (strncmp(p, "if", 2) == 0 && !is_token_str(p[2]))
+    {
+      current = new_token(TK_IF, current, p, 2);
+      p += 2;
+      continue;
+    }
+
+    // else
+    if (strncmp(p, "else", 4) == 0 && !is_token_str(p[4]))
+    {
+      current = new_token(TK_ELSE, current, p, 4);
+      p += 4;
+      continue;
+    }
+
     // variable
-    if (isalpha(*p))
+    if (is_token_str(*p))
     {
       char *ident_first = p;
 
       int len = 1;
       p++;
 
-      while (isalpha(*p))
+      while (is_token_str(*p))
       {
         len++;
         p++;
       }
 
       current = new_token(TK_IDENT, current, ident_first, len);
-      p++;
       continue;
     }
 
-    error("cannot tokenize");
+    error("cannot tokenize: %s", p);
   }
 
   new_token(TK_EOF, current, p, 0);
@@ -191,6 +207,12 @@ void print_token(Token *token, FILE* s)
     break;
   case TK_EOF:
     fprintf(s, "TK_EOF: ");
+    break;
+  case TK_IF:
+    fprintf(s, "TK_IF: ");
+    break;
+  case TK_ELSE:
+    fprintf(s, "TK_ELSE: ");
     break;
   }
 

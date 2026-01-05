@@ -198,9 +198,15 @@ Node* stmt()
     Node *cond = NULL;
     Node *update = NULL;
     if (!consume_op(";"))
+    {
       init = expr();
+      expect_op(";");
+    }
     if (!consume_op(";"))
+    {
       cond = expr();
+      expect_op(";");
+    }
     if (!consume_op(")"))
     {
       update = expr();
@@ -213,6 +219,8 @@ Node* stmt()
     node->lhs = stmt();
     node->rhs = update;
     node->init = init;
+
+    return node;
   }
 
   // expr ";"
@@ -423,7 +431,7 @@ void generate(Node *node)
     generate(node->cond);
     write_output("  pop rax\n");
     write_output("  cmp rax, 0\n");
-    write_output("  jne .Lend%d\n", end_label);
+    write_output("  je .Lend%d\n", end_label);
     generate(node->lhs);
     write_output("  jmp .Lloop%d\n", loop_label);
     write_output(".Lend%d:\n", end_label);
@@ -442,7 +450,7 @@ void generate(Node *node)
       generate(node->cond);
     write_output("  pop rax\n");
     write_output("  cmp rax, 0\n");
-    write_output("  jne .Lend%d\n", end_label);
+    write_output("  je .Lend%d\n", end_label);
     generate(node->lhs);
     if (node->rhs)
       generate(node->rhs);

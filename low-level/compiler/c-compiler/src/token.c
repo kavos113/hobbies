@@ -175,7 +175,7 @@ Token *tokenize(char *p)
     // for
     if (strncmp(p, "for", 3) == 0 && !is_token_str(p[3]))
     {
-      current = new_token(TK_WHILE, current, p, 3);
+      current = new_token(TK_FOR, current, p, 3);
       p += 3;
       continue;
     }

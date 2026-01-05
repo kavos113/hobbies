@@ -34,7 +34,6 @@ int main(int argc, char **argv)
   for (int i = 0; code[i]; i++)
   {
     generate(code[i]);
-    write_output("  pop rax\n");
   }
 
   close_file();

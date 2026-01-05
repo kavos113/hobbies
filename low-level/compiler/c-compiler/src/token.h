@@ -13,6 +13,7 @@ typedef enum
   TK_RETURN,
   TK_IF,
   TK_ELSE,
+  TK_WHILE,
 } TokenKind;
 
 typedef struct Token Token;
@@ -21,9 +22,9 @@ struct Token
 {
   TokenKind kind;
   Token *next;
-  int val;
+  int val; // only TK_NUMBER
   char *str;
-  int len;
+  int len; // 0 if TK_NUMBER
 };
 
 void set_token(Token *tok);

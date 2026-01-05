@@ -164,6 +164,14 @@ Token *tokenize(char *p)
       continue;
     }
 
+    // while
+    if (strncmp(p, "while", 5) == 0 && !is_token_str(p[5]))
+    {
+      current = new_token(TK_WHILE, current, p, 5);
+      p += 5;
+      continue;
+    }
+
     // variable
     if (is_token_str(*p))
     {
@@ -213,6 +221,9 @@ void print_token(Token *token, FILE* s)
     break;
   case TK_ELSE:
     fprintf(s, "TK_ELSE: ");
+    break;
+  case TK_WHILE:
+    fprintf(s, "TK_WHILE: ");
     break;
   }
 

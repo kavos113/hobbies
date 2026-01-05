@@ -11,6 +11,7 @@ program = stmt*
 stmt    = expr ";"
           | "return" expr ";"
           | "if" "(" expr ")" stmt ("else" stmt)?
+          | "while" "(" expr ")" stmt
 expr    = assign
 assign  = equal ("=" assign)?
 equal   = compare ("==" compare | "!= compare")*
@@ -35,6 +36,7 @@ typedef enum {
   ND_LVAR,   // offset: offset from rbp. lhs=rhs=null
   ND_RETURN, // lhs: expr, rhs=null
   ND_IF,     // cond: condition, lhs: if stmt, rhs: else stmt(nullable)
+  ND_WHILE,  // cond: condition, lhs: stmt
 } NodeKind;
 
 typedef struct Node Node;

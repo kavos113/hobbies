@@ -71,6 +71,9 @@ void print_node(Node *node, int depth, FILE *s)
   case ND_IF:
     fprintf(s, "ND_IF\n");
     break;
+  case ND_WHILE:
+    fprintf(s, "ND_WHILE\n");
+    break;
   }
 
   if (node->lhs)
@@ -165,6 +168,21 @@ Node* stmt()
 
     if (consume(TK_ELSE))
       node->rhs = stmt();
+
+    return node;
+  }
+
+  // "while" "(" expr ")" stmt
+  if (consume(TK_WHILE))
+  {
+    expect_op("(");
+    Node *cond = expr();
+    expect_op(")");
+
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_WHILE;
+    node->cond = cond;
+    node->lhs = stmt();
 
     return node;
   }
@@ -367,6 +385,21 @@ void generate(Node *node)
       generate(node->lhs);
       write_output(".Lend%d:\n", label_latest++);
     }
+    return;
+  case ND_WHILE:
+  {
+    unsigned int loop_label = label_latest++;
+    unsigned int end_label = label_latest++;
+
+    write_output(".Lloop%d:\n", loop_label);
+    generate(node->cond);
+    write_output("  pop rax\n");
+    write_output("  cmp rax, 0\n");
+    write_output("  jne .Lend%d\n", end_label);
+    generate(node->lhs);
+    write_output("  jmp .Lloop%d\n", loop_label);
+    write_output(".Lend%d:\n", end_label);
+  }
     return;
   }
 

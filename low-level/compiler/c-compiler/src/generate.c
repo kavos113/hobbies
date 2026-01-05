@@ -77,12 +77,17 @@ void print_node(Node *node, int depth, FILE *s)
   case ND_FOR:
     fprintf(s, "ND_FOR\n");
     break;
+  case ND_BLOCK:
+    fprintf(s, "ND_BLOCK\n");
+    break;
   }
 
   if (node->lhs)
     print_node(node->lhs, depth + 2, s);
   if (node->rhs)
     print_node(node->rhs, depth + 2, s);
+  if (node->next)
+    print_node(node->next, depth, s);
 }
 
 Node *new_node_op(NodeKind kind, Node *lhs, Node *rhs)
@@ -153,16 +158,36 @@ Node* stmt()
     node->kind = ND_RETURN;
     node->lhs = expr();
 
-    expect_op(";");
+    expect_reserved(";");
+    return node;
+  }
+
+  // "{" stmt* "}"
+  if (consume_reserved("{"))
+  {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+
+    Node **next = &node->next;
+    while (1)
+    {
+      if (consume_reserved("}"))
+        break;
+
+      Node *content = stmt();
+      *next = content;
+      next = &content->next;
+    }
+
     return node;
   }
 
   // "if" "(" expr ")" stmt ("else" stmt)?
   if (consume(TK_IF))
   {
-    expect_op("(");
+    expect_reserved("(");
     Node *cond = expr();
-    expect_op(")");
+    expect_reserved(")");
 
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_IF;
@@ -178,9 +203,9 @@ Node* stmt()
   // "while" "(" expr ")" stmt
   if (consume(TK_WHILE))
   {
-    expect_op("(");
+    expect_reserved("(");
     Node *cond = expr();
-    expect_op(")");
+    expect_reserved(")");
 
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_WHILE;
@@ -193,24 +218,24 @@ Node* stmt()
   // "for" "(" expr? ";" expr? ";" expr? ")" stmt
   if (consume(TK_FOR))
   {
-    expect_op("(");
+    expect_reserved("(");
     Node *init = NULL;
     Node *cond = NULL;
     Node *update = NULL;
-    if (!consume_op(";"))
+    if (!consume_reserved(";"))
     {
       init = expr();
-      expect_op(";");
+      expect_reserved(";");
     }
-    if (!consume_op(";"))
+    if (!consume_reserved(";"))
     {
       cond = expr();
-      expect_op(";");
+      expect_reserved(";");
     }
-    if (!consume_op(")"))
+    if (!consume_reserved(")"))
     {
       update = expr();
-      expect_op(")");
+      expect_reserved(")");
     }
 
     Node *node = calloc(1, sizeof(Node));
@@ -226,7 +251,7 @@ Node* stmt()
   // expr ";"
   Node *node = expr();
 
-  expect_op(";");
+  expect_reserved(";");
   return node;
 }
 
@@ -239,7 +264,7 @@ Node* assign()
 {
   Node *node = equal();
 
-  if (consume_op("="))
+  if (consume_reserved("="))
     node = new_node_op(ND_ASSIGN, node, assign());
   return node;
 }
@@ -250,9 +275,9 @@ Node *equal()
 
   for (;;)
   {
-    if (consume_op("=="))
+    if (consume_reserved("=="))
       node = new_node_op(ND_EQ, node, compare());
-    else if (consume_op("!="))
+    else if (consume_reserved("!="))
       node = new_node_op(ND_NEQ, node, compare());
     else 
       return node;
@@ -265,13 +290,13 @@ Node *compare()
 
   for (;;)
   {
-    if (consume_op("<"))
+    if (consume_reserved("<"))
       node = new_node_op(ND_LESS, node, add());
-    else if (consume_op("<="))
+    else if (consume_reserved("<="))
       node = new_node_op(ND_LESSEQ, node, add());
-    else if (consume_op(">"))
+    else if (consume_reserved(">"))
       node = new_node_op(ND_LESS, add(), node);
-    else if (consume_op(">="))
+    else if (consume_reserved(">="))
       node = new_node_op(ND_LESSEQ, add(), node);
     else 
       return node;
@@ -287,10 +312,10 @@ Node *add()
   for (;;)
   {
     // "+" mul
-    if (consume_op("+"))
+    if (consume_reserved("+"))
       node = new_node_op(ND_ADD, node, mul());
     // "-" mul
-    else if (consume_op("-"))
+    else if (consume_reserved("-"))
       node = new_node_op(ND_SUB, node, mul());
     else 
       return node;
@@ -306,10 +331,10 @@ Node *mul()
   for (;;)
   {
     // "*" primary
-    if (consume_op("*"))
+    if (consume_reserved("*"))
       node = new_node_op(ND_MUL, node, unary());
     // "/" primary
-    else if (consume_op("/"))
+    else if (consume_reserved("/"))
       node = new_node_op(ND_DIV, node, unary());
     else 
       return node;
@@ -319,11 +344,11 @@ Node *mul()
 Node *unary()
 {
   // "+"?
-  if (consume_op("+"))
+  if (consume_reserved("+"))
     return primary();
   
   // "-"?
-  if (consume_op("-"))
+  if (consume_reserved("-"))
     return new_node_op(ND_SUB, new_node_num(0), primary());
 
   return primary();
@@ -332,10 +357,10 @@ Node *unary()
 Node *primary()
 {
   // "(" expr ")"
-  if (consume_op("("))
+  if (consume_reserved("("))
   {
     Node *node = expr();
-    expect_op(")");
+    expect_reserved(")");
     return node;
   }
 
@@ -401,25 +426,30 @@ void generate(Node *node)
     {
       generate(node->cond);
 
+      unsigned int end_label = label_latest++;
+      unsigned int else_label = label_latest++;
+
       write_output("  pop rax\n");
       write_output("  cmp rax, 0\n");
-      write_output("  je .Lelse%d\n", label_latest);
+      write_output("  je .Lelse%d\n", else_label);
       generate(node->lhs);
-      write_output("  jmp .Lend%d\n", label_latest);
-      write_output(".Lelse%d:\n", label_latest);
+      write_output("  jmp .Lend%d\n", end_label);
+      write_output(".Lelse%d:\n", else_label);
       generate(node->rhs);
-      write_output(".Lend%d:\n", label_latest++);
+      write_output(".Lend%d:\n", end_label);
     }
     // if
     else
     {
       generate(node->cond);
 
+      unsigned int end_label = label_latest++;
+
       write_output("  pop rax\n");
       write_output("  cmp rax, 0\n");
-      write_output("  je .Lend%d\n", label_latest);
+      write_output("  je .Lend%d\n", end_label);
       generate(node->lhs);
-      write_output(".Lend%d:\n", label_latest++);
+      write_output(".Lend%d:\n", end_label);
     }
     return;
   case ND_WHILE:
@@ -457,6 +487,14 @@ void generate(Node *node)
     write_output("  jmp .Lloop%d\n", loop_label);
     write_output(".Lend%d:\n", end_label);
   }
+    return;
+  case ND_BLOCK:
+    while (node->next)
+    {
+      generate(node->next);
+      write_output("  pop rax\n");
+      node = node->next;
+    }
     return;
   }
 

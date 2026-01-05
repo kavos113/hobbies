@@ -30,10 +30,10 @@ struct Token
 
 void set_token(Token *tok);
 
-bool consume_op(char *op);
+bool consume_reserved(char *op);
 Token *consume_ident();
 bool consume(TokenKind kind);
-void expect_op(char *op);
+void expect_reserved(char *op);
 int expect_number();
 bool at_eof();
 

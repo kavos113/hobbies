@@ -30,10 +30,9 @@ bool starts_with(char *a, char *b)
   return memcmp(a, b, strlen(a)) == 0;
 }
 
-bool consume_op(char *op)
+bool consume_reserved(char *op)
 {
-  // fprintf(stdout, "consume_op: token %s, len %d, op %s\n", token->str, token->len, op);
-  if (token->kind != TK_RESERVED 
+  if (token->kind != TK_RESERVED
     || strlen(op) != token->len
     || memcmp(token->str, op, token->len)
   )
@@ -63,7 +62,7 @@ bool consume(TokenKind kind)
   return true;
 }
 
-void expect_op(char *op)
+void expect_reserved(char *op)
 {
   if (token->kind != TK_RESERVED 
     || strlen(op) != token->len
@@ -123,7 +122,7 @@ Token *tokenize(char *p)
     }
 
     // single char operator
-    if (strchr("+-*/()<>;=", *p))
+    if (strchr("+-*/()<>;={}", *p))
     {
       current = new_token(TK_RESERVED, current, p++, 1);
       continue;

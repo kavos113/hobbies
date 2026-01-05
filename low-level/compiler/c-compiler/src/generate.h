@@ -13,6 +13,7 @@ stmt    = expr ";"
           | "if" "(" expr ")" stmt ("else" stmt)?
           | "while" "(" expr ")" stmt
           | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+          | "{" stmt* "}"
 expr    = assign
 assign  = equal ("=" assign)?
 equal   = compare ("==" compare | "!= compare")*
@@ -39,6 +40,7 @@ typedef enum {
   ND_IF,     // cond: condition, lhs: if stmt, rhs: else stmt(nullable)
   ND_WHILE,  // cond: condition, lhs: stmt
   ND_FOR,    // cond: condition, lhs: stmt, rhs: update, init: init
+  ND_BLOCK,  // next: stmt head (continue to next, null: end)
 } NodeKind;
 
 typedef struct Node Node;
@@ -52,6 +54,7 @@ struct Node
   int offset; // only ND_LVAR
   Node *cond; // only ND_IF, WHILE, FOR
   Node *init; // only ND_FOR
+  Node *next; // only ND_BLOCK
 };
 
 void print_node(Node *node, int depth, FILE *s);

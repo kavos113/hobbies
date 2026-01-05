@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 {
   if (argc != 3)
   {
-    fprintf(stderr, "usage: acc <file_path> <output_path>");
+    fprintf(stderr, "usage: acc <file_path> <output_path>\n");
     return 1;
   }
   
@@ -34,6 +34,7 @@ int main(int argc, char **argv)
   for (int i = 0; code[i]; i++)
   {
     generate(code[i]);
+    // print_node(code[i], 0, stdout);
   }
 
   close_file();

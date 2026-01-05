@@ -14,6 +14,7 @@ typedef enum
   TK_IF,
   TK_ELSE,
   TK_WHILE,
+  TK_FOR,
 } TokenKind;
 
 typedef struct Token Token;

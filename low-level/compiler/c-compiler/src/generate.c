@@ -74,6 +74,9 @@ void print_node(Node *node, int depth, FILE *s)
   case ND_WHILE:
     fprintf(s, "ND_WHILE\n");
     break;
+  case ND_FOR:
+    fprintf(s, "ND_FOR\n");
+    break;
   }
 
   if (node->lhs)
@@ -185,6 +188,31 @@ Node* stmt()
     node->lhs = stmt();
 
     return node;
+  }
+
+  // "for" "(" expr? ";" expr? ";" expr? ")" stmt
+  if (consume(TK_FOR))
+  {
+    expect_op("(");
+    Node *init = NULL;
+    Node *cond = NULL;
+    Node *update = NULL;
+    if (!consume_op(";"))
+      init = expr();
+    if (!consume_op(";"))
+      cond = expr();
+    if (!consume_op(")"))
+    {
+      update = expr();
+      expect_op(")");
+    }
+
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_FOR;
+    node->cond = cond;
+    node->lhs = stmt();
+    node->rhs = update;
+    node->init = init;
   }
 
   // expr ";"
@@ -397,6 +425,27 @@ void generate(Node *node)
     write_output("  cmp rax, 0\n");
     write_output("  jne .Lend%d\n", end_label);
     generate(node->lhs);
+    write_output("  jmp .Lloop%d\n", loop_label);
+    write_output(".Lend%d:\n", end_label);
+  }
+    return;
+  case ND_FOR:
+  {
+    unsigned int loop_label = label_latest++;
+    unsigned int end_label = label_latest++;
+
+    if (node->init)
+      generate(node->init);
+
+    write_output(".Lloop%d:\n", loop_label);
+    if (node->cond)
+      generate(node->cond);
+    write_output("  pop rax\n");
+    write_output("  cmp rax, 0\n");
+    write_output("  jne .Lend%d\n", end_label);
+    generate(node->lhs);
+    if (node->rhs)
+      generate(node->rhs);
     write_output("  jmp .Lloop%d\n", loop_label);
     write_output(".Lend%d:\n", end_label);
   }

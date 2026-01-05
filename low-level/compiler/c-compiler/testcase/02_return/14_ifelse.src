@@ -1,0 +1,6 @@
+a = 5;
+if (a < 1)
+    a = 21;
+else
+    a = 10;
+return a;

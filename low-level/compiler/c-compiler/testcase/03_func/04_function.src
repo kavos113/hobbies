@@ -1,0 +1,7 @@
+somefunc() {
+    return 42;
+}
+
+main() {
+    return somefunc() + 5;
+}

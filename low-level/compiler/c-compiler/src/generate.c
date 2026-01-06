@@ -151,9 +151,12 @@ int get_offsets()
     return 0;
 }
 
-Node* program()
+void program(Node** dst)
 {
-  return func();
+  int i = 0;
+  while (!at_eof())
+    dst[i++] = func();
+  dst[i] = NULL;
 }
 
 Node* func()
@@ -573,6 +576,7 @@ void generate(Node *node)
     }
 
     write_output("  call %.*s\n", node->name_len, node->name);
+    write_output("  push rax\n");
   }
     return;
   case ND_FNDEF:

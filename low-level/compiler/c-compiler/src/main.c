@@ -18,14 +18,18 @@ int main(int argc, char **argv)
   set_token(tokenize(source));
   set_user_input(source);
 
-  Node *code = program();
+  Node *node[100];
+  program(node);
 
   open_output_file(argv[2]);
 
   write_output(".intel_syntax noprefix\n");
   write_output(".global main\n");
 
-  generate(code);
+  for (int i = 0; node[i]; i++)
+  {
+    generate(node[i]);
+  }
 
   close_file();
   return 0;

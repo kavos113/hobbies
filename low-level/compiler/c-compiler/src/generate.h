@@ -7,7 +7,7 @@
 
 grammer rules
 
-program = func
+program = func+
 func    = stmt*
 stmt    = expr ";"
           | "return" expr ";"
@@ -80,7 +80,7 @@ struct LVar
 
 int get_offsets();
 
-Node *program();
+void program(Node **dst);
 void generate(Node *node);
 
 #endif

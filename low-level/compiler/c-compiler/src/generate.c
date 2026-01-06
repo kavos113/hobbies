@@ -83,6 +83,9 @@ void print_node(Node *node, int depth, FILE *s)
   case ND_FUNC:
     fprintf(s, "ND_FUNC\n");
     break;
+  case ND_FUNCARG:
+    fprintf(s, "ND_FUNCARG\n");
+    break;
   }
 
   if (node->lhs)
@@ -371,15 +374,31 @@ Node *primary()
   Token *tok = consume_ident();
   if (tok)
   {
-    // "(" ")"
+    // "(" (num ",")* ")"
     if (consume_reserved("("))
     {
-      expect_reserved(")");
-
       Node *node = calloc(1, sizeof(Node));
       node->kind = ND_FUNC;
       node->name = tok->str;
       node->name_len = tok->len;
+
+      Node **lastarg = &node->next;
+      bool is_first = true;
+      while (!consume_reserved(")"))
+      {
+        if (is_first)
+          is_first = false;
+        else
+          expect_reserved(",");
+
+        int argval = expect_number();
+
+        Node *arg = calloc(1, sizeof(Node));
+        arg->kind = ND_FUNCARG;
+        arg->val = argval;
+        *lastarg = arg;
+        lastarg = &arg->next;
+      }
 
       return node;
     }
@@ -513,8 +532,21 @@ void generate(Node *node)
     }
     return;
   case ND_FUNC:
+  {
     write_output("  pop rax\n");
+
+    char *regs[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+    Node *arg = node->next;
+    for (int i = 0; i < 6; i++)
+    {
+      if (!arg) break;
+
+      write_output("  mov %s, %d\n", regs[i], arg->val);
+      arg = arg->next;
+    }
+
     write_output("  call %.*s\n", node->name_len, node->name);
+  }
     return;
   }
 

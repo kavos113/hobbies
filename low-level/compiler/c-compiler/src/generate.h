@@ -22,7 +22,7 @@ add     = mul ("+" mul | "-" mul)*
 mul     = unary ("*" unary | "/" unary)*
 unary   = ("+" | "-")? primary
 primary = num
-          | ident ("(" ")")?
+          | ident ("(" (num ",")* ")")?
           | "(" expr ")"
 
 */
@@ -43,7 +43,8 @@ typedef enum {
   ND_WHILE,  // cond: condition, lhs: stmt
   ND_FOR,    // cond: condition, lhs: stmt, rhs: update, init: init
   ND_BLOCK,  // next: stmt head (continue to next, null: end)
-  ND_FUNC,
+  ND_FUNC,   // name, name_len: func name, next: args head
+  ND_FUNCARG,// next: next arg(null: end), val
 } NodeKind;
 
 typedef struct Node Node;
@@ -53,11 +54,11 @@ struct Node
   NodeKind kind;
   Node *lhs;
   Node *rhs;
-  int val; // only ND_NUM
+  int val; // only ND_NUM, ND_FUNCARG
   int offset; // only ND_LVAR
   Node *cond; // only ND_IF, WHILE, FOR
   Node *init; // only ND_FOR
-  Node *next; // only ND_BLOCK
+  Node *next; // only ND_BLOCK, ND_FUNC, ND_FUNCARG
   char *name; // only ND_FUNC
   int name_len ; // only ND_FUNC
 };

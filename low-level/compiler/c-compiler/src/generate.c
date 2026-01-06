@@ -12,6 +12,7 @@ Node *new_node_num(int val);
 LVar *find_lvar(Token *tok);
 LVar *new_lvar(Token *tok);
 
+Node *func();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -80,11 +81,14 @@ void print_node(Node *node, int depth, FILE *s)
   case ND_BLOCK:
     fprintf(s, "ND_BLOCK\n");
     break;
-  case ND_FUNC:
-    fprintf(s, "ND_FUNC\n");
+  case ND_FNCL:
+    fprintf(s, "ND_FNCL\n");
     break;
-  case ND_FUNCARG:
-    fprintf(s, "ND_FUNCARG\n");
+  case ND_FNCLARG:
+    fprintf(s, "ND_FNCLARG\n");
+    break;
+  case ND_FNDEF:
+    fprintf(s, "ND_FNDEF\n");
     break;
   }
 
@@ -147,12 +151,35 @@ int get_offsets()
     return 0;
 }
 
-void program(Node **dst)
+Node* program()
 {
+  return func();
+}
+
+Node* func()
+{
+  Token *func_ident = consume_ident();
+  if (!func_ident)
+    error("first must be function identifier\n");
+
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = ND_FNDEF;
+  node->stmts = calloc(100, sizeof(Node *));
+  node->name = func_ident->str;
+  node->name_len = func_ident->len;
+
+  expect_reserved("(");
+  expect_reserved(")");
+  expect_reserved("{");
+
   int i = 0;
-  while (!at_eof())
-    dst[i++] = stmt();
-  dst[i] = NULL;
+  while (!consume_reserved("}"))
+  {
+    node->stmts[i] = stmt();
+    i++;
+  }
+
+  return node;
 }
 
 Node* stmt()
@@ -378,7 +405,7 @@ Node *primary()
     if (consume_reserved("("))
     {
       Node *node = calloc(1, sizeof(Node));
-      node->kind = ND_FUNC;
+      node->kind = ND_FNCL;
       node->name = tok->str;
       node->name_len = tok->len;
 
@@ -394,7 +421,7 @@ Node *primary()
         int argval = expect_number();
 
         Node *arg = calloc(1, sizeof(Node));
-        arg->kind = ND_FUNCARG;
+        arg->kind = ND_FNCLARG;
         arg->val = argval;
         *lastarg = arg;
         lastarg = &arg->next;
@@ -531,7 +558,7 @@ void generate(Node *node)
       node = node->next;
     }
     return;
-  case ND_FUNC:
+  case ND_FNCL:
   {
     write_output("  pop rax\n");
 
@@ -546,6 +573,21 @@ void generate(Node *node)
     }
 
     write_output("  call %.*s\n", node->name_len, node->name);
+  }
+    return;
+  case ND_FNDEF:
+  {
+    write_output("%.*s:\n", node->name_len, node->name);
+
+    write_output("  push rbp\n");
+    write_output("  mov rbp, rsp\n");
+    write_output("  sub rsp, %d\n", get_offsets());
+    for (int i = 0; 1; i++)
+    {
+      if (!node->stmts[i])
+        break;
+      generate(node->stmts[i]);
+    }
   }
     return;
   }

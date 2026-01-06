@@ -7,7 +7,8 @@
 
 grammer rules
 
-program = stmt*
+program = func
+func    = stmt*
 stmt    = expr ";"
           | "return" expr ";"
           | "if" "(" expr ")" stmt ("else" stmt)?
@@ -43,8 +44,9 @@ typedef enum {
   ND_WHILE,  // cond: condition, lhs: stmt
   ND_FOR,    // cond: condition, lhs: stmt, rhs: update, init: init
   ND_BLOCK,  // next: stmt head (continue to next, null: end)
-  ND_FUNC,   // name, name_len: func name, next: args head
-  ND_FUNCARG,// next: next arg(null: end), val
+  ND_FNCL,   // name, name_len: func name, next: args head
+  ND_FNCLARG,// next: next arg(null: end), val
+  ND_FNDEF,
 } NodeKind;
 
 typedef struct Node Node;
@@ -54,13 +56,14 @@ struct Node
   NodeKind kind;
   Node *lhs;
   Node *rhs;
-  int val; // only ND_NUM, ND_FUNCARG
+  int val; // only ND_NUM, ND_FNCLARG
   int offset; // only ND_LVAR
   Node *cond; // only ND_IF, WHILE, FOR
   Node *init; // only ND_FOR
-  Node *next; // only ND_BLOCK, ND_FUNC, ND_FUNCARG
-  char *name; // only ND_FUNC
-  int name_len ; // only ND_FUNC
+  Node *next; // only ND_BLOCK, ND_FUNC, ND_FNCLARG
+  char *name; // only ND_FNCL, ND_FNDEF
+  int name_len; // only ND_FNCL, ND_FNDEF
+  Node **stmts; // only ND_FNDEF
 };
 
 void print_node(Node *node, int depth, FILE *s);
@@ -77,7 +80,7 @@ struct LVar
 
 int get_offsets();
 
-void program(Node **dst);
+Node *program();
 void generate(Node *node);
 
 #endif

@@ -18,24 +18,14 @@ int main(int argc, char **argv)
   set_token(tokenize(source));
   set_user_input(source);
 
-  Node *code[100];
-  program(code);
+  Node *code = program();
 
   open_output_file(argv[2]);
 
   write_output(".intel_syntax noprefix\n");
   write_output(".global main\n");
-  write_output("main:\n");
 
-  write_output("  push rbp\n");
-  write_output("  mov rbp, rsp\n");
-  write_output("  sub rsp, %d\n", get_offsets());
-
-  for (int i = 0; code[i]; i++)
-  {
-    generate(code[i]);
-    // print_node(code[i], 0, stdout);
-  }
+  generate(code);
 
   close_file();
   return 0;

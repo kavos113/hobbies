@@ -21,7 +21,9 @@ compare = add ("<" add | ">" add | "<=" add | ">=" add)*
 add     = mul ("+" mul | "-" mul)*
 mul     = unary ("*" unary | "/" unary)*
 unary   = ("+" | "-")? primary
-primary = num | ident | "(" expr ")"
+primary = num
+          | ident ("(" ")")?
+          | "(" expr ")"
 
 */
 typedef enum {
@@ -41,6 +43,7 @@ typedef enum {
   ND_WHILE,  // cond: condition, lhs: stmt
   ND_FOR,    // cond: condition, lhs: stmt, rhs: update, init: init
   ND_BLOCK,  // next: stmt head (continue to next, null: end)
+  ND_FUNC,
 } NodeKind;
 
 typedef struct Node Node;
@@ -55,6 +58,8 @@ struct Node
   Node *cond; // only ND_IF, WHILE, FOR
   Node *init; // only ND_FOR
   Node *next; // only ND_BLOCK
+  char *name; // only ND_FUNC
+  int name_len ; // only ND_FUNC
 };
 
 void print_node(Node *node, int depth, FILE *s);

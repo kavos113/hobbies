@@ -80,6 +80,9 @@ void print_node(Node *node, int depth, FILE *s)
   case ND_BLOCK:
     fprintf(s, "ND_BLOCK\n");
     break;
+  case ND_FUNC:
+    fprintf(s, "ND_FUNC\n");
+    break;
   }
 
   if (node->lhs)
@@ -364,10 +367,23 @@ Node *primary()
     return node;
   }
 
-  // ident
+  // ident ("(" ")")?
   Token *tok = consume_ident();
   if (tok)
   {
+    // "(" ")"
+    if (consume_reserved("("))
+    {
+      expect_reserved(")");
+
+      Node *node = calloc(1, sizeof(Node));
+      node->kind = ND_FUNC;
+      node->name = tok->str;
+      node->name_len = tok->len;
+
+      return node;
+    }
+
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
 
@@ -495,6 +511,10 @@ void generate(Node *node)
       write_output("  pop rax\n");
       node = node->next;
     }
+    return;
+  case ND_FUNC:
+    write_output("  pop rax\n");
+    write_output("  call %.*s\n", node->name_len, node->name);
     return;
   }
 

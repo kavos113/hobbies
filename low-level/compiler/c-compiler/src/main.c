@@ -29,6 +29,7 @@ int main(int argc, char **argv)
   for (int i = 0; node[i]; i++)
   {
     generate(node[i]);
+    // print_node(node[i], 0, stdout);
   }
 
   close_file();

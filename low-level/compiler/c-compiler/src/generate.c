@@ -84,8 +84,8 @@ void print_node(Node *node, int depth, FILE *s)
   case ND_FNCL:
     fprintf(s, "ND_FNCL\n");
     break;
-  case ND_FNCLARG:
-    fprintf(s, "ND_FNCLARG\n");
+  case ND_FNARG:
+    fprintf(s, "ND_FNARG\n");
     break;
   case ND_FNDEF:
     fprintf(s, "ND_FNDEF\n");
@@ -98,6 +98,15 @@ void print_node(Node *node, int depth, FILE *s)
     print_node(node->rhs, depth + 2, s);
   if (node->next)
     print_node(node->next, depth, s);
+  if (node->stmts)
+  {
+    int i = 0;
+    while (node->stmts[i])
+    {
+      print_node(node->stmts[i++], depth + 2, s);
+      fprintf(s, "\n");
+    }
+  }
 }
 
 Node *new_node_op(NodeKind kind, Node *lhs, Node *rhs)
@@ -135,6 +144,8 @@ LVar* new_lvar(Token* tok)
     var->next = locals;
     var->offset = locals->offset + 8;
   }
+  else
+    var->offset = 8;
 
   var->name = tok->str;
   var->len = tok->len;
@@ -149,6 +160,20 @@ int get_offsets()
     return locals->offset;
   else
     return 0;
+}
+
+void print_lvar_internal(LVar *lvar)
+{
+  if (lvar)
+  {
+    fprintf(stdout, "%.*s: %d\n", lvar->len, lvar->name, lvar->offset);
+    print_lvar_internal(lvar->next);
+  }
+}
+
+void print_lvar()
+{
+  print_lvar_internal(locals);
 }
 
 void program(Node** dst)
@@ -172,7 +197,30 @@ Node* func()
   node->name_len = func_ident->len;
 
   expect_reserved("(");
-  expect_reserved(")");
+
+  Node **lastarg = &node->next;
+  bool is_first = true;
+  while (!consume_reserved(")"))
+  {
+    if (is_first)
+      is_first = false;
+    else
+      expect_reserved(",");
+
+    Token *argident = consume_ident();
+    if (!argident)
+      error("no argument identifier\n");
+
+    Node *arg = calloc(1, sizeof(Node));
+    arg->kind = ND_FNARG;
+
+    LVar *var = new_lvar(argident);
+    arg->offset = var->offset;
+
+    *lastarg = arg;
+    lastarg = &arg->next;
+  }
+
   expect_reserved("{");
 
   int i = 0;
@@ -181,6 +229,9 @@ Node* func()
     node->stmts[i] = stmt();
     i++;
   }
+
+  node->offset = get_offsets();
+  locals = NULL;
 
   return node;
 }
@@ -421,11 +472,10 @@ Node *primary()
         else
           expect_reserved(",");
 
-        int argval = expect_number();
-
         Node *arg = calloc(1, sizeof(Node));
-        arg->kind = ND_FNCLARG;
-        arg->val = argval;
+        arg->kind = ND_FNARG;
+        arg->lhs = expr();
+        arg->offset = -1;
         *lastarg = arg;
         lastarg = &arg->next;
       }
@@ -563,7 +613,7 @@ void generate(Node *node)
     return;
   case ND_FNCL:
   {
-    write_output("  pop rax\n");
+    // write_output("  pop rax\n");
 
     char *regs[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
     Node *arg = node->next;
@@ -571,7 +621,9 @@ void generate(Node *node)
     {
       if (!arg) break;
 
-      write_output("  mov %s, %d\n", regs[i], arg->val);
+      generate(arg->lhs);
+      write_output("  pop rax\n");
+      write_output("  mov %s, rax\n", regs[i]);
       arg = arg->next;
     }
 
@@ -585,7 +637,21 @@ void generate(Node *node)
 
     write_output("  push rbp\n");
     write_output("  mov rbp, rsp\n");
-    write_output("  sub rsp, %d\n", get_offsets());
+    write_output("  sub rsp, %d\n", node->offset);
+
+    char *regs[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+    Node *arg = node->next;
+    for (int i = 0; i < 6; i++)
+    {
+      if (!arg) break;
+
+      write_output("  mov rax, rbp\n");
+      write_output("  sub rax, %d\n", arg->offset);
+      write_output("  mov [rax], %s\n", regs[i]);
+
+      arg = arg->next;
+    }
+
     for (int i = 0; 1; i++)
     {
       if (!node->stmts[i])

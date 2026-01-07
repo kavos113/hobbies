@@ -22,6 +22,7 @@ compare = add ("<" add | ">" add | "<=" add | ">=" add)*
 add     = mul ("+" mul | "-" mul)*
 mul     = unary ("*" unary | "/" unary)*
 unary   = ("+" | "-")? primary
+          | ("*" | "&") unary
 primary = num
           | ident ("(" (expr ",")* ")")?
           | "(" expr ")"
@@ -37,6 +38,8 @@ typedef enum {
   ND_LESSEQ,  // <=
   ND_EQ,
   ND_NEQ,
+  ND_ADDR,   // &, lhs
+  ND_DEREF,  // *, lhs
   ND_ASSIGN,  // lhs: variable, rhs: value
   ND_LVAR,    // offset: offset from rbp. lhs=rhs=null
   ND_RETURN,  // lhs: expr, rhs=null

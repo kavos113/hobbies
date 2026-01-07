@@ -438,6 +438,12 @@ Node *unary()
   if (consume_reserved("-"))
     return new_node_op(ND_SUB, new_node_num(0), primary());
 
+  if (consume_reserved("*"))
+    return new_node_op(ND_DEREF, unary(), NULL);
+
+  if (consume_reserved("&"))
+    return new_node_op(ND_ADDR, unary(), NULL);
+
   return primary();
 }
 
@@ -659,6 +665,15 @@ void generate(Node *node)
       generate(node->stmts[i]);
     }
   }
+    return;
+  case ND_ADDR:
+    generate_lval(node->lhs);
+    return;
+  case ND_DEREF:
+    generate(node->lhs);
+    printf("  pop rax\n");
+    printf("  mov rax, [rax]\n");
+    printf("  push rax\n");
     return;
   }
 

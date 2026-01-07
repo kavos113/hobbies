@@ -671,9 +671,9 @@ void generate(Node *node)
     return;
   case ND_DEREF:
     generate(node->lhs);
-    printf("  pop rax\n");
-    printf("  mov rax, [rax]\n");
-    printf("  push rax\n");
+    write_output("  pop rax\n");
+    write_output("  mov rax, [rax]\n");
+    write_output("  push rax\n");
     return;
   }
 

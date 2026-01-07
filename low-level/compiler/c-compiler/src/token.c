@@ -53,6 +53,15 @@ Token *consume_ident()
   return prev;
 }
 
+bool consume_keyword(Keyword kwd)
+{
+  if (token->kind != TK_KEYWORD || token->kwd != kwd)
+    return false;
+
+  token = token->next;
+  return true;
+}
+
 bool consume(TokenKind kind)
 {
   if (token->kind != kind)
@@ -142,7 +151,8 @@ Token *tokenize(char *p)
     // return
     if (strncmp(p, "return", 6) == 0 && !is_token_str(p[6]))
     {
-      current = new_token(TK_RETURN, current, p, 6);
+      current = new_token(TK_KEYWORD, current, p, 6);
+      current->kwd = KW_RETURN;
       p += 6;
       continue;
     }
@@ -150,7 +160,8 @@ Token *tokenize(char *p)
     // if
     if (strncmp(p, "if", 2) == 0 && !is_token_str(p[2]))
     {
-      current = new_token(TK_IF, current, p, 2);
+      current = new_token(TK_KEYWORD, current, p, 2);
+      current->kwd = KW_IF;
       p += 2;
       continue;
     }
@@ -158,7 +169,8 @@ Token *tokenize(char *p)
     // else
     if (strncmp(p, "else", 4) == 0 && !is_token_str(p[4]))
     {
-      current = new_token(TK_ELSE, current, p, 4);
+      current = new_token(TK_KEYWORD, current, p, 4);
+      current->kwd = KW_ELSE;
       p += 4;
       continue;
     }
@@ -166,7 +178,8 @@ Token *tokenize(char *p)
     // while
     if (strncmp(p, "while", 5) == 0 && !is_token_str(p[5]))
     {
-      current = new_token(TK_WHILE, current, p, 5);
+      current = new_token(TK_KEYWORD, current, p, 5);
+      current->kwd = KW_WHILE;
       p += 5;
       continue;
     }
@@ -174,7 +187,8 @@ Token *tokenize(char *p)
     // for
     if (strncmp(p, "for", 3) == 0 && !is_token_str(p[3]))
     {
-      current = new_token(TK_FOR, current, p, 3);
+      current = new_token(TK_KEYWORD, current, p, 3);
+      current->kwd = KW_FOR;
       p += 3;
       continue;
     }
@@ -217,24 +231,11 @@ void print_token(Token *token, FILE* s)
   case TK_IDENT:
     fprintf(s, "TK_IDENT: ");
     break;
-  case TK_RETURN:
-    fprintf(s, "TK_RETURN: ");
-    break;
   case TK_EOF:
     fprintf(s, "TK_EOF: ");
     break;
-  case TK_IF:
-    fprintf(s, "TK_IF: ");
-    break;
-  case TK_ELSE:
-    fprintf(s, "TK_ELSE: ");
-    break;
-  case TK_WHILE:
-    fprintf(s, "TK_WHILE: ");
-    break;
-  case TK_FOR:
-    fprintf(s, "TK_FOR: ");
-    break;
+  case TK_KEYWORD:
+    fprintf(s, "TK_KEYWORD: ");
   }
 
   fprintf(stdout, "%.*s\n", token->len, token->str);

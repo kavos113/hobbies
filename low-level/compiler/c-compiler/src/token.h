@@ -10,12 +10,17 @@ typedef enum
   TK_IDENT,
   TK_NUMBER,
   TK_EOF,
-  TK_RETURN,
-  TK_IF,
-  TK_ELSE,
-  TK_WHILE,
-  TK_FOR,
+  TK_KEYWORD,
 } TokenKind;
+
+typedef enum
+{
+  KW_RETURN,
+  KW_IF,
+  KW_ELSE,
+  KW_WHILE,
+  KW_FOR
+} Keyword;
 
 typedef struct Token Token;
 
@@ -26,12 +31,14 @@ struct Token
   int val; // only TK_NUMBER
   char *str;
   int len; // 0 if TK_NUMBER
+  Keyword kwd; // TK_KEYWORD
 };
 
 void set_token(Token *tok);
 
 bool consume_reserved(char *op);
 Token *consume_ident();
+bool consume_keyword(Keyword kwd);
 bool consume(TokenKind kind);
 void expect_reserved(char *op);
 int expect_number();

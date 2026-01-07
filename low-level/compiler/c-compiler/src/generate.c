@@ -239,7 +239,7 @@ Node* func()
 Node* stmt()
 {
   // "return" expr ";"
-  if (consume(TK_RETURN))
+  if (consume_keyword(KW_RETURN))
   {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
@@ -270,7 +270,7 @@ Node* stmt()
   }
 
   // "if" "(" expr ")" stmt ("else" stmt)?
-  if (consume(TK_IF))
+  if (consume_keyword(KW_IF))
   {
     expect_reserved("(");
     Node *cond = expr();
@@ -281,14 +281,14 @@ Node* stmt()
     node->cond = cond;
     node->lhs = stmt();
 
-    if (consume(TK_ELSE))
+    if (consume_keyword(KW_ELSE))
       node->rhs = stmt();
 
     return node;
   }
 
   // "while" "(" expr ")" stmt
-  if (consume(TK_WHILE))
+  if (consume_keyword(KW_WHILE))
   {
     expect_reserved("(");
     Node *cond = expr();
@@ -303,7 +303,7 @@ Node* stmt()
   }
 
   // "for" "(" expr? ";" expr? ";" expr? ")" stmt
-  if (consume(TK_FOR))
+  if (consume_keyword(KW_FOR))
   {
     expect_reserved("(");
     Node *init = NULL;

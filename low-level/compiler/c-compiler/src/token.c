@@ -193,6 +193,14 @@ Token *tokenize(char *p)
       continue;
     }
 
+    if (strncmp(p, "int", 3) == 0 && !is_token_str(p[3]))
+    {
+      current = new_token(TK_KEYWORD, current, p, 3);
+      current->kwd = KW_INT;
+      p += 3;
+      continue;
+    }
+
     // variable
     if (is_token_str(*p))
     {

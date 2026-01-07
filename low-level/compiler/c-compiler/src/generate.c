@@ -186,6 +186,9 @@ void program(Node** dst)
 
 Node* func()
 {
+  if (!consume_keyword(KW_INT))
+    error("first must be INT keyword\n");
+
   Token *func_ident = consume_ident();
   if (!func_ident)
     error("first must be function identifier\n");
@@ -331,6 +334,25 @@ Node* stmt()
     node->lhs = stmt();
     node->rhs = update;
     node->init = init;
+
+    return node;
+  }
+
+  // "int" ident ";"
+  if (consume_keyword(KW_INT))
+  {
+    Token *tok = consume_ident();
+
+    if (find_lvar(tok))
+      error_at(tok->str, "this var is already defined\n");
+
+    LVar *var = new_lvar(tok);
+
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+    node->offset = var->offset;
+
+    expect_reserved(";");
 
     return node;
   }
@@ -498,10 +520,7 @@ Node *primary()
       node->offset = var->offset;
     }
     else
-    {
-      var = new_lvar(tok);
-      node->offset = var->offset;
-    }
+      error_at(tok->str, "undefined variable\n");
 
     return node;
   }

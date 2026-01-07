@@ -1,7 +1,7 @@
-somefunc() {
+int somefunc() {
     return 42;
 }
 
-main() {
+int main() {
     return somefunc() + 5;
 }

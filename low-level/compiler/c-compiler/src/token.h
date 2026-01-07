@@ -19,7 +19,8 @@ typedef enum
   KW_IF,
   KW_ELSE,
   KW_WHILE,
-  KW_FOR
+  KW_FOR,
+  KW_INT,
 } Keyword;
 
 typedef struct Token Token;

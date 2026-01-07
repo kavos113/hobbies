@@ -8,13 +8,14 @@
 grammer rules
 
 program = func+
-func    = ident "(" (ident ",")* ")" "{" stmt* "}"
+func    = "int" ident "(" (ident ",")* ")" "{" stmt* "}"
 stmt    = expr ";"
           | "return" expr ";"
           | "if" "(" expr ")" stmt ("else" stmt)?
           | "while" "(" expr ")" stmt
           | "for" "(" expr? ";" expr? ";" expr? ")" stmt
           | "{" stmt* "}"
+          | "int" ident ";"
 expr    = assign
 assign  = equal ("=" assign)?
 equal   = compare ("==" compare | "!= compare")*

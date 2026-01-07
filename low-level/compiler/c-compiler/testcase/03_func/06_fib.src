@@ -1,4 +1,6 @@
-fibonacci(n) {
+int fibonacci(n) {
+    int a;
+
     a = 0;
     if (n == 0) {
         a = 0;
@@ -10,6 +12,6 @@ fibonacci(n) {
     return a;
 }
 
-main() {
+int main() {
     return fibonacci(10);
 }

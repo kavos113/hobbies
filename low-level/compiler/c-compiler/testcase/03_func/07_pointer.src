@@ -1,8 +1,9 @@
 int main() {
     int a;
-    int b;
+    int *b;
     
     a = 10;
     b = &a;
-    return *b;
+    *b = 20;
+    return a;
 }

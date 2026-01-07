@@ -1,4 +1,4 @@
-int fibonacci(n) {
+int fibonacci(int n) {
     int a;
 
     a = 0;

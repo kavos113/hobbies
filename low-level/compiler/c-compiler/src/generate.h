@@ -8,14 +8,14 @@
 grammer rules
 
 program = func+
-func    = "int" ident "(" (ident ",")* ")" "{" stmt* "}"
+func    = "int" ident "(" (type ident ",")* ")" "{" stmt* "}"
 stmt    = expr ";"
           | "return" expr ";"
           | "if" "(" expr ")" stmt ("else" stmt)?
           | "while" "(" expr ")" stmt
           | "for" "(" expr? ";" expr? ";" expr? ")" stmt
           | "{" stmt* "}"
-          | "int" ident ";"
+          | type ident ";"
 expr    = assign
 assign  = equal ("=" assign)?
 equal   = compare ("==" compare | "!= compare")*
@@ -27,6 +27,8 @@ unary   = ("+" | "-")? primary
 primary = num
           | ident ("(" (expr ",")* ")")?
           | "(" expr ")"
+
+type    = "int" "*"*
 
 */
 typedef enum {
@@ -55,6 +57,16 @@ typedef enum {
 
 typedef struct Node Node;
 
+typedef struct Type
+{
+  enum
+  {
+    INT,
+    PTR,
+  } type;
+  struct Type *base;
+} Type;
+
 struct Node 
 {
   NodeKind kind;
@@ -73,15 +85,14 @@ struct Node
 void print_node(Node *node, int depth, FILE *s);
 void print_lvar();
 
-typedef struct LVar LVar;
-
-struct LVar
+typedef struct LVar
 {
-  LVar *next;
+  struct LVar *next;
   char *name;
   int len;
   int offset;
-};
+  Type *type;
+} LVar;
 
 int get_offsets();
 

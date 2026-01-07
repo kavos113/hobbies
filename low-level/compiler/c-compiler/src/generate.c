@@ -14,6 +14,7 @@ LVar *new_lvar(Token *tok);
 
 Node *func();
 Node *stmt();
+Type *type();
 Node *expr();
 Node *assign();
 Node *equal();
@@ -23,7 +24,7 @@ Node *mul();
 Node *unary();
 Node *primary();
 
-void generate_lval(Node *node);
+void generate_val_addr(Node *node);
 
 static LVar *locals;
 static unsigned int label_latest = 0;
@@ -89,6 +90,12 @@ void print_node(Node *node, int depth, FILE *s)
     break;
   case ND_FNDEF:
     fprintf(s, "ND_FNDEF\n");
+    break;
+  case ND_ADDR:
+    fprintf(s, "ND_ADDR\n");
+    break;
+  case ND_DEREF:
+    fprintf(s, "ND_DEREF\n");
     break;
   }
 
@@ -209,6 +216,10 @@ Node* func()
       is_first = false;
     else
       expect_reserved(",");
+
+    Type *ty = type();
+    if (!ty)
+      error("function argument need type keyword\n");
 
     Token *argident = consume_ident();
     if (!argident)
@@ -338,8 +349,9 @@ Node* stmt()
     return node;
   }
 
-  // "int" ident ";"
-  if (consume_keyword(KW_INT))
+  // type ident ";"
+  Type *ty = type();
+  if (ty)
   {
     Token *tok = consume_ident();
 
@@ -347,6 +359,7 @@ Node* stmt()
       error_at(tok->str, "this var is already defined\n");
 
     LVar *var = new_lvar(tok);
+    var->type = ty;
 
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
@@ -362,6 +375,26 @@ Node* stmt()
 
   expect_reserved(";");
   return node;
+}
+
+Type* type()
+{
+  if (!consume_keyword(KW_INT))
+    return NULL;
+
+  Type *type = calloc(1, sizeof(Type));
+  type->type = INT;
+
+  while (consume_reserved("*"))
+  {
+    Type *t = calloc(1, sizeof(Type));
+    t->type = PTR;
+    t->base = type;
+
+    type = t;
+  }
+
+  return type;
 }
 
 Node *expr()
@@ -538,13 +571,18 @@ void generate(Node *node)
     return;
   case ND_LVAR:
     // 変数の中身をスタックにpush
-    generate_lval(node);
+    generate_val_addr(node);
     write_output("  pop rax\n");
     write_output("  mov rax, [rax]\n");
     write_output("  push rax\n");
     return;
   case ND_ASSIGN:
-    generate_lval(node->lhs);
+    if (node->lhs->kind == ND_DEREF)
+    {
+
+    }
+    else
+      generate_val_addr(node->lhs);
     generate(node->rhs);
 
     write_output("  pop rdi\n");
@@ -686,7 +724,7 @@ void generate(Node *node)
   }
     return;
   case ND_ADDR:
-    generate_lval(node->lhs);
+    generate_val_addr(node->lhs);
     return;
   case ND_DEREF:
     generate(node->lhs);
@@ -743,10 +781,13 @@ void generate(Node *node)
 }
 
 // 変数のアドレスをpush
-void generate_lval(Node* node)
+void generate_val_addr(Node* node)
 {
   if (node->kind != ND_LVAR)
-    error("not left value");
+  {
+    print_node(node, 0, stdout);
+    error("not left value\n");
+  }
 
   write_output("  mov rax, rbp\n");
   write_output("  sub rax, %d\n", node->offset);

@@ -9,8 +9,11 @@
 
 Node *new_node_op(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
-LVar *find_lvar(Token *tok);
-LVar *new_lvar(Token *tok, size_t size);
+Variable *find_lvar(Token *tok);
+Variable *new_lvar(Token *tok, size_t size);
+Variable *find_gvar(Token *tok);
+Variable *new_gvar(Token *tok, size_t size);
+Variable *find_var(Token *tok);
 
 Node *func();
 Node *stmt();
@@ -30,7 +33,8 @@ int type_size(Type *type);
 
 void generate_val_addr(Node *node);
 
-static LVar *locals;
+static Variable *locals;
+static Variable *globals;
 static unsigned int label_latest = 0;
 
 void print_node(Node *node, int depth, FILE *s)
@@ -140,18 +144,27 @@ Node *new_node_num(int val)
   return node;
 }
 
-LVar *find_lvar(Token* tok)
+Variable *find_var(Token *tok)
 {
-  for (LVar *var = locals; var; var = var->next)
+  Variable *var = find_lvar(tok);
+  if (var)
+    return var;
+
+  return find_gvar(tok);
+}
+
+Variable *find_lvar(Token* tok)
+{
+  for (Variable *var = locals; var; var = var->next)
     if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
       return var;
 
   return NULL;
 }
 
-LVar* new_lvar(Token* tok, size_t size)
+Variable* new_lvar(Token* tok, size_t size)
 {
-  LVar *var = calloc(1, sizeof(LVar));
+  Variable *var = calloc(1, sizeof(Variable));
 
   if (locals)
   {
@@ -163,8 +176,34 @@ LVar* new_lvar(Token* tok, size_t size)
 
   var->name = tok->str;
   var->len = tok->len;
+  var->scope = LOCAL;
   locals = var;
 
+  return var;
+}
+
+Variable* find_gvar(Token* tok)
+{
+  for (Variable *var = globals; var; var = var->next)
+    if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+      return var;
+
+  return NULL;
+}
+
+Variable* new_gvar(Token* tok, size_t size)
+{
+  Variable *var = calloc(1, sizeof(Variable));
+  
+  if (globals)
+    var->next = globals;
+  
+  var->name = tok->str;
+  var->len = tok->len;
+  var->offset = size;
+  var->scope = GLOBAL;
+  globals = var;
+  
   return var;
 }
 
@@ -176,7 +215,7 @@ int get_offsets()
     return 0;
 }
 
-void print_lvar_internal(LVar *lvar)
+void print_lvar_internal(Variable *lvar)
 {
   if (lvar)
   {
@@ -240,7 +279,7 @@ Node* func()
     arg->kind = ND_FNARG;
     arg->type = ty;
 
-    LVar *var = new_lvar(argident, 8);
+    Variable *var = new_lvar(argident, 8);
     var->type = ty;
     arg->offset = var->offset;
 
@@ -368,10 +407,10 @@ Node* stmt()
   {
     Token *tok = consume_ident();
 
-    if (find_lvar(tok))
+    if (find_var(tok))
       error_at(tok->str, "this var is already defined\n");
 
-    LVar *var;
+    Variable *var;
     if (consume_reserved("["))
     {
       int size = expect_number();
@@ -585,7 +624,7 @@ Node *primary()
       int index = expect_number();
       expect_reserved("]");
 
-      LVar *array = find_lvar(tok);
+      Variable *array = find_var(tok);
       if (!array)
         error_at(tok->str, "undefined array\n");
 
@@ -612,7 +651,7 @@ Node *primary()
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
 
-    LVar *var = find_lvar(tok);
+    Variable *var = find_var(tok);
     if (var)
     {
       node->offset = var->offset;

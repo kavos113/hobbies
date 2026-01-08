@@ -91,14 +91,19 @@ struct Node
 void print_node(Node *node, int depth, FILE *s);
 void print_lvar();
 
-typedef struct LVar
+typedef struct Variable
 {
-  struct LVar *next;
+  struct Variable *next;
+  enum
+  {
+    LOCAL,
+    GLOBAL
+  } scope;
   char *name;
   int len;
-  int offset;
+  int offset; // size if global
   Type *type;
-} LVar;
+} Variable;
 
 int get_offsets();
 

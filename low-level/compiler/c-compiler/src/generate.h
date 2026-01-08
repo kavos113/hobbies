@@ -24,6 +24,7 @@ add     = mul ("+" mul | "-" mul)*
 mul     = unary ("*" unary | "/" unary)*
 unary   = ("+" | "-")? primary
           | ("*" | "&") unary
+          | "sizeof" unary
 primary = num
           | ident ("(" (expr ",")* ")")?
           | "(" expr ")"
@@ -53,6 +54,7 @@ typedef enum {
   ND_FNCL,    // name, name_len: func name, next: args head
   ND_FNARG, // next: next arg(null: end), lhs(call only), offset(def only)
   ND_FNDEF,   // name, name_len: func name, next: args head, offset: total offset
+  ND_SIZEOF,  // lhs
 } NodeKind;
 
 typedef struct Node Node;
@@ -80,6 +82,7 @@ struct Node
   char *name; // only ND_FNCL, ND_FNDEF
   int name_len; // only ND_FNCL, ND_FNDEF
   Node **stmts; // only ND_FNDEF
+  Type *type;
 };
 
 void print_node(Node *node, int depth, FILE *s);

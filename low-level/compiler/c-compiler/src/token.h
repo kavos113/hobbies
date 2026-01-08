@@ -21,6 +21,7 @@ typedef enum
   KW_WHILE,
   KW_FOR,
   KW_INT,
+  KW_SIZEOF,
 } Keyword;
 
 typedef struct Token Token;

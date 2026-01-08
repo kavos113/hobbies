@@ -24,6 +24,9 @@ Node *mul();
 Node *unary();
 Node *primary();
 
+void add_type(Node *node);
+bool is_equal_type(Type *t1, Type *t2);
+
 void generate_val_addr(Node *node);
 
 static LVar *locals;
@@ -96,6 +99,9 @@ void print_node(Node *node, int depth, FILE *s)
     break;
   case ND_DEREF:
     fprintf(s, "ND_DEREF\n");
+    break;
+  case ND_SIZEOF:
+    fprintf(s, "ND_SIZEOF\n");
     break;
   }
 
@@ -499,6 +505,9 @@ Node *unary()
   if (consume_reserved("&"))
     return new_node_op(ND_ADDR, unary(), NULL);
 
+  if (consume_keyword(KW_SIZEOF))
+    return new_node_op(ND_SIZEOF, unary(), NULL);
+
   return primary();
 }
 
@@ -551,6 +560,7 @@ Node *primary()
     if (var)
     {
       node->offset = var->offset;
+      node->type = var->type;
     }
     else
       error_at(tok->str, "undefined variable\n");
@@ -562,7 +572,94 @@ Node *primary()
   return new_node_num(expect_number());
 }
 
-void generate(Node *node) 
+void add_type(Node* node)
+{
+  if (!node || node->type)
+    return;
+
+  add_type(node->lhs);
+  add_type(node->rhs);
+  add_type(node->next);
+  add_type(node->cond);
+  add_type(node->init);
+
+  int i = 0;
+  while (node->stmts[i])
+    add_type(node->stmts[i]);
+
+  // ND_LVAR: add type when create node
+  // ND_IF, WHILE, FOR, BLOCK, FN: no type
+  switch (node->kind)
+  {
+  case ND_ADD:
+  case ND_SUB:
+  case ND_MUL:
+  case ND_DIV:
+    if (node->lhs->type->type == PTR)
+      node->type = node->lhs->type;
+    else if (node->rhs->type->type == PTR)
+      node->type = node->rhs->type;
+    else
+    {
+      Type *ty = calloc(1, sizeof(Type));
+      ty->type = INT;
+      node->type = ty;
+    }
+    return;
+
+  case ND_NUM:
+  case ND_LESS:
+  case ND_LESSEQ:
+  case ND_EQ:
+  case ND_NEQ:
+  case ND_SIZEOF:
+    {
+      Type *ty = calloc(1, sizeof(Type));
+      ty->type = INT;
+      node->type = ty;
+    }
+    return;
+
+  case ND_ADDR:
+    {
+      Type *ty = calloc(1, sizeof(Type));
+      ty->type = PTR;
+      ty->base = node->lhs->type;
+    }
+    return;
+
+  case ND_DEREF:
+    if (node->lhs->type->type != PTR)
+      error("Type Error: cannot dereference non-pointer variable\n");
+    else
+      node->type = node->lhs->type->base;
+    return;
+
+  case ND_ASSIGN:
+    if (!is_equal_type(node->lhs->type, node->rhs->type))
+      error("Type Error: cannot assign different type\n");
+    else
+      node->type = node->lhs->type;
+    return;
+
+  case ND_RETURN:
+    node->type = node->lhs->type;
+    return;
+  }
+}
+
+bool is_equal_type(Type* t1, Type* t2)
+{
+  if (t1->type != t2->type)
+    return false;
+
+  if (t1->type == INT && t2->type == INT)
+    return true;
+
+  return is_equal_type(t1->base, t2->base);
+}
+
+void generate(Node *node)
 {
   switch (node->kind)
   {
@@ -730,6 +827,14 @@ void generate(Node *node)
     write_output("  pop rax\n");
     write_output("  mov rax, [rax]\n");
     write_output("  push rax\n");
+    return;
+  case ND_SIZEOF:
+    if (!node->lhs->type)
+      error("Type Error: cannot 'sizeof' for no-value\n");
+    else if (node->lhs->type->type == INT)
+      write_output("  push 4\n");
+    else
+      write_output("  push 8\n");
     return;
   }
 

@@ -201,6 +201,14 @@ Token *tokenize(char *p)
       continue;
     }
 
+    if (strncmp(p, "sizeof", 6) == 0 && !is_token_str(p[6]))
+    {
+      current = new_token(TK_KEYWORD, current, p, 6);
+      current->kwd = KW_SIZEOF;
+      p += 6;
+      continue;
+    }
+
     // variable
     if (is_token_str(*p))
     {

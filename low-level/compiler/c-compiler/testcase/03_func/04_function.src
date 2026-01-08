@@ -1,0 +1,7 @@
+int somefunc() {
+    return 42;
+}
+
+int main() {
+    return somefunc() + 5;
+}

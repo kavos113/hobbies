@@ -1,5 +1,6 @@
 TARGET = kernel.elf
-OBJS = main.o pixel_writer.o font.o console.o newlib_support.o io.o pci.o mouse.o logger.o libcxx_support.o \
+OBJS = main.o pixel_writer.o font.o console.o newlib_support.o io.o pci.o mouse.o logger.o \
+	libcxx_support.o interrupt.o idt.o \
 	usb/memory.o usb/device.o usb/xhci/device.o usb/xhci/devmgr.o usb/xhci/port.o \
 	usb/xhci/registers.o usb/xhci/ring.o usb/xhci/trb.o usb/xhci/xhci.o \
 	usb/classdriver/base.o usb/classdriver/hid.o usb/classdriver/keyboard.o usb/classdriver/mouse.o

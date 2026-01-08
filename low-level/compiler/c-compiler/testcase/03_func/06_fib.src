@@ -1,0 +1,17 @@
+int fibonacci(int n) {
+    int a;
+
+    a = 0;
+    if (n == 0) {
+        a = 0;
+    } else if (n == 1) {
+        a = 1;
+    } else {
+        a = fibonacci(n - 1) + fibonacci(n - 2);
+    }
+    return a;
+}
+
+int main() {
+    return fibonacci(10);
+}

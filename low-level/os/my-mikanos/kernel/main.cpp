@@ -4,6 +4,8 @@
 #include "mouse.h"
 #include "pci.h"
 #include "pixel_writer.h"
+#include "interrupt.h"
+#include "idt.h"
 
 #include "usb/classdriver/mouse.hpp"
 #include "usb/xhci/xhci.hpp"
@@ -53,6 +55,23 @@ void switch_ehci_to_xhci(const pci::Device& xhc_dev)
 
     uint32_t echi2xhci_ports = pci::read_config_register(xhc_dev, 0xd4);
     pci::write_config_register(xhc_dev, 0xd0, echi2xhci_ports);
+}
+
+usb::xhci::Controller *xhc;
+
+__attribute__((interrupt))
+void int_handler_xhcl(InterruptFrame *frame)
+{
+    while (xhc->PrimaryEventRing()->HasFront())
+    {
+        Error err = usb::xhci::ProcessEvent(*xhc);
+        if (err)
+        {
+            Log(LogLevel::ERROR, "Error while process event: %s at %%s:%d\n", err.name(), err.file(), err.line());
+        }
+    }
+
+    notify_end_of_interrupt();
 }
 
 extern "C" void KernelMain(const FrameBufferConfig* config)
@@ -116,6 +135,30 @@ extern "C" void KernelMain(const FrameBufferConfig* config)
     if (xhc_dev)
     {
         Log(LogLevel::WARN, "xHC has been found: %d.%d.%d\n", xhc_dev->bus, xhc_dev->device, xhc_dev->function);
+    }
+
+    const uint16_t cs = GetCS();
+    set_idt_entry(
+        idt[InterruptVector::kXHCI],
+        make_idt_attr(DescriptorType::InterruptGate, 0),
+        reinterpret_cast<uint64_t>(int_handler_xhcl),
+        cs
+    );
+    LoadIDT(sizeof(idt) - 1, reinterpret_cast<uintptr_t>(&idt[0]));
+
+    // bsp: bootstrap processer
+    const uint8_t bsp_local_apic_id = *reinterpret_cast<const uint32_t *>(0xfee0020) >> 24;
+    err = pci::configure_msi_fixed_destination(
+        *xhc_dev,
+        bsp_local_apic_id,
+        pci::MSITriggerMode::kLevel,
+        pci::MSIDeliveryMode::kFixed,
+        InterruptVector::kXHCI,
+        0
+    );
+    if (err)
+    {
+        Log(LogLevel::ERROR, "failed to configure msi: %s\n", err.name());
     }
 
     uint64_t xhc_bar;

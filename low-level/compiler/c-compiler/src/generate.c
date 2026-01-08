@@ -194,7 +194,11 @@ void program(Node** dst)
 {
   int i = 0;
   while (!at_eof())
-    dst[i++] = func();
+  {
+    dst[i] = func();
+    add_type(dst[i]);
+    i++;
+  }
   dst[i] = NULL;
 }
 
@@ -234,8 +238,10 @@ Node* func()
 
     Node *arg = calloc(1, sizeof(Node));
     arg->kind = ND_FNARG;
+    arg->type = ty;
 
-    LVar *var = new_lvar(argident, type_size(ty));
+    LVar *var = new_lvar(argident, 8);
+    var->type = ty;
     arg->offset = var->offset;
 
     *lastarg = arg;
@@ -365,6 +371,7 @@ Node* stmt()
     if (find_lvar(tok))
       error_at(tok->str, "this var is already defined\n");
 
+    LVar *var;
     if (consume_reserved("["))
     {
       int size = expect_number();
@@ -376,14 +383,20 @@ Node* stmt()
       atype->base = ty;
 
       ty = atype;
-    }
 
-    LVar *var = new_lvar(tok, type_size(ty));
-    var->type = ty;
+      var = new_lvar(tok, type_size(ty));
+      var->type = ty;
+    }
+    else
+    {
+      var = new_lvar(tok, 8);
+      var->type = ty;
+    }
 
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
     node->offset = var->offset;
+    node->type = var->type;
 
     expect_reserved(";");
 
@@ -567,6 +580,35 @@ Node *primary()
       return node;
     }
 
+    if (consume_reserved("["))
+    {
+      int index = expect_number();
+      expect_reserved("]");
+
+      LVar *array = find_lvar(tok);
+      if (!array)
+        error_at(tok->str, "undefined array\n");
+
+      Node *node = calloc(1, sizeof(Node));
+      node->kind = ND_DEREF;
+
+      Node *addr = calloc(1, sizeof(Node));
+      addr->kind = ND_ADD;
+      addr->lhs = calloc(1, sizeof(Node));
+      addr->lhs->kind = ND_LVAR;
+      addr->lhs->offset = array->offset;
+      addr->lhs->type = array->type;
+      addr->rhs = calloc(1, sizeof(Node));
+      addr->rhs->kind = ND_NUM;
+      addr->rhs->type = calloc(1, sizeof(Type));
+      addr->rhs->type->type = INT;
+      addr->rhs->val = index;
+
+      node->lhs = addr;
+
+      return node;
+    }
+
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
 
@@ -598,8 +640,8 @@ void add_type(Node* node)
   add_type(node->init);
 
   int i = 0;
-  while (node->stmts[i])
-    add_type(node->stmts[i]);
+  while (node->stmts && node->stmts[i])
+    add_type(node->stmts[i++]);
 
   // ND_LVAR: add type when create node
   // ND_IF, WHILE, FOR, BLOCK, FN: no type
@@ -611,8 +653,22 @@ void add_type(Node* node)
   case ND_DIV:
     if (node->lhs->type->type == PTR)
       node->type = node->lhs->type;
+    else if (node->lhs->type->type == ARRAY)
+    {
+      Type *ty = calloc(1, sizeof(Type));
+      ty->type = PTR;
+      ty->base = node->lhs->type->base;
+      node->type = ty;
+    }
     else if (node->rhs->type->type == PTR)
       node->type = node->rhs->type;
+    else if (node->rhs->type->type == ARRAY)
+    {
+      Type *ty = calloc(1, sizeof(Type));
+      ty->type = PTR;
+      ty->base = node->rhs->type->base;
+      node->type = ty;
+    }
     else
     {
       Type *ty = calloc(1, sizeof(Type));
@@ -627,6 +683,7 @@ void add_type(Node* node)
   case ND_EQ:
   case ND_NEQ:
   case ND_SIZEOF:
+  case ND_FNCL:
     {
       Type *ty = calloc(1, sizeof(Type));
       ty->type = INT;
@@ -639,11 +696,12 @@ void add_type(Node* node)
       Type *ty = calloc(1, sizeof(Type));
       ty->type = PTR;
       ty->base = node->lhs->type;
+      node->type = ty;
     }
     return;
 
   case ND_DEREF:
-    if (node->lhs->type->type != PTR)
+    if (node->lhs->type->type != PTR && node->lhs->type->type != ARRAY)
       error("Type Error: cannot dereference non-pointer variable\n");
     else
       node->type = node->lhs->type->base;
@@ -675,8 +733,10 @@ bool is_equal_type(Type* t1, Type* t2)
 
 int type_size(Type* type)
 {
-  if (type->type == INT || type->type == PTR)
+  if (type->type == PTR)
     return 8;
+  else if (type->type == INT)
+    return 4;
   else
     return type->array_size * type_size(type->base);
 }
@@ -689,8 +749,11 @@ void generate(Node *node)
     write_output("  push %d\n", node->val);
     return;
   case ND_LVAR:
-    // 変数の中身をスタックにpush
     generate_val_addr(node);
+    if (node->type->type == ARRAY)
+      return;
+
+    // 変数の中身をスタックにpush
     write_output("  pop rax\n");
     write_output("  mov rax, [rax]\n");
     write_output("  push rax\n");
@@ -853,8 +916,6 @@ void generate(Node *node)
   case ND_SIZEOF:
     if (!node->lhs->type)
       error("Type Error: cannot 'sizeof' for no-value\n");
-    else if (node->lhs->type->type == INT)
-      write_output("  push 4\n");
     else
       write_output("  push %d\n", type_size(node->lhs->type));
     return;
@@ -863,12 +924,16 @@ void generate(Node *node)
   generate(node->lhs);
   generate(node->rhs);
 
-  write_output("  pop rdi\n");
-  write_output("  pop rax\n");
+  write_output("  pop rdi\n"); // rhs
+  write_output("  pop rax\n"); // lhs
 
   switch (node->kind)
   {
   case ND_ADD:
+    if (node->lhs->type->type == PTR)
+      write_output("  imul rax, %d\n", type_size(node->lhs->type));
+    else if (node->rhs->type->type == PTR)
+      write_output("  imul rdi, %d\n", type_size(node->rhs->type));
     write_output("  add rax, rdi\n");
     break;
   case ND_SUB:

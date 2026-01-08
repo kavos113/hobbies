@@ -27,6 +27,7 @@ unary   = ("+" | "-")? primary
           | "sizeof" unary
 primary = num
           | ident ("(" (expr ",")* ")")?
+          | ident "[" num "]"
           | "(" expr ")"
 
 type    = "int" "*"*

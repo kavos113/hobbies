@@ -45,7 +45,7 @@ func (c *CloudWatchClient) GetStreams(logGroup string, start, end time.Time) ([]
 		}
 
 		for _, stream := range output.LogStreams {
-			if stream.LastEventTimestamp != nil {
+			if stream.LastEventTimestamp == nil {
 				continue
 			}
 			streamTime := time.UnixMilli(*stream.LastEventTimestamp)

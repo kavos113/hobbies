@@ -88,7 +88,7 @@ func (uc *Commands) CloudWatchListStreams(args map[string]any) error {
 	}
 	defer f.Close()
 	for _, stream := range streams {
-		_, err := f.WriteString(stream.Name + "\n")
+		_, err := f.WriteString(fmt.Sprintf("%s, %s\n", stream.Time.Format("2006-01-02_15:04:05"), stream.Name))
 		if err != nil {
 			return err
 		}

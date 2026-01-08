@@ -10,7 +10,7 @@
 Node *new_node_op(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 LVar *find_lvar(Token *tok);
-LVar *new_lvar(Token *tok);
+LVar *new_lvar(Token *tok, size_t size);
 
 Node *func();
 Node *stmt();
@@ -26,6 +26,7 @@ Node *primary();
 
 void add_type(Node *node);
 bool is_equal_type(Type *t1, Type *t2);
+int type_size(Type *type);
 
 void generate_val_addr(Node *node);
 
@@ -148,17 +149,17 @@ LVar *find_lvar(Token* tok)
   return NULL;
 }
 
-LVar* new_lvar(Token* tok)
+LVar* new_lvar(Token* tok, size_t size)
 {
   LVar *var = calloc(1, sizeof(LVar));
 
   if (locals)
   {
     var->next = locals;
-    var->offset = locals->offset + 8;
+    var->offset = locals->offset + size;
   }
   else
-    var->offset = 8;
+    var->offset = size;
 
   var->name = tok->str;
   var->len = tok->len;
@@ -234,7 +235,7 @@ Node* func()
     Node *arg = calloc(1, sizeof(Node));
     arg->kind = ND_FNARG;
 
-    LVar *var = new_lvar(argident);
+    LVar *var = new_lvar(argident, type_size(ty));
     arg->offset = var->offset;
 
     *lastarg = arg;
@@ -364,7 +365,20 @@ Node* stmt()
     if (find_lvar(tok))
       error_at(tok->str, "this var is already defined\n");
 
-    LVar *var = new_lvar(tok);
+    if (consume_reserved("["))
+    {
+      int size = expect_number();
+      expect_reserved("]");
+
+      Type *atype = calloc(1, sizeof(Node));
+      atype->type = ARRAY;
+      atype->array_size = size;
+      atype->base = ty;
+
+      ty = atype;
+    }
+
+    LVar *var = new_lvar(tok, type_size(ty));
     var->type = ty;
 
     Node *node = calloc(1, sizeof(Node));
@@ -659,6 +673,14 @@ bool is_equal_type(Type* t1, Type* t2)
   return is_equal_type(t1->base, t2->base);
 }
 
+int type_size(Type* type)
+{
+  if (type->type == INT || type->type == PTR)
+    return 8;
+  else
+    return type->array_size * type_size(type->base);
+}
+
 void generate(Node *node)
 {
   switch (node->kind)
@@ -834,7 +856,7 @@ void generate(Node *node)
     else if (node->lhs->type->type == INT)
       write_output("  push 4\n");
     else
-      write_output("  push 8\n");
+      write_output("  push %d\n", type_size(node->lhs->type));
     return;
   }
 

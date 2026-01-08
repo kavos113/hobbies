@@ -131,7 +131,7 @@ Token *tokenize(char *p)
     }
 
     // single char operator
-    if (strchr("+-*/()<>;={},*&", *p))
+    if (strchr("+-*/()<>;={},*&[]", *p))
     {
       current = new_token(TK_RESERVED, current, p++, 1);
       continue;

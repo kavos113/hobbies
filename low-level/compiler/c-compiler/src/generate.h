@@ -15,7 +15,7 @@ stmt    = expr ";"
           | "while" "(" expr ")" stmt
           | "for" "(" expr? ";" expr? ";" expr? ")" stmt
           | "{" stmt* "}"
-          | type ident ";"
+          | type ident ("[" num "]")? ";"
 expr    = assign
 assign  = equal ("=" assign)?
 equal   = compare ("==" compare | "!= compare")*
@@ -45,7 +45,7 @@ typedef enum {
   ND_ADDR,   // &, lhs
   ND_DEREF,  // *, lhs
   ND_ASSIGN,  // lhs: variable, rhs: value
-  ND_LVAR,    // offset: offset from rbp. lhs=rhs=null
+  ND_LVAR,    // offset: offset from rbp. type
   ND_RETURN,  // lhs: expr, rhs=null
   ND_IF,      // cond: condition, lhs: if stmt, rhs: else stmt(nullable)
   ND_WHILE,   // cond: condition, lhs: stmt
@@ -65,8 +65,10 @@ typedef struct Type
   {
     INT,
     PTR,
+    ARRAY,
   } type;
   struct Type *base;
+  size_t array_size;
 } Type;
 
 struct Node 

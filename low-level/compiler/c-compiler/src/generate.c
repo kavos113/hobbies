@@ -578,11 +578,10 @@ void generate(Node *node)
     return;
   case ND_ASSIGN:
     if (node->lhs->kind == ND_DEREF)
-    {
-
-    }
+      generate(node->lhs->lhs);
     else
       generate_val_addr(node->lhs);
+
     generate(node->rhs);
 
     write_output("  pop rdi\n");

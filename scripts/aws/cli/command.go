@@ -63,12 +63,12 @@ func (cli *Cli) AddSubCommand(commandName, subCommandName, description string, o
 }
 
 func (cli *Cli) ParseAndExecute(args []string) error {
-	if len(args) < 2 {
+	if len(args) < 3 {
 		return nil
 	}
 
-	commandName := args[0]
-	subCommandName := args[1]
+	commandName := args[1]
+	subCommandName := args[2]
 
 	var selectedCommand *Command
 	for _, cmd := range cli.Commands {
@@ -94,7 +94,7 @@ func (cli *Cli) ParseAndExecute(args []string) error {
 		return nil
 	}
 
-	parsedArgs, err := parseOptions(args[2:], selectedSubCommand.Options)
+	parsedArgs, err := parseOptions(args[3:], selectedSubCommand.Options)
 	if err != nil {
 		SubCommandUsage(*selectedCommand, *selectedSubCommand)
 		return err

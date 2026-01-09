@@ -60,8 +60,8 @@ char *register_name[32] = {
   "t6"
 };
 
-InstInfo *instructions[1] = {
-  {"add", 3, FM_R}
+InstInfo instructions[1] = {
+  {"add", 3, M_ADD, FM_R}
 };
 
 Register parse_register(Token *tok)
@@ -90,8 +90,8 @@ InstInfo *parse_instruction(Token *tok)
     return NULL;
 
   for (int i = 0; i < 1; i++)
-    if (strncmp(tok->str, instructions[i]->name, tok->len) == 0)
-      return instructions[i];
+    if (strncmp(tok->str, instructions[i].name, tok->len) == 0)
+      return &instructions[i];
   
   return NULL;
 }

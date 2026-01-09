@@ -49,10 +49,16 @@ typedef enum
   R_T6,
 } Register;
 
+typedef enum 
+{
+  M_ADD,
+} Mnemonic;
+
 typedef struct InstInfo
 {
   char *name;
   int len;
+  Mnemonic mnemonic;
   
   Format fmt;
 } InstInfo;

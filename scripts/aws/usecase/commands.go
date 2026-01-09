@@ -97,10 +97,14 @@ func (uc *Commands) CloudWatchListStreams(args map[string]any) error {
 }
 
 func (uc *Commands) S3Download(args map[string]any) error {
+	rewrite := false
+	if args["rewrite"] != nil {
+		rewrite = args["rewite"].(bool)
+	}
 	return uc.s3.DownloadFolder(
 		args["bucket"].(string),
 		args["prefix"].(string),
 		args["local-path"].(string),
-		args["rewrite"].(bool),
+		rewrite,
 	)
 }

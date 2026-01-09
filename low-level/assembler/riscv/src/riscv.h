@@ -59,7 +59,7 @@ typedef struct InstInfo
 
 typedef struct Instruction
 {
-  InstInfo info;
+  InstInfo *info;
 
   Register rd;
   Register rs1;

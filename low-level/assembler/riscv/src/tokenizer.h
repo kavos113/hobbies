@@ -4,6 +4,7 @@
 typedef enum 
 {
   T_STR,
+  T_NUM,
   T_SYM,
   T_EOL,
   T_EOF,   
@@ -14,6 +15,7 @@ typedef struct Token
   TokenType type;
   char *str;
   int len;
+  int val;
 
   struct Token *next;
 } Token;

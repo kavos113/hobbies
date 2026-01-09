@@ -5,10 +5,10 @@
 #include <string.h>
 #include <ctype.h>
 
-bool is_alnum(char c);
+bool is_str(char c);
 Token *new_token(TokenType type, char *str, int len, Token *last);
 
-bool is_alnum(char c)
+bool is_str(char c)
 {
   return ('a' <= c && c <= 'z')
       || ('A' <= c && c <= 'Z')
@@ -47,6 +47,16 @@ Token *tokenize(char *p)
       continue;
     }
 
+    if (isdigit(*p))
+    {
+      char *base = p;
+
+      last = new_token(T_NUM, base, 0, last);
+      last->val = strtol(p, &p, 10);
+      last->len = p - base;
+      continue;
+    }
+
     if (strchr(",:", *p))
     {
       last = new_token(T_SYM, p, 1, last);
@@ -54,11 +64,11 @@ Token *tokenize(char *p)
       continue;
     }
 
-    if (is_alnum(*p))
+    if (is_str(*p))
     {
       int len = 0;
       char *start = p;
-      while(is_alnum(*p))
+      while(is_str(*p))
       {
         len++;
         p++;

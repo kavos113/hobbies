@@ -49,13 +49,17 @@ typedef enum
   R_T6,
 } Register;
 
+typedef struct InstInfo
+{
+  char *name;
+  int len;
+  
+  Format fmt;
+} InstInfo;
+
 typedef struct Instruction
 {
-  Format fmt;
-
-  char opcode;
-  char func7;
-  char func3;
+  InstInfo info;
 
   Register rd;
   Register rs1;

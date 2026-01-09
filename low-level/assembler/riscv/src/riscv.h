@@ -61,6 +61,8 @@ typedef struct Instruction
   Register rs1;
   Register rs2;
   int imm;
+
+  struct Instruction *next;
 } Instruction;
 
 #endif // RISCV_H

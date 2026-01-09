@@ -1,0 +1,23 @@
+#ifndef TOKENIZER_H
+#define TOKENIZER_H
+
+typedef enum 
+{
+  T_STR,
+  T_SYM,
+  T_EOL,
+  T_EOF,   
+} TokenType;
+
+typedef struct Token
+{
+  TokenType type;
+  char *str;
+  int len;
+
+  struct Token *next;
+} Token;
+
+Token *tokenize(char *p);
+
+#endif // TOKENIZER_H

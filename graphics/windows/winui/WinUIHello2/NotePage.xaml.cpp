@@ -21,4 +21,13 @@ namespace winrt::WinUIHello2::implementation
     {
         throw hresult_not_implemented();
     }
+
+    void NotePage::NotePage_Loaded(const IInspectable& sender, const RoutedEventArgs& e)
+    {
+        m_file = m_storageFolder.TryGetItemAsync(m_fileName);
+        if (m_file)
+        {
+
+        }
+    }
 }

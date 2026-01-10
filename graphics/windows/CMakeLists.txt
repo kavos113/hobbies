@@ -61,6 +61,8 @@ add_subdirectory(dwrite/features)
 
 add_subdirectory(winrt/capture)
 
+add_subdirectory(winui/cmake-hello)
+
 add_subdirectory(winsock/hello)
 add_subdirectory(winsock/udp)
 add_subdirectory(winsock/window)

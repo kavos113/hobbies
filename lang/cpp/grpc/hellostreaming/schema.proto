@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package helloworld;
+package hellostreaming;
 
 service HelloService {
   rpc SayHello (HelloRequest) returns (stream HelloResponse) {}

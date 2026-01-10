@@ -51,20 +51,20 @@ struct TableStruct_schema_2eproto {
 };
 extern const ::google::protobuf::internal::DescriptorTable
     descriptor_table_schema_2eproto;
-namespace helloworld {
+namespace hellostreaming {
 class HelloRequest;
 struct HelloRequestDefaultTypeInternal;
 extern HelloRequestDefaultTypeInternal _HelloRequest_default_instance_;
 class HelloResponse;
 struct HelloResponseDefaultTypeInternal;
 extern HelloResponseDefaultTypeInternal _HelloResponse_default_instance_;
-}  // namespace helloworld
+}  // namespace hellostreaming
 namespace google {
 namespace protobuf {
 }  // namespace protobuf
 }  // namespace google
 
-namespace helloworld {
+namespace hellostreaming {
 
 // ===================================================================
 
@@ -72,7 +72,7 @@ namespace helloworld {
 // -------------------------------------------------------------------
 
 class HelloResponse final : public ::google::protobuf::Message
-/* @@protoc_insertion_point(class_definition:helloworld.HelloResponse) */ {
+/* @@protoc_insertion_point(class_definition:hellostreaming.HelloResponse) */ {
  public:
   inline HelloResponse() : HelloResponse(nullptr) {}
   ~HelloResponse() PROTOBUF_FINAL;
@@ -196,7 +196,7 @@ class HelloResponse final : public ::google::protobuf::Message
   template <typename T>
   friend ::absl::string_view(
       ::google::protobuf::internal::GetAnyMessageName)();
-  static ::absl::string_view FullMessageName() { return "helloworld.HelloResponse"; }
+  static ::absl::string_view FullMessageName() { return "hellostreaming.HelloResponse"; }
 
  protected:
   explicit HelloResponse(::google::protobuf::Arena* arena);
@@ -235,13 +235,13 @@ class HelloResponse final : public ::google::protobuf::Message
   std::string* _internal_mutable_response();
 
   public:
-  // @@protoc_insertion_point(class_scope:helloworld.HelloResponse)
+  // @@protoc_insertion_point(class_scope:hellostreaming.HelloResponse)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
       0, 1, 0,
-      41, 2>
+      45, 2>
       _table_;
 
   friend class ::google::protobuf::MessageLite;
@@ -268,7 +268,7 @@ class HelloResponse final : public ::google::protobuf::Message
 // -------------------------------------------------------------------
 
 class HelloRequest final : public ::google::protobuf::Message
-/* @@protoc_insertion_point(class_definition:helloworld.HelloRequest) */ {
+/* @@protoc_insertion_point(class_definition:hellostreaming.HelloRequest) */ {
  public:
   inline HelloRequest() : HelloRequest(nullptr) {}
   ~HelloRequest() PROTOBUF_FINAL;
@@ -392,7 +392,7 @@ class HelloRequest final : public ::google::protobuf::Message
   template <typename T>
   friend ::absl::string_view(
       ::google::protobuf::internal::GetAnyMessageName)();
-  static ::absl::string_view FullMessageName() { return "helloworld.HelloRequest"; }
+  static ::absl::string_view FullMessageName() { return "hellostreaming.HelloRequest"; }
 
  protected:
   explicit HelloRequest(::google::protobuf::Arena* arena);
@@ -431,13 +431,13 @@ class HelloRequest final : public ::google::protobuf::Message
   std::string* _internal_mutable_request();
 
   public:
-  // @@protoc_insertion_point(class_scope:helloworld.HelloRequest)
+  // @@protoc_insertion_point(class_scope:hellostreaming.HelloRequest)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
       0, 1, 0,
-      39, 2>
+      43, 2>
       _table_;
 
   friend class ::google::protobuf::MessageLite;
@@ -485,7 +485,7 @@ inline void HelloRequest::clear_request() {
 }
 inline const std::string& HelloRequest::request() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:helloworld.HelloRequest.request)
+  // @@protoc_insertion_point(field_get:hellostreaming.HelloRequest.request)
   return _internal_request();
 }
 template <typename Arg_, typename... Args_>
@@ -493,11 +493,11 @@ inline PROTOBUF_ALWAYS_INLINE void HelloRequest::set_request(Arg_&& arg,
                                                      Args_... args) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.request_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
-  // @@protoc_insertion_point(field_set:helloworld.HelloRequest.request)
+  // @@protoc_insertion_point(field_set:hellostreaming.HelloRequest.request)
 }
 inline std::string* HelloRequest::mutable_request() ABSL_ATTRIBUTE_LIFETIME_BOUND {
   std::string* _s = _internal_mutable_request();
-  // @@protoc_insertion_point(field_mutable:helloworld.HelloRequest.request)
+  // @@protoc_insertion_point(field_mutable:hellostreaming.HelloRequest.request)
   return _s;
 }
 inline const std::string& HelloRequest::_internal_request() const {
@@ -514,7 +514,7 @@ inline std::string* HelloRequest::_internal_mutable_request() {
 }
 inline std::string* HelloRequest::release_request() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:helloworld.HelloRequest.request)
+  // @@protoc_insertion_point(field_release:hellostreaming.HelloRequest.request)
   return _impl_.request_.Release();
 }
 inline void HelloRequest::set_allocated_request(std::string* value) {
@@ -523,7 +523,7 @@ inline void HelloRequest::set_allocated_request(std::string* value) {
   if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.request_.IsDefault()) {
     _impl_.request_.Set("", GetArena());
   }
-  // @@protoc_insertion_point(field_set_allocated:helloworld.HelloRequest.request)
+  // @@protoc_insertion_point(field_set_allocated:hellostreaming.HelloRequest.request)
 }
 
 // -------------------------------------------------------------------
@@ -537,7 +537,7 @@ inline void HelloResponse::clear_response() {
 }
 inline const std::string& HelloResponse::response() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:helloworld.HelloResponse.response)
+  // @@protoc_insertion_point(field_get:hellostreaming.HelloResponse.response)
   return _internal_response();
 }
 template <typename Arg_, typename... Args_>
@@ -545,11 +545,11 @@ inline PROTOBUF_ALWAYS_INLINE void HelloResponse::set_response(Arg_&& arg,
                                                      Args_... args) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.response_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
-  // @@protoc_insertion_point(field_set:helloworld.HelloResponse.response)
+  // @@protoc_insertion_point(field_set:hellostreaming.HelloResponse.response)
 }
 inline std::string* HelloResponse::mutable_response() ABSL_ATTRIBUTE_LIFETIME_BOUND {
   std::string* _s = _internal_mutable_response();
-  // @@protoc_insertion_point(field_mutable:helloworld.HelloResponse.response)
+  // @@protoc_insertion_point(field_mutable:hellostreaming.HelloResponse.response)
   return _s;
 }
 inline const std::string& HelloResponse::_internal_response() const {
@@ -566,7 +566,7 @@ inline std::string* HelloResponse::_internal_mutable_response() {
 }
 inline std::string* HelloResponse::release_response() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:helloworld.HelloResponse.response)
+  // @@protoc_insertion_point(field_release:hellostreaming.HelloResponse.response)
   return _impl_.response_.Release();
 }
 inline void HelloResponse::set_allocated_response(std::string* value) {
@@ -575,7 +575,7 @@ inline void HelloResponse::set_allocated_response(std::string* value) {
   if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.response_.IsDefault()) {
     _impl_.response_.Set("", GetArena());
   }
-  // @@protoc_insertion_point(field_set_allocated:helloworld.HelloResponse.response)
+  // @@protoc_insertion_point(field_set_allocated:hellostreaming.HelloResponse.response)
 }
 
 #ifdef __GNUC__
@@ -583,7 +583,7 @@ inline void HelloResponse::set_allocated_response(std::string* value) {
 #endif  // __GNUC__
 
 // @@protoc_insertion_point(namespace_scope)
-}  // namespace helloworld
+}  // namespace hellostreaming
 
 
 // @@protoc_insertion_point(global_scope)

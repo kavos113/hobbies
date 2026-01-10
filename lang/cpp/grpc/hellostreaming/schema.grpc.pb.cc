@@ -19,10 +19,10 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/impl/service_type.h>
 #include <grpcpp/support/sync_stream.h>
-namespace helloworld {
+namespace hellostreaming {
 
 static const char* HelloService_method_names[] = {
-  "/helloworld.HelloService/SayHello",
+  "/hellostreaming.HelloService/SayHello",
 };
 
 std::unique_ptr< HelloService::Stub> HelloService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -35,31 +35,31 @@ HelloService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& chann
   : channel_(channel), rpcmethod_SayHello_(HelloService_method_names[0], options.suffix_for_stats(),::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
   {}
 
-::grpc::ClientReader< ::helloworld::HelloResponse>* HelloService::Stub::SayHelloRaw(::grpc::ClientContext* context, const ::helloworld::HelloRequest& request) {
-  return ::grpc::internal::ClientReaderFactory< ::helloworld::HelloResponse>::Create(channel_.get(), rpcmethod_SayHello_, context, request);
+::grpc::ClientReader< ::hellostreaming::HelloResponse>* HelloService::Stub::SayHelloRaw(::grpc::ClientContext* context, const ::hellostreaming::HelloRequest& request) {
+  return ::grpc::internal::ClientReaderFactory< ::hellostreaming::HelloResponse>::Create(channel_.get(), rpcmethod_SayHello_, context, request);
 }
 
-void HelloService::Stub::async::SayHello(::grpc::ClientContext* context, const ::helloworld::HelloRequest* request, ::grpc::ClientReadReactor< ::helloworld::HelloResponse>* reactor) {
-  ::grpc::internal::ClientCallbackReaderFactory< ::helloworld::HelloResponse>::Create(stub_->channel_.get(), stub_->rpcmethod_SayHello_, context, request, reactor);
+void HelloService::Stub::async::SayHello(::grpc::ClientContext* context, const ::hellostreaming::HelloRequest* request, ::grpc::ClientReadReactor< ::hellostreaming::HelloResponse>* reactor) {
+  ::grpc::internal::ClientCallbackReaderFactory< ::hellostreaming::HelloResponse>::Create(stub_->channel_.get(), stub_->rpcmethod_SayHello_, context, request, reactor);
 }
 
-::grpc::ClientAsyncReader< ::helloworld::HelloResponse>* HelloService::Stub::AsyncSayHelloRaw(::grpc::ClientContext* context, const ::helloworld::HelloRequest& request, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderFactory< ::helloworld::HelloResponse>::Create(channel_.get(), cq, rpcmethod_SayHello_, context, request, true, tag);
+::grpc::ClientAsyncReader< ::hellostreaming::HelloResponse>* HelloService::Stub::AsyncSayHelloRaw(::grpc::ClientContext* context, const ::hellostreaming::HelloRequest& request, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::hellostreaming::HelloResponse>::Create(channel_.get(), cq, rpcmethod_SayHello_, context, request, true, tag);
 }
 
-::grpc::ClientAsyncReader< ::helloworld::HelloResponse>* HelloService::Stub::PrepareAsyncSayHelloRaw(::grpc::ClientContext* context, const ::helloworld::HelloRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderFactory< ::helloworld::HelloResponse>::Create(channel_.get(), cq, rpcmethod_SayHello_, context, request, false, nullptr);
+::grpc::ClientAsyncReader< ::hellostreaming::HelloResponse>* HelloService::Stub::PrepareAsyncSayHelloRaw(::grpc::ClientContext* context, const ::hellostreaming::HelloRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::hellostreaming::HelloResponse>::Create(channel_.get(), cq, rpcmethod_SayHello_, context, request, false, nullptr);
 }
 
 HelloService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       HelloService_method_names[0],
       ::grpc::internal::RpcMethod::SERVER_STREAMING,
-      new ::grpc::internal::ServerStreamingHandler< HelloService::Service, ::helloworld::HelloRequest, ::helloworld::HelloResponse>(
+      new ::grpc::internal::ServerStreamingHandler< HelloService::Service, ::hellostreaming::HelloRequest, ::hellostreaming::HelloResponse>(
           [](HelloService::Service* service,
              ::grpc::ServerContext* ctx,
-             const ::helloworld::HelloRequest* req,
-             ::grpc::ServerWriter<::helloworld::HelloResponse>* writer) {
+             const ::hellostreaming::HelloRequest* req,
+             ::grpc::ServerWriter<::hellostreaming::HelloResponse>* writer) {
                return service->SayHello(ctx, req, writer);
              }, this)));
 }
@@ -67,7 +67,7 @@ HelloService::Service::Service() {
 HelloService::Service::~Service() {
 }
 
-::grpc::Status HelloService::Service::SayHello(::grpc::ServerContext* context, const ::helloworld::HelloRequest* request, ::grpc::ServerWriter< ::helloworld::HelloResponse>* writer) {
+::grpc::Status HelloService::Service::SayHello(::grpc::ServerContext* context, const ::hellostreaming::HelloRequest* request, ::grpc::ServerWriter< ::hellostreaming::HelloResponse>* writer) {
   (void) context;
   (void) request;
   (void) writer;
@@ -75,5 +75,5 @@ HelloService::Service::~Service() {
 }
 
 
-}  // namespace helloworld
+}  // namespace hellostreaming
 

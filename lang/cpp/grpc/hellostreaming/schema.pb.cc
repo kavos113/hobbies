@@ -24,7 +24,7 @@ PROTOBUF_PRAGMA_INIT_SEG
 namespace _pb = ::google::protobuf;
 namespace _pbi = ::google::protobuf::internal;
 namespace _fl = ::google::protobuf::internal::field_layout;
-namespace helloworld {
+namespace hellostreaming {
 
 inline constexpr HelloResponse::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
@@ -79,7 +79,7 @@ struct HelloRequestDefaultTypeInternal {
 
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 HelloRequestDefaultTypeInternal _HelloRequest_default_instance_;
-}  // namespace helloworld
+}  // namespace hellostreaming
 static constexpr const ::_pb::EnumDescriptor**
     file_level_enum_descriptors_schema_2eproto = nullptr;
 static constexpr const ::_pb::ServiceDescriptor**
@@ -88,47 +88,47 @@ const ::uint32_t
     TableStruct_schema_2eproto::offsets[] ABSL_ATTRIBUTE_SECTION_VARIABLE(
         protodesc_cold) = {
         ~0u,  // no _has_bits_
-        PROTOBUF_FIELD_OFFSET(::helloworld::HelloRequest, _internal_metadata_),
+        PROTOBUF_FIELD_OFFSET(::hellostreaming::HelloRequest, _internal_metadata_),
         ~0u,  // no _extensions_
         ~0u,  // no _oneof_case_
         ~0u,  // no _weak_field_map_
         ~0u,  // no _inlined_string_donated_
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
-        PROTOBUF_FIELD_OFFSET(::helloworld::HelloRequest, _impl_.request_),
+        PROTOBUF_FIELD_OFFSET(::hellostreaming::HelloRequest, _impl_.request_),
         ~0u,  // no _has_bits_
-        PROTOBUF_FIELD_OFFSET(::helloworld::HelloResponse, _internal_metadata_),
+        PROTOBUF_FIELD_OFFSET(::hellostreaming::HelloResponse, _internal_metadata_),
         ~0u,  // no _extensions_
         ~0u,  // no _oneof_case_
         ~0u,  // no _weak_field_map_
         ~0u,  // no _inlined_string_donated_
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
-        PROTOBUF_FIELD_OFFSET(::helloworld::HelloResponse, _impl_.response_),
+        PROTOBUF_FIELD_OFFSET(::hellostreaming::HelloResponse, _impl_.response_),
 };
 
 static const ::_pbi::MigrationSchema
     schemas[] ABSL_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-        {0, -1, -1, sizeof(::helloworld::HelloRequest)},
-        {9, -1, -1, sizeof(::helloworld::HelloResponse)},
+        {0, -1, -1, sizeof(::hellostreaming::HelloRequest)},
+        {9, -1, -1, sizeof(::hellostreaming::HelloResponse)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
-    &::helloworld::_HelloRequest_default_instance_._instance,
-    &::helloworld::_HelloResponse_default_instance_._instance,
+    &::hellostreaming::_HelloRequest_default_instance_._instance,
+    &::hellostreaming::_HelloResponse_default_instance_._instance,
 };
 const char descriptor_table_protodef_schema_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIABLE(
     protodesc_cold) = {
-    "\n\014schema.proto\022\nhelloworld\"\037\n\014HelloReque"
-    "st\022\017\n\007request\030\001 \001(\t\"!\n\rHelloResponse\022\020\n\010"
-    "response\030\001 \001(\t2S\n\014HelloService\022C\n\010SayHel"
-    "lo\022\030.helloworld.HelloRequest\032\031.helloworl"
-    "d.HelloResponse\"\0000\001b\006proto3"
+    "\n\014schema.proto\022\016hellostreaming\"\037\n\014HelloR"
+    "equest\022\017\n\007request\030\001 \001(\t\"!\n\rHelloResponse"
+    "\022\020\n\010response\030\001 \001(\t2[\n\014HelloService\022K\n\010Sa"
+    "yHello\022\034.hellostreaming.HelloRequest\032\035.h"
+    "ellostreaming.HelloResponse\"\0000\001b\006proto3"
 };
 static ::absl::once_flag descriptor_table_schema_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_schema_2eproto = {
     false,
     false,
-    187,
+    199,
     descriptor_table_protodef_schema_2eproto,
     "schema.proto",
     &descriptor_table_schema_2eproto_once,
@@ -141,7 +141,7 @@ PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_schema_2eproto
     file_level_enum_descriptors_schema_2eproto,
     file_level_service_descriptors_schema_2eproto,
 };
-namespace helloworld {
+namespace hellostreaming {
 // ===================================================================
 
 class HelloRequest::_Internal {
@@ -155,11 +155,11 @@ HelloRequest::HelloRequest(::google::protobuf::Arena* arena)
     : ::google::protobuf::Message(arena) {
 #endif  // PROTOBUF_CUSTOM_VTABLE
   SharedCtor(arena);
-  // @@protoc_insertion_point(arena_constructor:helloworld.HelloRequest)
+  // @@protoc_insertion_point(arena_constructor:hellostreaming.HelloRequest)
 }
 inline PROTOBUF_NDEBUG_INLINE HelloRequest::Impl_::Impl_(
     ::google::protobuf::internal::InternalVisibility visibility, ::google::protobuf::Arena* arena,
-    const Impl_& from, const ::helloworld::HelloRequest& from_msg)
+    const Impl_& from, const ::hellostreaming::HelloRequest& from_msg)
       : request_(arena, from.request_),
         _cached_size_{0} {}
 
@@ -177,7 +177,7 @@ HelloRequest::HelloRequest(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
 
-  // @@protoc_insertion_point(copy_constructor:helloworld.HelloRequest)
+  // @@protoc_insertion_point(copy_constructor:hellostreaming.HelloRequest)
 }
 inline PROTOBUF_NDEBUG_INLINE HelloRequest::Impl_::Impl_(
     ::google::protobuf::internal::InternalVisibility visibility,
@@ -189,7 +189,7 @@ inline void HelloRequest::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
 }
 HelloRequest::~HelloRequest() {
-  // @@protoc_insertion_point(destructor:helloworld.HelloRequest)
+  // @@protoc_insertion_point(destructor:hellostreaming.HelloRequest)
   SharedDtor(*this);
 }
 inline void HelloRequest::SharedDtor(MessageLite& self) {
@@ -236,7 +236,7 @@ const ::google::protobuf::internal::ClassData* HelloRequest::GetClassData() cons
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<0, 1, 0, 39, 2> HelloRequest::_table_ = {
+const ::_pbi::TcParseTable<0, 1, 0, 43, 2> HelloRequest::_table_ = {
   {
     0,  // no _has_bits_
     0, // no _extensions_
@@ -251,7 +251,7 @@ const ::_pbi::TcParseTable<0, 1, 0, 39, 2> HelloRequest::_table_ = {
     nullptr,  // post_loop_handler
     ::_pbi::TcParser::GenericFallback,  // fallback
     #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
-    ::_pbi::TcParser::GetTable<::helloworld::HelloRequest>(),  // to_prefetch
+    ::_pbi::TcParser::GetTable<::hellostreaming::HelloRequest>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
     // string request = 1;
@@ -266,14 +266,14 @@ const ::_pbi::TcParseTable<0, 1, 0, 39, 2> HelloRequest::_table_ = {
   }},
   // no aux_entries
   {{
-    "\27\7\0\0\0\0\0\0"
-    "helloworld.HelloRequest"
+    "\33\7\0\0\0\0\0\0"
+    "hellostreaming.HelloRequest"
     "request"
   }},
 };
 
 PROTOBUF_NOINLINE void HelloRequest::Clear() {
-// @@protoc_insertion_point(message_clear_start:helloworld.HelloRequest)
+// @@protoc_insertion_point(message_clear_start:hellostreaming.HelloRequest)
   ::google::protobuf::internal::TSanWrite(&_impl_);
   ::uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
@@ -294,7 +294,7 @@ PROTOBUF_NOINLINE void HelloRequest::Clear() {
             ::google::protobuf::io::EpsCopyOutputStream* stream) const {
           const HelloRequest& this_ = *this;
 #endif  // PROTOBUF_CUSTOM_VTABLE
-          // @@protoc_insertion_point(serialize_to_array_start:helloworld.HelloRequest)
+          // @@protoc_insertion_point(serialize_to_array_start:hellostreaming.HelloRequest)
           ::uint32_t cached_has_bits = 0;
           (void)cached_has_bits;
 
@@ -302,7 +302,7 @@ PROTOBUF_NOINLINE void HelloRequest::Clear() {
           if (!this_._internal_request().empty()) {
             const std::string& _s = this_._internal_request();
             ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "helloworld.HelloRequest.request");
+                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "hellostreaming.HelloRequest.request");
             target = stream->WriteStringMaybeAliased(1, _s, target);
           }
 
@@ -311,7 +311,7 @@ PROTOBUF_NOINLINE void HelloRequest::Clear() {
                 ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
                     this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
           }
-          // @@protoc_insertion_point(serialize_to_array_end:helloworld.HelloRequest)
+          // @@protoc_insertion_point(serialize_to_array_end:hellostreaming.HelloRequest)
           return target;
         }
 
@@ -322,7 +322,7 @@ PROTOBUF_NOINLINE void HelloRequest::Clear() {
         ::size_t HelloRequest::ByteSizeLong() const {
           const HelloRequest& this_ = *this;
 #endif  // PROTOBUF_CUSTOM_VTABLE
-          // @@protoc_insertion_point(message_byte_size_start:helloworld.HelloRequest)
+          // @@protoc_insertion_point(message_byte_size_start:hellostreaming.HelloRequest)
           ::size_t total_size = 0;
 
           ::uint32_t cached_has_bits = 0;
@@ -343,7 +343,7 @@ PROTOBUF_NOINLINE void HelloRequest::Clear() {
 void HelloRequest::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
   auto* const _this = static_cast<HelloRequest*>(&to_msg);
   auto& from = static_cast<const HelloRequest&>(from_msg);
-  // @@protoc_insertion_point(class_specific_merge_from_start:helloworld.HelloRequest)
+  // @@protoc_insertion_point(class_specific_merge_from_start:hellostreaming.HelloRequest)
   ABSL_DCHECK_NE(&from, _this);
   ::uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
@@ -355,7 +355,7 @@ void HelloRequest::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::go
 }
 
 void HelloRequest::CopyFrom(const HelloRequest& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:helloworld.HelloRequest)
+// @@protoc_insertion_point(class_specific_copy_from_start:hellostreaming.HelloRequest)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -386,11 +386,11 @@ HelloResponse::HelloResponse(::google::protobuf::Arena* arena)
     : ::google::protobuf::Message(arena) {
 #endif  // PROTOBUF_CUSTOM_VTABLE
   SharedCtor(arena);
-  // @@protoc_insertion_point(arena_constructor:helloworld.HelloResponse)
+  // @@protoc_insertion_point(arena_constructor:hellostreaming.HelloResponse)
 }
 inline PROTOBUF_NDEBUG_INLINE HelloResponse::Impl_::Impl_(
     ::google::protobuf::internal::InternalVisibility visibility, ::google::protobuf::Arena* arena,
-    const Impl_& from, const ::helloworld::HelloResponse& from_msg)
+    const Impl_& from, const ::hellostreaming::HelloResponse& from_msg)
       : response_(arena, from.response_),
         _cached_size_{0} {}
 
@@ -408,7 +408,7 @@ HelloResponse::HelloResponse(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
 
-  // @@protoc_insertion_point(copy_constructor:helloworld.HelloResponse)
+  // @@protoc_insertion_point(copy_constructor:hellostreaming.HelloResponse)
 }
 inline PROTOBUF_NDEBUG_INLINE HelloResponse::Impl_::Impl_(
     ::google::protobuf::internal::InternalVisibility visibility,
@@ -420,7 +420,7 @@ inline void HelloResponse::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
 }
 HelloResponse::~HelloResponse() {
-  // @@protoc_insertion_point(destructor:helloworld.HelloResponse)
+  // @@protoc_insertion_point(destructor:hellostreaming.HelloResponse)
   SharedDtor(*this);
 }
 inline void HelloResponse::SharedDtor(MessageLite& self) {
@@ -467,7 +467,7 @@ const ::google::protobuf::internal::ClassData* HelloResponse::GetClassData() con
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<0, 1, 0, 41, 2> HelloResponse::_table_ = {
+const ::_pbi::TcParseTable<0, 1, 0, 45, 2> HelloResponse::_table_ = {
   {
     0,  // no _has_bits_
     0, // no _extensions_
@@ -482,7 +482,7 @@ const ::_pbi::TcParseTable<0, 1, 0, 41, 2> HelloResponse::_table_ = {
     nullptr,  // post_loop_handler
     ::_pbi::TcParser::GenericFallback,  // fallback
     #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
-    ::_pbi::TcParser::GetTable<::helloworld::HelloResponse>(),  // to_prefetch
+    ::_pbi::TcParser::GetTable<::hellostreaming::HelloResponse>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
     // string response = 1;
@@ -497,14 +497,14 @@ const ::_pbi::TcParseTable<0, 1, 0, 41, 2> HelloResponse::_table_ = {
   }},
   // no aux_entries
   {{
-    "\30\10\0\0\0\0\0\0"
-    "helloworld.HelloResponse"
+    "\34\10\0\0\0\0\0\0"
+    "hellostreaming.HelloResponse"
     "response"
   }},
 };
 
 PROTOBUF_NOINLINE void HelloResponse::Clear() {
-// @@protoc_insertion_point(message_clear_start:helloworld.HelloResponse)
+// @@protoc_insertion_point(message_clear_start:hellostreaming.HelloResponse)
   ::google::protobuf::internal::TSanWrite(&_impl_);
   ::uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
@@ -525,7 +525,7 @@ PROTOBUF_NOINLINE void HelloResponse::Clear() {
             ::google::protobuf::io::EpsCopyOutputStream* stream) const {
           const HelloResponse& this_ = *this;
 #endif  // PROTOBUF_CUSTOM_VTABLE
-          // @@protoc_insertion_point(serialize_to_array_start:helloworld.HelloResponse)
+          // @@protoc_insertion_point(serialize_to_array_start:hellostreaming.HelloResponse)
           ::uint32_t cached_has_bits = 0;
           (void)cached_has_bits;
 
@@ -533,7 +533,7 @@ PROTOBUF_NOINLINE void HelloResponse::Clear() {
           if (!this_._internal_response().empty()) {
             const std::string& _s = this_._internal_response();
             ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "helloworld.HelloResponse.response");
+                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "hellostreaming.HelloResponse.response");
             target = stream->WriteStringMaybeAliased(1, _s, target);
           }
 
@@ -542,7 +542,7 @@ PROTOBUF_NOINLINE void HelloResponse::Clear() {
                 ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
                     this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
           }
-          // @@protoc_insertion_point(serialize_to_array_end:helloworld.HelloResponse)
+          // @@protoc_insertion_point(serialize_to_array_end:hellostreaming.HelloResponse)
           return target;
         }
 
@@ -553,7 +553,7 @@ PROTOBUF_NOINLINE void HelloResponse::Clear() {
         ::size_t HelloResponse::ByteSizeLong() const {
           const HelloResponse& this_ = *this;
 #endif  // PROTOBUF_CUSTOM_VTABLE
-          // @@protoc_insertion_point(message_byte_size_start:helloworld.HelloResponse)
+          // @@protoc_insertion_point(message_byte_size_start:hellostreaming.HelloResponse)
           ::size_t total_size = 0;
 
           ::uint32_t cached_has_bits = 0;
@@ -574,7 +574,7 @@ PROTOBUF_NOINLINE void HelloResponse::Clear() {
 void HelloResponse::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
   auto* const _this = static_cast<HelloResponse*>(&to_msg);
   auto& from = static_cast<const HelloResponse&>(from_msg);
-  // @@protoc_insertion_point(class_specific_merge_from_start:helloworld.HelloResponse)
+  // @@protoc_insertion_point(class_specific_merge_from_start:hellostreaming.HelloResponse)
   ABSL_DCHECK_NE(&from, _this);
   ::uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
@@ -586,7 +586,7 @@ void HelloResponse::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::g
 }
 
 void HelloResponse::CopyFrom(const HelloResponse& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:helloworld.HelloResponse)
+// @@protoc_insertion_point(class_specific_copy_from_start:hellostreaming.HelloResponse)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -605,7 +605,7 @@ void HelloResponse::InternalSwap(HelloResponse* PROTOBUF_RESTRICT other) {
   return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
 }
 // @@protoc_insertion_point(namespace_scope)
-}  // namespace helloworld
+}  // namespace hellostreaming
 namespace google {
 namespace protobuf {
 }  // namespace protobuf

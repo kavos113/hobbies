@@ -59,6 +59,10 @@ add_subdirectory(d3d/35_descriptor_management)
 add_subdirectory(dwrite/01_list_system_fonts)
 add_subdirectory(dwrite/features)
 
+add_subdirectory(dxgi/show_video_memory)
+
+add_subdirectory(pdh/01_hello_pdh)
+
 add_subdirectory(winrt/capture)
 
 add_subdirectory(winui/cmake-hello)

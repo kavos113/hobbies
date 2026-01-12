@@ -1,1 +1,2 @@
 add_subdirectory(capture_stderr)
+add_subdirectory(new_smart_ptr)

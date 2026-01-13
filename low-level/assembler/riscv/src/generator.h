@@ -3,4 +3,6 @@
 
 #include "riscv.h"
 
+unsigned int generate_instruction(Instruction *inst);
+
 #endif // GENERATOR_H

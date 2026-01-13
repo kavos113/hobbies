@@ -4,14 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-void error(char *fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  vfprintf(stderr, fmt, ap);
-  fprintf(stderr, "\n");
-  exit(1);
-}
+#include "util.h"
 
 typedef struct Opcode
 {
@@ -26,7 +19,6 @@ Opcode opcode_table[1] = {
 };
 
 Opcode *find_opcode(InstInfo *info);
-unsigned int generate_instruction(Instruction *inst);
 
 Opcode *find_opcode(InstInfo *info)
 {

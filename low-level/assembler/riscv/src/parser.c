@@ -1,19 +1,10 @@
 #include "parser.h"
 
 #include <stdbool.h>
-#include <stdio.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
-void error(char *fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  vfprintf(stderr, fmt, ap);
-  fprintf(stderr, "\n");
-  exit(1);
-}
+#include "util.h"
 
 // cannot found: error
 Register parse_register(Token *tok);

@@ -6,3 +6,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(freetype)
 add_subdirectory(grpc)
+add_subdirectory(stdlib)

@@ -1,5 +1,6 @@
 #include "tokenizer.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -81,4 +82,31 @@ Token *tokenize(char *p)
 
   last = new_token(T_EOF, p, 0, last);
   return head.next;
+}
+
+void print_token(Token *tok)
+{
+  if (!tok)
+    return;
+
+  switch (tok->type)
+  {
+    case T_STR:
+      printf("T_STR: %*.s\n", tok->len, tok->str);
+      break;
+    case T_NUM:
+      printf("T_NUM: %*.s\n", tok->len, tok->str);
+      break;
+    case T_SYM:
+      printf("T_SYM: %*.s\n", tok->len, tok->str);
+      break;
+    case T_EOL:
+      printf("T_EOL\n");
+      break;
+    case T_EOF:
+      printf("T_EOF\n");
+      break;
+  }
+
+  // print_token(tok->next);
 }

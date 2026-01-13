@@ -4,6 +4,8 @@ OBJS=$(SRCS:.c=.o)
 CC=gcc
 CFLAGS=-std=c11 -g -static
 
+all: ass
+
 ass: $(OBJS)
 	$(CC) -o ass $(OBJS) $(LDFLAGS)
 

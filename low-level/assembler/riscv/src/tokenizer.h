@@ -22,4 +22,6 @@ typedef struct Token
 
 Token *tokenize(char *p);
 
+void print_token(Token *tok);
+
 #endif // TOKENIZER_H

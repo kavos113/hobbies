@@ -14,7 +14,7 @@ InstInfo *parse_instruction(Token *tok);
 void need_symbol(Token *tok, char c);
 bool is_eof(Token *tok);
 
-Instruction *parse_line(Token *tok);
+Instruction *parse_line(Token **tok);
 
 char *register_name[32] = {
   "zero",
@@ -102,57 +102,73 @@ bool is_eof(Token *tok)
 }
 
 // read token
-Instruction *parse_line(Token *tok)
+Instruction *parse_line(Token **tok)
 {
-  InstInfo *info = parse_instruction(tok);
+  InstInfo *info = parse_instruction(*tok);
   if (!info)
-    error("need instruction: %*.s", tok->len, tok->str);
+    error("need instruction: %*.s", (*tok)->len, (*tok)->str);
 
   Instruction *inst = calloc(1, sizeof(Instruction));
   inst->info = info;
 
-  tok = tok->next;
+  *tok = (*tok)->next;
 
   switch(info->fmt)
   {
   case FM_R:
-    inst->rd = parse_register(tok);
-    tok = tok->next;
-    inst->rs1 = parse_register(tok);
-    tok = tok->next;
-    inst->rs2 = parse_register(tok);
-    tok = tok->next;
+    inst->rd = parse_register(*tok);
+    *tok = (*tok)->next;
+    need_symbol(*tok, ',');
+    *tok = (*tok)->next;
+    inst->rs1 = parse_register(*tok);
+    *tok = (*tok)->next;
+    need_symbol(*tok, ',');
+    *tok = (*tok)->next;
+    inst->rs2 = parse_register(*tok);
+    *tok = (*tok)->next;
     break;
   case FM_I:
-    inst->rd = parse_register(tok);
-    tok = tok->next;
-    inst->rs1 = parse_register(tok);
-    tok = tok->next;
-    inst->imm = parse_immidiate(tok);
-    tok = tok->next;
+    inst->rd = parse_register(*tok);
+    *tok = (*tok)->next;
+    need_symbol(*tok, ',');
+    *tok = (*tok)->next;
+    inst->rs1 = parse_register(*tok);
+    *tok = (*tok)->next;
+    need_symbol(*tok, ',');
+    *tok = (*tok)->next;
+    inst->imm = parse_immidiate(*tok);
+    *tok = (*tok)->next;
     break;
   case FM_S:
   case FM_SB:
-    inst->rs1 = parse_register(tok);
-    tok = tok->next;
-    inst->rs2 = parse_register(tok);
-    tok = tok->next;
-    inst->imm = parse_immidiate(tok);
-    tok = tok->next;
+    inst->rs1 = parse_register(*tok);
+    *tok = (*tok)->next;
+    need_symbol(*tok, ',');
+    *tok = (*tok)->next;
+    inst->rs2 = parse_register(*tok);
+    *tok = (*tok)->next;
+    need_symbol(*tok, ',');
+    *tok = (*tok)->next;
+    inst->imm = parse_immidiate(*tok);
+    *tok = (*tok)->next;
     break;
   case FM_U:
   case FM_UJ:
-    inst->rd = parse_register(tok);
-    tok = tok->next;
-    inst->imm = parse_immidiate(tok);
-    tok = tok->next;
+    inst->rd = parse_register(*tok);
+    *tok = (*tok)->next;
+    need_symbol(*tok, ',');
+    *tok = (*tok)->next;
+    inst->imm = parse_immidiate(*tok);
+    *tok = (*tok)->next;
     break;
   }
 
-  if (tok->type != T_EOL)
-    error("too many tokens: %.*s", tok->len, tok->str);
+  if ((*tok)->type != T_EOL)
+    error("too many tokens: %.*s", (*tok)->len, (*tok)->str);
 
-  tok = tok->next;
+  *tok = (*tok)->next;
+
+  return inst;
 }
 
 Instruction *parse(Token *tok)
@@ -163,7 +179,7 @@ Instruction *parse(Token *tok)
 
   while(!is_eof(tok))
   {
-    Instruction *new_inst = parse_line(tok);
+    Instruction *new_inst = parse_line(&tok);
     last->next = new_inst;
     last = new_inst;
   }

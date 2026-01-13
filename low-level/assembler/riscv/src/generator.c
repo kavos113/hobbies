@@ -38,53 +38,53 @@ unsigned int generate_instruction(Instruction *inst)
   {
   case FM_R:
     result = result
-      | ((unsigned int)(inst->rd) << 6)
-      | ((unsigned int)(op->func3) << 11)
-      | ((unsigned int)(inst->rs1) << 14)
-      | ((unsigned int)(inst->rs2) << 19)
-      | ((unsigned int)(op->func7) << 24);
+      | ((unsigned int)(inst->rd) << 7)
+      | ((unsigned int)(op->func3) << 12)
+      | ((unsigned int)(inst->rs1) << 15)
+      | ((unsigned int)(inst->rs2) << 20)
+      | ((unsigned int)(op->func7) << 25);
 
   case FM_I:
     result = result
-      | ((unsigned int)(inst->rd) << 6)
-      | ((unsigned int)(op->func3) << 11)
-      | ((unsigned int)(inst->rs1) << 14)
-      | ((unsigned int)(inst->imm) << 19);
+      | ((unsigned int)(inst->rd) << 7)
+      | ((unsigned int)(op->func3) << 12)
+      | ((unsigned int)(inst->rs1) << 15)
+      | ((unsigned int)(inst->imm) << 20);
     break;
 
   case FM_S:
     result = result
-      | ((unsigned int)(inst->imm & 0x1f) << 6)
-      | ((unsigned int)(op->func3) << 11)
-      | ((unsigned int)(inst->rs1) << 14)
-      | ((unsigned int)(inst->rs2) << 19)
-      | ((unsigned int)(inst->imm & 0xfe0) << 24);
+      | ((unsigned int)(inst->imm & 0x1f) << 7)
+      | ((unsigned int)(op->func3) << 12)
+      | ((unsigned int)(inst->rs1) << 15)
+      | ((unsigned int)(inst->rs2) << 20)
+      | ((unsigned int)(inst->imm & 0xfe0) << 25);
     break;
 
   case FM_SB:
     result = result 
-      | ((unsigned int)((inst->imm >> 11) & 0x1) << 6) // imm[11]
-      | ((unsigned int)((inst->imm >> 1) & 0xf) << 7)  // imm[4:1]
-      | ((unsigned int)(op->func3) << 11)
-      | ((unsigned int)(inst->rs1) << 14)
-      | ((unsigned int)(inst->rs2) << 19)
-      | ((unsigned int)((inst->imm >> 5) & 0x3f) << 24)  // imm[10:5]
-      | ((unsigned int)((inst->imm >> 12) & 0x1) << 30); // imm[12]
+      | ((unsigned int)((inst->imm >> 12) & 0x1) << 7) // imm[11]
+      | ((unsigned int)((inst->imm >> 1) & 0xf) << 8)  // imm[4:1]
+      | ((unsigned int)(op->func3) << 12)
+      | ((unsigned int)(inst->rs1) << 15)
+      | ((unsigned int)(inst->rs2) << 20)
+      | ((unsigned int)((inst->imm >> 5) & 0x3f) << 26)  // imm[10:5]
+      | ((unsigned int)((inst->imm >> 12) & 0x1) << 31); // imm[12]
     break;
 
   case FM_U:
     result = result
-      | ((unsigned int)(inst->rd) << 6)
-      | ((unsigned int)(inst->imm) << 11);
+      | ((unsigned int)(inst->rd) << 7)
+      | ((unsigned int)(inst->imm) << 12);
     break;
 
   case FM_UJ:
     result = result
-      | ((unsigned int)(inst->rd) << 6)
-      | ((unsigned int)((inst->imm >> 12) & 0xff) << 11) // imm[19:12]
-      | ((unsigned int)((inst->imm >> 11) & 0x1) << 19)  // imm[11]
-      | ((unsigned int)((inst->imm >> 1) & 0x3ff) << 29) // imm[10:1]
-      | ((unsigned int)((inst->imm >> 20) & 0x1) << 30); // imm[20]
+      | ((unsigned int)(inst->rd) << 7)
+      | ((unsigned int)((inst->imm >> 12) & 0xff) << 12) // imm[19:12]
+      | ((unsigned int)((inst->imm >> 12) & 0x1) << 20)  // imm[11]
+      | ((unsigned int)((inst->imm >> 1) & 0x3ff) << 30) // imm[10:1]
+      | ((unsigned int)((inst->imm >> 20) & 0x1) << 31); // imm[20]
     break;
   }
 

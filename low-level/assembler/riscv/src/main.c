@@ -17,7 +17,6 @@ int main(int argc, char **argv)
   // }
 
   Token *tok = tokenize(program);
-  print_token(tok);
   Instruction *inst = parse(tok);
   while(inst)
   {

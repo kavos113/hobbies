@@ -108,5 +108,5 @@ void print_token(Token *tok)
       break;
   }
 
-  // print_token(tok->next);
+  print_token(tok->next);
 }

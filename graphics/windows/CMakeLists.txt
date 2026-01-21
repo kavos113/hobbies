@@ -58,6 +58,7 @@ add_subdirectory(d3d/35_descriptor_management)
 
 add_subdirectory(dwrite/01_list_system_fonts)
 add_subdirectory(dwrite/02_dwrite_hello)
+add_subdirectory(dwrite/03_draw_glyphrun)
 add_subdirectory(dwrite/features)
 
 add_subdirectory(dxgi/show_video_memory)

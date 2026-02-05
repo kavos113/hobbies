@@ -8,7 +8,15 @@ foreach ($dir in $packageDirs) {
     Push-Location $dir
 
     try {
-        pnpm up --lockfile-only
+        if (Test-Path "package-lock.json") {
+            npm install
+        }
+        elseif (Test-Path "pnpm-lock.yaml") {
+            pnpm up --lockfile-only
+        }
+        else {
+            Write-Warning "No recognized lock file found in $dir. Skipping package update."
+        }
     }
     catch {
         Write-Error "Failed to update packages in $dir"

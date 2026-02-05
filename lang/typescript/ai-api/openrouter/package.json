@@ -11,6 +11,6 @@
   "license": "ISC",
   "packageManager": "pnpm@10.7.1",
   "dependencies": {
-    "openai": "^4.95.1"
+    "openai": "^4.104.0"
   }
 }

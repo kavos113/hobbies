@@ -11,10 +11,10 @@
   "license": "ISC",
   "packageManager": "pnpm@10.6.5",
   "devDependencies": {
-    "typescript": "^5.8.2"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@types/node": "^22.13.11",
-    "execa": "^9.5.2"
+    "@types/node": "^22.19.8",
+    "execa": "^9.6.1"
   }
 }

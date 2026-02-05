@@ -11,8 +11,8 @@
     "build": "tsc && node esbuild.js"
   },
   "devDependencies": {
-    "esbuild": "^0.25.1",
-    "lodash": "^4.17.21",
+    "esbuild": "^0.25.12",
+    "lodash": "^4.17.23",
     "webpack-cli": "^6.0.1"
   }
 }

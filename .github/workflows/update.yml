@@ -25,6 +25,9 @@ jobs:
       with:
         version: 10
 
+    - name: add permissions to scripts
+      run: chmod +x ./scripts/update/*.sh
+
     - name: update js dependencies
       run: ./scripts/update/package-update.sh
 

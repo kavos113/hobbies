@@ -26,10 +26,10 @@ jobs:
         version: 10
 
     - name: update js dependencies
-      run: ./scripts/package-update.sh
+      run: ./scripts/update/package-update.sh
 
     - name: update cargo dependencies
-      run: ./scripts/cargo-update.sh
+      run: ./scripts/update/cargo-update.sh
 
     - name: commit and push changes
       run: |

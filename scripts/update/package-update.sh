@@ -5,6 +5,7 @@ echo "searching for package updates..."
 pkgs=$(find . -name "node_modules" -prune -o -name "package.json" -print)
 for pkg in $pkgs; do
   dir=$(dirname "$pkg")
+  echo "----------------------------------------"
   echo "updating packages in $dir"
 
   (
@@ -16,4 +17,5 @@ for pkg in $pkgs; do
         pnpm up --lockfile-only
     fi
   )
+  echo "----------------------------------------"
 done

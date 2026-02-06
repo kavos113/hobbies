@@ -1,0 +1,43 @@
+name: Update Dependencies
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'  # Every Sunday at 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    permissions: 
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: set up Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+    
+    - name: setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+
+    - name: update js dependencies
+      run: ./scripts/package-update.sh
+
+    - name: update cargo dependencies
+      run: ./scripts/cargo-update.sh
+
+    - name: commit and push changes
+      run: |
+        git add .
+        
+        if ! git diff --cached --quiet; then
+          git commit -m "chore: update dependencies"
+          git push origin main
+        else
+          echo "No dependency updates found."
+        fi

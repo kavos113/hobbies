@@ -16,12 +16,6 @@ typedef struct _COFFHeader
   uint16_t characteristics;
 } COFFHeader;
 
-typedef struct _PEHeader
-{
-  char signature[4];
-  COFFHeader coff_header;
-} PEHeader;
-
 // ----- machine -----
 #define IMAGE_FILE_MACHINE_UNKNOWN     0x0
 #define IMAGE_FILE_MACHINE_ALPHA       0x184
@@ -75,5 +69,88 @@ typedef struct _PEHeader
 #define IMAGE_FILE_DLL                     0x2000
 #define IMAGE_FILE_UP_SYSTEM_ONLY          0x4000
 #define IMAGE_FILE_BYTES_REVERSED_HI       0x8000
+
+#define PE_OPTIONAL_HEADER_MAGIC_PE32     0x10b
+#define PE_OPTIONAL_HEADER_MAGIC_PE32PLUS 0x20b
+
+typedef struct _OptionalHeaderStandardPE32
+{
+  uint16_t magic;
+  uint8_t major_linker_version;
+  uint8_t minor_linker_version;
+  uint32_t size_of_code;
+  uint32_t size_of_initialized_data;
+  uint32_t size_of_bss_data;
+  uint32_t address_of_entry_point;
+  uint32_t base_of_code;
+  uint32_t base_of_data;
+} OptionalHeaderStandardPE32;
+
+typedef struct _OptionalHeaderStandardPE32Plus
+{
+  uint16_t magic;
+  uint8_t major_linker_version;
+  uint8_t minor_linker_version;
+  uint32_t size_of_code;
+  uint32_t size_of_initialized_data;
+  uint32_t size_of_bss_data;
+  uint32_t address_of_entry_point;
+  uint32_t base_of_code;
+} OptionalHeaderStandardPE32Plus;
+
+typedef struct _OptionalHeaderWindowsFieldPE32
+{
+  uint32_t image_base;
+  uint32_t section_alignment;
+  uint32_t file_alignment;
+  uint16_t major_os_version;
+  uint16_t minor_os_version;
+  uint16_t major_image_version;
+  uint16_t minor_image_version;
+  uint16_t major_subsystem_version;
+  uint16_t minor_subsystem_version;
+  uint32_t win32_version_value;
+  uint32_t size_of_image;
+  uint32_t size_of_headers;
+  uint32_t check_sum;
+  uint16_t subsystem;
+  uint16_t dll_characteristics;
+  uint32_t size_of_stack_reserve;
+  uint32_t size_of_heap_reserve;
+  uint32_t size_of_heap_commit;
+  uint32_t loader_flags;
+  uint32_t number_of_rva_and_sizes;
+} OptionalHeaderWindowsFieldPE32;
+
+typedef struct _OptionalHeaderWindowsFieldPE32Plus
+{
+  uint64_t image_base;
+  uint32_t section_alignment;
+  uint32_t file_alignment;
+  uint16_t major_os_version;
+  uint16_t minor_os_version;
+  uint16_t major_image_version;
+  uint16_t minor_image_version;
+  uint16_t major_subsystem_version;
+  uint16_t minor_subsystem_version;
+  uint32_t win32_version_value;
+  uint32_t size_of_image;
+  uint32_t size_of_headers;
+  uint32_t check_sum;
+  uint16_t subsystem;
+  uint16_t dll_characteristics;
+  uint64_t size_of_stack_reserve;
+  uint64_t size_of_heap_reserve;
+  uint64_t size_of_heap_commit;
+  uint32_t loader_flags;
+  uint32_t number_of_rva_and_sizes;
+} OptionalHeaderWindowsFieldPE32Plus;
+
+typedef struct _PEHeader
+{
+  char signature[4];
+  COFFHeader coff_header;
+} PEHeader;
+
 
 #endif // PE_H

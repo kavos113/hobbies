@@ -1,0 +1,11 @@
+#ifndef ERROR_H
+#define ERROR_H
+
+typedef enum {
+  ERROR_NONE = 0,
+  ERROR_INVALID_FILE_POINTER = 1,
+  ERROR_FILE_SEEK_FAILED = 2,
+  ERROR_FILE_READ_FAILED = 3,
+} PEError;
+
+#endif // ERROR_H

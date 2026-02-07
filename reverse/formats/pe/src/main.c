@@ -2,6 +2,7 @@
 
 #include "header.h"
 #include "pe.h"
+#include "print.h"
 
 void usage()
 {
@@ -32,5 +33,6 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  printf("PE Signature: %.4s\n", pe_header->signature);
+  print_pe_header(pe_header);
+  return 0;
 }

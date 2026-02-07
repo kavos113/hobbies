@@ -6,6 +6,8 @@
 
 PEError seek_pe_header(FILE *file);
 PEError read_signature(FILE *file, char *signature);
+// expected file pointer to be at the start of COFF header
+PEError read_coff_header(FILE *file, COFFHeader *coff_header);
 
 PEHeader *read_pe_header(FILE *file)
 {
@@ -24,6 +26,13 @@ PEHeader *read_pe_header(FILE *file)
   }
 
   err = read_signature(file, pe_header->signature);
+  if (err != ERROR_NONE)
+  {
+    free(pe_header);
+    return NULL;
+  }
+
+  err = read_coff_header(file, &pe_header->coff_header);
   if (err != ERROR_NONE)
   {
     free(pe_header);
@@ -76,6 +85,24 @@ PEError read_signature(FILE *file, char *signature)
   if (read_size != 4)
   {
     fprintf(stderr, "Failed to read PE signature.\n");
+    return ERROR_FILE_READ_FAILED;
+  }
+
+  return ERROR_NONE;
+}
+
+PEError read_coff_header(FILE *file, COFFHeader *coff_header)
+{
+  if (file == NULL)
+  {
+    fprintf(stderr, "Invalid file pointer.\n");
+    return ERROR_INVALID_FILE_POINTER;
+  }
+
+  size_t read_size = fread(coff_header, sizeof(COFFHeader), 1, file);
+  if (read_size != 1)
+  {
+    fprintf(stderr, "Failed to read COFF header.\n");
     return ERROR_FILE_READ_FAILED;
   }
 

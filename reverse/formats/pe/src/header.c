@@ -8,6 +8,7 @@ PEError seek_pe_header(FILE *file);
 PEError read_signature(FILE *file, char *signature);
 // expected file pointer to be at the start of COFF header
 PEError read_coff_header(FILE *file, COFFHeader *coff_header);
+PEError read_optional_header(FILE *file, OptionalHeader *optional_header);
 
 PEHeader *read_pe_header(FILE *file)
 {
@@ -33,6 +34,13 @@ PEHeader *read_pe_header(FILE *file)
   }
 
   err = read_coff_header(file, &pe_header->coff_header);
+  if (err != ERROR_NONE)
+  {
+    free(pe_header);
+    return NULL;
+  }
+
+  err = read_optional_header(file, &pe_header->optional_header);
   if (err != ERROR_NONE)
   {
     free(pe_header);
@@ -104,6 +112,65 @@ PEError read_coff_header(FILE *file, COFFHeader *coff_header)
   {
     fprintf(stderr, "Failed to read COFF header.\n");
     return ERROR_FILE_READ_FAILED;
+  }
+
+  return ERROR_NONE;
+}
+
+PEError read_optional_header(FILE *file, OptionalHeader *optional_header)
+{
+  if (file == NULL)
+  {
+    fprintf(stderr, "Invalid file pointer.\n");
+    return ERROR_INVALID_FILE_POINTER;
+  }
+
+  uint16_t magic;
+  size_t read_size = fread(&magic, sizeof(uint16_t), 1, file);
+  if (read_size != 1)
+  {
+    fprintf(stderr, "Failed to read Optional Header magic.\n");
+    return ERROR_FILE_READ_FAILED;
+  }
+
+  switch (magic)
+  {
+  case PE_OPTIONAL_HEADER_MAGIC_PE32:
+    optional_header->magic = magic;
+    // Move file pointer back to read the full Optional Header
+    if (fseek(file, -(long)(sizeof(uint16_t)), SEEK_CUR) != 0)
+    {
+      fprintf(stderr, "Failed to seek back to Optional Header start.\n");
+      return ERROR_FILE_SEEK_FAILED;
+    }
+
+    read_size = fread(&optional_header->pe32, sizeof(OptionalHeaderPE32), 1, file);
+    if (read_size != 1)
+    {
+      fprintf(stderr, "Failed to read PE32 Optional Header.\n");
+      return ERROR_FILE_READ_FAILED;
+    }
+    break;
+
+  case PE_OPTIONAL_HEADER_MAGIC_PE32PLUS:
+    optional_header->magic = magic;
+    // Move file pointer back to read the full Optional Header
+    if (fseek(file, -(long)(sizeof(uint16_t)), SEEK_CUR) != 0)
+    {
+      fprintf(stderr, "Failed to seek back to Optional Header start.\n");
+      return ERROR_FILE_SEEK_FAILED;
+    }
+
+    read_size = fread(&optional_header->pe32_plus, sizeof(OptionalHeaderPE32Plus), 1, file);
+    if (read_size != 1)
+    {
+      fprintf(stderr, "Failed to read PE32+ Optional Header.\n");
+      return ERROR_FILE_READ_FAILED;
+    }
+    break;
+  default:
+    fprintf(stderr, "Unknown Optional Header magic: 0x%04x\n", magic);
+    return ERROR_UNKNOWN_OPTIONAL_HEADER_MAGIC;
   }
 
   return ERROR_NONE;

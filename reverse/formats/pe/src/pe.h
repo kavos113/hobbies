@@ -146,10 +146,87 @@ typedef struct _OptionalHeaderWindowsFieldPE32Plus
   uint32_t number_of_rva_and_sizes;
 } OptionalHeaderWindowsFieldPE32Plus;
 
+typedef struct _OptionalHeaderDataDirectoryEntry
+{
+  uint32_t virtual_address;
+  uint32_t size;
+} OptionalHeaderDataDirectoryEntry;
+
+typedef struct _OptionalHeaderDataDirectory
+{
+  OptionalHeaderDataDirectoryEntry export_table;
+  OptionalHeaderDataDirectoryEntry import_table;
+  OptionalHeaderDataDirectoryEntry resource_table;
+  OptionalHeaderDataDirectoryEntry exception_table;
+  OptionalHeaderDataDirectoryEntry certificate_table;
+  OptionalHeaderDataDirectoryEntry base_relocation_table;
+  OptionalHeaderDataDirectoryEntry debug;
+  OptionalHeaderDataDirectoryEntry architecture;
+  OptionalHeaderDataDirectoryEntry global_ptr;
+  OptionalHeaderDataDirectoryEntry tls_table;
+  OptionalHeaderDataDirectoryEntry load_config_table;
+  OptionalHeaderDataDirectoryEntry bound_import;
+  OptionalHeaderDataDirectoryEntry import_address_table;
+  OptionalHeaderDataDirectoryEntry delay_import_descriptor;
+  OptionalHeaderDataDirectoryEntry clr_runtime_header;
+  OptionalHeaderDataDirectoryEntry reserved;
+} OptionalHeaderDataDirectory;
+
+typedef struct _OptionalHeaderPE32
+{
+  OptionalHeaderStandardPE32 standard_fields;
+  OptionalHeaderWindowsFieldPE32 windows_fields;
+  OptionalHeaderDataDirectory data_directories;
+} OptionalHeaderPE32;
+
+typedef struct _OptionalHeaderPE32Plus
+{
+  OptionalHeaderStandardPE32Plus standard_fields;
+  OptionalHeaderWindowsFieldPE32Plus windows_fields;
+  OptionalHeaderDataDirectory data_directories;
+} OptionalHeaderPE32Plus;
+
+typedef union _OptionalHeader
+{
+  uint16_t magic;
+  OptionalHeaderPE32 pe32;
+  OptionalHeaderPE32Plus pe32_plus;
+} OptionalHeader;
+
+// ----- Windows Subsystem -----
+#define IMAGE_SUBSYSTEM_UNKNOWN                  0
+#define IMAGE_SUBSYSTEM_NATIVE                   1
+#define IMAGE_SUBSYSTEM_WINDOWS_GUI              2
+#define IMAGE_SUBSYSTEM_WINDOWS_CUI              3
+#define IMAGE_SUBSYSTEM_OS2_CUI                  5
+#define IMAGE_SUBSYSTEM_POSIX_CUI                7
+#define IMAGE_SUBSYSTEM_NATIVE_WINDOWS           8
+#define IMAGE_SUBSYSTEM_WINDOWS_CE_GUI           9
+#define IMAGE_SUBSYSTEM_EFI_APPLICATION          10
+#define IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER  11
+#define IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER       12
+#define IMAGE_SUBSYSTEM_EFI_ROM                  13
+#define IMAGE_SUBSYSTEM_XBOX                     14
+#define IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION 16
+
+// ----- DLL Characteristics -----
+#define IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA       0x0020
+#define IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE          0x0040
+#define IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY       0x0080
+#define IMAGE_DLL_CHARACTERISTICS_NX_COMPAT             0x0100
+#define IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION          0x0200
+#define IMAGE_DLL_CHARACTERISTICS_NO_SEH                0x0400
+#define IMAGE_DLL_CHARACTERISTICS_NO_BIND               0x0800
+#define IMAGE_DLL_CHARACTERISTICS_APPCONTAINER          0x1000
+#define IMAGE_DLL_CHARACTERISTICS_WDM_DRIVER            0x2000
+#define IMAGE_DLL_CHARACTERISTICS_GUARD_CF              0x4000
+#define IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE 0x8000
+
 typedef struct _PEHeader
 {
   char signature[4];
   COFFHeader coff_header;
+  OptionalHeader optional_header;
 } PEHeader;
 
 

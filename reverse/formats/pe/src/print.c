@@ -6,6 +6,7 @@
 void print_signature(char *signature);
 void print_coff_header(COFFHeader *coff_header);
 void print_optional_header(OptionalHeader *optional_header);
+void print_section_table(SectionHeader *section_table, uint16_t number_of_sections);
 
 void print_pe_header(PEHeader *pe_header)
 {
@@ -19,6 +20,7 @@ void print_pe_header(PEHeader *pe_header)
   print_signature(pe_header->signature);
   print_coff_header(&pe_header->coff_header);
   print_optional_header(&pe_header->optional_header);
+  print_section_table(pe_header->section_table, pe_header->coff_header.number_of_sections);
 }
 
 void print_pretty_char(char c)
@@ -27,22 +29,22 @@ void print_pretty_char(char c)
   {
   case 0:
     printf("\\0");
-    break;
+    return;
   case '\n':
     printf("\\n");
-    break;
+    return;
   case '\r':
     printf("\\r");
-    break;
+    return;
   case '\t':
     printf("\\t");
-    break;
+    return;
   case '\\':
     printf("\\\\");
-    break;
+    return;
   case ' ':
     printf(" ");
-    break;
+    return;
   }
 
   if (c >= 0x20 && c <= 0x7E)
@@ -445,6 +447,7 @@ void print_optional_header_windows_field_pe32(OptionalHeaderWindowsFieldPE32 *wi
   print_optional_header_windows_subsystem(windows_fields->subsystem);
   print_optional_header_dll_characteristics(windows_fields->dll_characteristics, 2);
   printf("  Size of Stack Reserve:      %u\n", windows_fields->size_of_stack_reserve);
+  printf("  Size of Stack Commit:       %u\n", windows_fields->size_of_stack_commit);
   printf("  Size of Heap Reserve:       %u\n", windows_fields->size_of_heap_reserve);
   printf("  Size of Heap Commit:        %u\n", windows_fields->size_of_heap_commit);
   printf("  Loader Flags:               0x%08x\n", windows_fields->loader_flags);
@@ -479,6 +482,7 @@ void print_optional_header_windows_field_pe32_plus(OptionalHeaderWindowsFieldPE3
   printf("  DLL Characteristics:\n");
   print_optional_header_dll_characteristics(windows_fields->dll_characteristics, 4);
   printf("  Size of Stack Reserve:      %llu\n", (unsigned long long)windows_fields->size_of_stack_reserve);
+  printf("  Size of Stack Commit:       %llu\n", (unsigned long long)windows_fields->size_of_stack_commit);
   printf("  Size of Heap Reserve:       %llu\n", (unsigned long long)windows_fields->size_of_heap_reserve);
   printf("  Size of Heap Commit:        %llu\n", (unsigned long long)windows_fields->size_of_heap_commit);
   printf("  Loader Flags(0):            0x%08x\n", windows_fields->loader_flags);
@@ -674,4 +678,71 @@ void print_optional_header_data_directory(OptionalHeaderDataDirectory *data_dire
   print_optional_header_data_directory_entry(
       "Reserved(0)",
       data_directories->reserved);
+}
+
+void print_section_header_image(uint16_t number, SectionHeader *section_header)
+{
+  if (section_header == NULL)
+  {
+    fprintf(stderr, "Invalid Section Header pointer.\n");
+    return;
+  }
+
+  printf("  [%-3u] %-8s 0x%08x 0x%08x 0x%08x 0x%08x",
+         number,
+         section_header->name,
+         section_header->virtual_size,
+         section_header->virtual_address,
+         section_header->size_of_raw_data,
+         section_header->ptr_to_raw_data);
+
+  char flags[5] = {'-', '-', '-', '-', '-'};
+  if (section_header->characteristics & IMAGE_SCN_MEM_READ)
+  {
+    flags[0] = 'r';
+  }
+  if (section_header->characteristics & IMAGE_SCN_MEM_WRITE)
+  {
+    flags[1] = 'w';
+  }
+  if (section_header->characteristics & IMAGE_SCN_MEM_EXECUTE)
+  {
+    flags[2] = 'x';
+  }
+  if (section_header->characteristics & IMAGE_SCN_MEM_SHARED)
+  {
+    flags[3] = 's';
+  }
+  if (!(section_header->characteristics & IMAGE_SCN_MEM_NOT_PAGED))
+  {
+    flags[4] = 'p';
+  }
+  printf(" %c%c%c%c%c\n",
+         flags[0],
+         flags[1],
+         flags[2],
+         flags[3],
+         flags[4]);
+}
+
+void print_section_table(SectionHeader *section_table, uint16_t number_of_sections)
+{
+  if (section_table == NULL)
+  {
+    fprintf(stderr, "Invalid Section Table pointer.\n");
+    return;
+  }
+
+  printf("\n");
+  printf("----------- Section Table -----------\n");
+
+  printf("  No    Name     VSize      VAddr      DataSize   DataPtr    Flags\n");
+  
+  for (uint16_t i = 0; i < number_of_sections; i++)
+  {
+    print_section_header_image(i + 1, &section_table[i]);
+  }
+
+  printf("  Flags: r=readable, w=writable, x=executable, s=shared, p=pageable\n");
+  printf("-------------------------------------\n");
 }

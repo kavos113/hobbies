@@ -9,6 +9,7 @@ PEError read_signature(FILE *file, char *signature);
 // expected file pointer to be at the start of COFF header
 PEError read_coff_header(FILE *file, COFFHeader *coff_header);
 PEError read_optional_header(FILE *file, OptionalHeader *optional_header);
+PEError read_section_table(FILE *file, SectionHeader **section_table, uint16_t number_of_sections);
 
 PEHeader *read_pe_header(FILE *file)
 {
@@ -41,6 +42,16 @@ PEHeader *read_pe_header(FILE *file)
   }
 
   err = read_optional_header(file, &pe_header->optional_header);
+  if (err != ERROR_NONE)
+  {
+    free(pe_header);
+    return NULL;
+  }
+
+  err = read_section_table(
+      file,
+      &pe_header->section_table,
+      pe_header->coff_header.number_of_sections);
   if (err != ERROR_NONE)
   {
     free(pe_header);
@@ -171,6 +182,32 @@ PEError read_optional_header(FILE *file, OptionalHeader *optional_header)
   default:
     fprintf(stderr, "Unknown Optional Header magic: 0x%04x\n", magic);
     return ERROR_UNKNOWN_OPTIONAL_HEADER_MAGIC;
+  }
+
+  return ERROR_NONE;
+}
+
+PEError read_section_table(FILE *file, SectionHeader **section_table, uint16_t number_of_sections)
+{
+  if (file == NULL)
+  {
+    fprintf(stderr, "Invalid file pointer.\n");
+    return ERROR_INVALID_FILE_POINTER;
+  }
+
+  *section_table = malloc(sizeof(SectionHeader) * number_of_sections);
+  if (*section_table == NULL)
+  {
+    fprintf(stderr, "Memory allocation for section table failed.\n");
+    return ERROR_FILE_READ_FAILED;
+  }
+
+  size_t read_size = fread(*section_table, sizeof(SectionHeader), number_of_sections, file);
+  if (read_size != number_of_sections)
+  {
+    fprintf(stderr, "Failed to read section table.\n");
+    free(*section_table);
+    return ERROR_FILE_READ_FAILED;
   }
 
   return ERROR_NONE;

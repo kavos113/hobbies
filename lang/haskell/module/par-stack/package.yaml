@@ -61,3 +61,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - par-stack
+    - QuickCheck
+    - quickcheck-instances

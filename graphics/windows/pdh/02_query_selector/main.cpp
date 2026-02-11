@@ -54,7 +54,7 @@ public:
 
         DWORD bufferSize = 0;
         DWORD count = 0;
-        PdhGetFormattedCounterArray(m_counter, PDH_FMT_LARGE, &bufferSize, &count, nullptr);
+        PdhGetFormattedCounterArray(m_counter, PDH_FMT_DOUBLE, &bufferSize, &count, nullptr);
         if (bufferSize == 0)
         {
             return;
@@ -62,13 +62,12 @@ public:
 
         std::vector<std::byte> buf(bufferSize);
         PPDH_FMT_COUNTERVALUE_ITEM items = reinterpret_cast<PPDH_FMT_COUNTERVALUE_ITEM_W>(buf.data());
-        PdhGetFormattedCounterArray(m_counter, PDH_FMT_LARGE, &bufferSize, &count, items);
+        PdhGetFormattedCounterArray(m_counter, PDH_FMT_DOUBLE, &bufferSize, &count, items);
 
         for (DWORD i = 0; i < count; i++)
         {
             std::wcout << items[i].szName << ": "
-                << items[i].FmtValue.doubleValue
-                << "  " << items[i].FmtValue.largeValue
+                << "  " << items[i].FmtValue.doubleValue
                 << std::endl;
         }
     }

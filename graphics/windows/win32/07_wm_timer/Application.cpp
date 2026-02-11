@@ -2,8 +2,10 @@
 
 #include <string>
 #include <format>
+#include <iostream>
 
 #define CUSTOM_TIMER_ID 1
+#define CUSTOM_TIMER_2 2
 
 Application::Application()
     : m_hwnd(nullptr)
@@ -58,9 +60,15 @@ int Application::createWindow(int x, int y, int width, int height)
     return 0;
 }
 
+void CALLBACK TimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+{
+    std::cout << "Timer event: " << idEvent << " at " << dwTime << " ms" << std::endl;
+}
+
 void Application::run()
 {
     SetTimer(m_hwnd, CUSTOM_TIMER_ID, 1000, nullptr);
+    SetTimer(m_hwnd, CUSTOM_TIMER_2, 500, TimerProc);
 
     MSG msg = {};
     while (GetMessage(&msg, nullptr, 0, 0))

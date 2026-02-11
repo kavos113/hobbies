@@ -1,5 +1,10 @@
 #include "Application.h"
 
+#include <string>
+#include <format>
+
+#define CUSTOM_TIMER_ID 1
+
 Application::Application()
     : m_hwnd(nullptr)
 {
@@ -55,6 +60,8 @@ int Application::createWindow(int x, int y, int width, int height)
 
 void Application::run()
 {
+    SetTimer(m_hwnd, CUSTOM_TIMER_ID, 1000, nullptr);
+
     MSG msg = {};
     while (GetMessage(&msg, nullptr, 0, 0))
     {
@@ -95,6 +102,28 @@ LRESULT Application::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
+
+    case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(m_hwnd, &ps);
+
+            FillRect(hdc, &ps.rcPaint, static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH)));
+
+            std::wstring text = std::format(L"Hello, World! Count: {}", count);
+            DrawText(hdc, text.c_str(), -1, &ps.rcPaint, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+
+            EndPaint(m_hwnd, &ps);
+        }
+
+    case WM_TIMER:
+        switch (wParam)
+        {
+        case CUSTOM_TIMER_ID:
+            count++;
+            InvalidateRect(m_hwnd, nullptr, FALSE);
+            return 0;
+        }
 
     default:
         return DefWindowProc(m_hwnd, uMsg, wParam, lParam);

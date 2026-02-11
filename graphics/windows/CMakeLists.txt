@@ -13,6 +13,7 @@ add_subdirectory(win32/03_list_system_fonts)
 add_subdirectory(win32/04_window_message)
 add_subdirectory(win32/05_hello_thread)
 add_subdirectory(win32/06_transparent_gui)
+add_subdirectory(win32/07_wm_timer)
 
 add_subdirectory(d2d/01_hello_world)
 add_subdirectory(d2d/02_device_context)

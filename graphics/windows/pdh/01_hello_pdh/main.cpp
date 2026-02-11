@@ -10,10 +10,10 @@
 #include <iostream>
 #include <vector>
 
-class GPUMonitor
+class Monitor
 {
 public:
-    GPUMonitor()
+    Monitor()
     {
         PDH_STATUS status = PdhOpenQuery(nullptr, 0, &m_query);
         if (status != ERROR_SUCCESS || m_query == nullptr)
@@ -30,7 +30,7 @@ public:
         }
     }
 
-    ~GPUMonitor()
+    ~Monitor()
     {
         if (m_query)
         {
@@ -38,7 +38,7 @@ public:
         }
     }
 
-    void ShowMemoryUsage() const
+    void ShowValue() const
     {
         if (!m_query || !m_counter)
         {
@@ -81,8 +81,8 @@ private:
 
 int main()
 {
-    GPUMonitor monitor;
-    monitor.ShowMemoryUsage();
+    Monitor monitor;
+    monitor.ShowValue();
 
     return 0;
 }

@@ -66,6 +66,7 @@ add_subdirectory(dwrite/features)
 add_subdirectory(dxgi/show_video_memory)
 
 add_subdirectory(pdh/01_hello_pdh)
+add_subdirectory(pdh/02_query_selector)
 
 add_subdirectory(winrt/capture)
 

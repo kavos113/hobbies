@@ -20,7 +20,7 @@ typedef struct
 
 int main()
 {
-    std::string text = "final illustration";
+    std::string text = "Te";
 
     FT_Library library;
 
@@ -116,6 +116,12 @@ int main()
 
         pen_x += (glyph_pos[i].x_advance >> 6); // Convert from 26.6 fixed point to integer
         pen_y += (glyph_pos[i].y_advance >> 6);
+
+        std::println("  hb position: x_advance={}, y_advance={}, x_offset={}, y_offset={}",
+                     glyph_pos[i].x_advance >> 6,
+                     glyph_pos[i].y_advance >> 6,
+                     glyph_pos[i].x_offset >> 6,
+                     glyph_pos[i].y_offset >> 6);
 
         glyphs.push_back(std::move(g_info));
     }

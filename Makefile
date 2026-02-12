@@ -1,7 +1,6 @@
 SUBDIRS := low-level/assembler/riscv \
 		   low-level/compiler/c-compiler \
-		   low-level/compiler/dentaku \
-		   reverse/formats/pe
+		   low-level/compiler/dentaku
 
 .PHONY: all clean $(SUBDIRS)
 

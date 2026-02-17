@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { MODEL, PROMPT } from "../constants/settings.js";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -6,5 +7,8 @@ const client = new OpenAI({
 });
 
 const response = await client.responses.create({
-  model: "gpt-4o",
-})
+  model: MODEL,
+  input: PROMPT,
+});
+
+console.log(response.output_text);

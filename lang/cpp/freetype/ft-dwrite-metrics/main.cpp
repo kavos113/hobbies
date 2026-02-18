@@ -1,5 +1,6 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_TRUETYPE_TABLES_H
 
 #ifndef UNICODE
 #define UNICODE
@@ -45,7 +46,7 @@ void freetype()
         return;
     }
 
-    error = FT_Set_Char_Size(face, 0, 512 * 64, 300, 300); // width: same as height
+    error = FT_Set_Pixel_Sizes(face, 0, face->units_per_EM);
     if (error)
     {
         std::println("Error setting character size: {}", error);
@@ -64,6 +65,111 @@ void freetype()
 
     FT_Done_Face(face);
     FT_Done_FreeType(library);
+}
+
+void freetype_dwritelike()
+{
+    FT_Library library;
+
+    FT_Error error = FT_Init_FreeType(&library);
+    if (error)
+    {
+        std::println("Error initializing FreeType: {}", error);
+        return;
+    }
+
+    FT_Face face;
+    error = FT_New_Face(
+        library,
+        "C:/Windows/Fonts/arial.ttf",
+        0,
+        &face
+    );
+    if (error == FT_Err_Unknown_File_Format)
+    {
+        std::println("The font file could be opened and read, but it appears that its format is unsupported.");
+        FT_Done_FreeType(library);
+        return;
+    }
+    if (error)
+    {
+        std::println("Error loading font: {}", error);
+        FT_Done_FreeType(library);
+        return;
+    }
+
+    DWRITE_FONT_METRICS metrics = {};
+
+    metrics.designUnitsPerEm = face->units_per_EM;
+
+    auto *os2 = reinterpret_cast<TT_OS2 *>(FT_Get_Sfnt_Table(face, ft_sfnt_os2));
+    auto *hhea = reinterpret_cast<TT_HoriHeader *>(FT_Get_Sfnt_Table(face, ft_sfnt_hhea));
+
+    if (os2)
+    {
+        std::println("OS/2 Table found.");
+
+        metrics.ascent = os2->usWinAscent;
+        metrics.descent = os2->usWinDescent;
+        metrics.lineGap = os2->sTypoLineGap;
+    }
+    else if (hhea)
+    {
+        std::println("hhea Table found.");
+
+        metrics.ascent = hhea->Ascender;
+        metrics.descent = std::abs(hhea->Descender);
+        metrics.lineGap = hhea->Line_Gap;
+    }
+    else
+    {
+        std::println("Neither OS/2 nor hhea Table found. Falling back to FreeType metrics.");
+
+        metrics.ascent = face->ascender;
+        metrics.descent = std::abs(face->descender);
+        metrics.lineGap = face->height - (face->ascender - face->descender);
+    }
+
+    if (os2 && os2->version >= 2)
+    {
+        metrics.capHeight = os2->sCapHeight;
+        metrics.xHeight = os2->sxHeight;
+    }
+    else
+    {
+        FT_Set_Pixel_Sizes(face, 0, metrics.designUnitsPerEm);
+
+        uint32_t index = FT_Get_Char_Index(face, 'H');
+        if (index)
+        {
+            FT_Load_Glyph(face, index, FT_LOAD_NO_SCALE);
+            metrics.capHeight = face->glyph->metrics.horiBearingY;
+        }
+        index = FT_Get_Char_Index(face, 'x');
+        if (index)
+        {
+            FT_Load_Glyph(face, index, FT_LOAD_NO_SCALE);
+            metrics.xHeight = face->glyph->metrics.horiBearingY;
+        }
+    }
+
+    metrics.underlinePosition = face->underline_position;
+    metrics.underlineThickness = face->underline_thickness;
+
+    if (os2)
+    {
+        metrics.strikethroughPosition = os2->yStrikeoutPosition;
+        metrics.strikethroughThickness = os2->yStrikeoutSize;
+    }
+    else
+    {
+        metrics.strikethroughPosition = metrics.ascent / 3; // Approximation
+        metrics.strikethroughThickness = metrics.lineGap / 2; // Approximation
+    }
+
+    std::println("DirectWrite: \n  Design Units Per Em: {}\n  Ascent: {}\n  Descent: {}\n  Line Gap: {}\n  Cap Height: {}\n  XHeight: {}\n  Underline Position: {}\n  Underline Thickness: {}\n  Strikethrough Position: {}\n  Strikethrough Thickness: {}",
+                 metrics.designUnitsPerEm, metrics.ascent, metrics.descent, metrics.lineGap, metrics.capHeight, metrics.xHeight, metrics.underlinePosition, metrics.underlineThickness, metrics.strikethroughPosition, metrics.strikethroughThickness);
+
 }
 
 void dwrite()
@@ -135,6 +241,7 @@ void dwrite()
 int main()
 {
     freetype();
+    freetype_dwritelike();
     dwrite();
 
     return 0;

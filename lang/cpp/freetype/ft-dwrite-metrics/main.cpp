@@ -111,7 +111,9 @@ void freetype_dwritelike()
 
         metrics.ascent = os2->usWinAscent;
         metrics.descent = os2->usWinDescent;
-        metrics.lineGap = os2->sTypoLineGap;
+
+        short lineGap = os2->sTypoLineGap;
+        metrics.lineGap = static_cast<signed short>(metrics.designUnitsPerEm + lineGap) - (metrics.ascent + metrics.descent);
     }
     else if (hhea)
     {
@@ -153,8 +155,8 @@ void freetype_dwritelike()
         }
     }
 
-    metrics.underlinePosition = face->underline_position;
     metrics.underlineThickness = face->underline_thickness;
+    metrics.underlinePosition = face->underline_position + metrics.underlineThickness / 2; // dwrite: top of underline, freetype: center of underline
 
     if (os2)
     {

@@ -12,8 +12,10 @@ for pkg in $pkgs; do
     cd "$dir" || exit
     
     if [ -f "package-lock.json" ]; then
+        npm audit fix --force
         npm install
     elif [ -f "pnpm-lock.yaml" ]; then
+        pnpm audit --fix
         pnpm up --lockfile-only
     fi
   )

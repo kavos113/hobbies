@@ -28,41 +28,49 @@ func main() {
 		type dirSize struct {
 			name string
 			size int64
+			dirCount int64
+			fileCount int64
 		}
 		dirs := make([]dirSize, 0, len(entries))
 		for i, entry := range entries {
-			size, err := getDirSizeSync(filepath.Join(dirPath, entry.Name()))
+			size, fileCount, dirCount, err := getDirSizeSync(filepath.Join(dirPath, entry.Name()))
 			if err != nil {
 				log.Printf("サイズの取得に失敗しました: %v", err)
 				continue
 			}
-			dirs = append(dirs, dirSize{entry.Name(), size})
+			dirs = append(dirs, dirSize{entry.Name(), size, dirCount, fileCount})
 			fmt.Printf("Processed %d/%d\r", i+1, len(entries))
 		}
 		sort.Slice(dirs, func(i, j int) bool {
 			return dirs[i].size > dirs[j].size
 		})
+		fmt.Println("size      files    dirs     name")
 		for _, d := range dirs {
-			fmt.Printf("%10s: %s\n", formatSize(d.size), d.name)
+			fmt.Printf("%9s %8d %8d %s\n", formatSize(d.size), d.fileCount, d.dirCount, d.name)
 		}
 	} else {
-		size, err := getDirSizeSync(dirPath)
+		size, fileCount, dirCount, err := getDirSizeSync(dirPath)
 		if err != nil {
 			log.Fatalf("サイズの取得に失敗しました: %v", err)
 		}
 
-		fmt.Printf("フォルダ '%s' の合計サイズ: %s\n", dirPath, formatSize(size))
+		fmt.Printf("Size of '%s': %s\n", dirPath, formatSize(size))
+		fmt.Printf("Files: %d\n", fileCount)
+		fmt.Printf("Directories: %d\n", dirCount)
 	}
 }
 
-func getDirSizeSync(path string) (int64, error) {
+func getDirSizeSync(path string) (int64, int64, int64, error) {
 	var size int64
+	var fileCount int64
+	var dirCount int64
 
 	_ = filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if d.IsDir() {
+			dirCount++
 			return nil
 		}
 		info, err := d.Info()
@@ -70,9 +78,10 @@ func getDirSizeSync(path string) (int64, error) {
 			return err
 		}
 		size += info.Size()
+		fileCount++
 		return nil
 	})
-	return size, nil
+	return size, fileCount, dirCount, nil
 }
 
 func getDirSize(path string) (int64, error) {

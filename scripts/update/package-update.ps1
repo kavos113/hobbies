@@ -9,9 +9,11 @@ foreach ($dir in $packageDirs) {
 
     try {
         if (Test-Path "package-lock.json") {
+            npm audit fix --force
             npm install
         }
         elseif (Test-Path "pnpm-lock.yaml") {
+            pnpm audit --fix
             pnpm up --lockfile-only
         }
         else {

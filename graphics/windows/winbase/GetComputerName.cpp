@@ -24,6 +24,6 @@ int main()
         return 1;
     }
 
-    std::wcout << L"Computer Name: " << computer_name << std::endl;
+    std::wcout << L"Computer Name: " << computer_name << L"\nMax Length: " << MAX_COMPUTERNAME_LENGTH << std::endl;
     return 0;
 }

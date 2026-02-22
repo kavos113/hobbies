@@ -4,3 +4,4 @@ project(winbase)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(winbase_getcomputername GetComputerName.cpp)
+add_executable(winbase_getusername GetUserName.cpp)

@@ -73,6 +73,7 @@ add_subdirectory(winrt/capture)
 add_subdirectory(winui/cmake-hello)
 
 add_subdirectory(winbase)
+add_subdirectory(winhttp)
 
 add_subdirectory(winsock/hello)
 add_subdirectory(winsock/udp)

@@ -14,6 +14,7 @@ add_subdirectory(win32gui/04_window_message)
 add_subdirectory(win32gui/05_hello_thread)
 add_subdirectory(win32gui/06_transparent_gui)
 add_subdirectory(win32gui/07_wm_timer)
+add_subdirectory(win32gui/08_enum_windows)
 
 add_subdirectory(d2d/01_hello_world)
 add_subdirectory(d2d/02_device_context)

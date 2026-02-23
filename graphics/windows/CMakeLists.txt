@@ -76,6 +76,7 @@ add_subdirectory(winui/cmake-hello)
 add_subdirectory(winbase)
 add_subdirectory(winhttp)
 add_subdirectory(fileapi)
+add_subdirectory(toolhelp32)
 
 add_subdirectory(winsock/hello)
 add_subdirectory(winsock/udp)

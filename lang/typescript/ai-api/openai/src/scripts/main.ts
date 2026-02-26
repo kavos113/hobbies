@@ -11,4 +11,4 @@ const response = await client.responses.create({
   input: PROMPT,
 });
 
-console.log(response.output_text);
+console.log(response);

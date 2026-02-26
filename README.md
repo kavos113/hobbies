@@ -1,6 +1,7 @@
 # hobbies
 雑多プログラム群
 
+- `ai`: AIエージェントで適当につくったものたち
 - `gpu`: GPGPUプログラミング
 - `graphics`: directx, vulkanなど
 - `lang`: 言語ごと

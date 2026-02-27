@@ -16,8 +16,8 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
       '@types/node':
-        specifier: ^22.19.12
-        version: 22.19.12
+        specifier: ^22.19.13
+        version: 22.19.13
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -27,8 +27,8 @@ packages:
   '@types/diff@7.0.2':
     resolution: {integrity: sha512-JSWRMozjFKsGlEjiiKajUjIJVKuKdE3oVy2DNtK+fUo8q82nhFZ2CPQwicAIkXrofahDXrWJ7mjelvZphMS98Q==}
 
-  '@types/node@22.19.12':
-    resolution: {integrity: sha512-0QEp0aPJYSyf6RrTjDB7HlKgNMTY+V2C7ESTaVt6G9gQ0rPLzTGz7OF2NXTLR5vcy7HJEtIUsyWLsfX0kTqJBA==}
+  '@types/node@22.19.13':
+    resolution: {integrity: sha512-akNQMv0wW5uyRpD2v2IEyRSZiR+BeGuoB6L310EgGObO44HSMNT8z1xzio28V8qOrgYaopIDNA18YgdXd+qTiw==}
 
   diff@8.0.3:
     resolution: {integrity: sha512-qejHi7bcSD4hQAZE0tNAawRK1ZtafHDmMTMkrrIGgSLl7hTnQHmKCeB45xAcbfTqK2zowkM3j3bHt/4b/ARbYQ==}
@@ -46,7 +46,7 @@ snapshots:
 
   '@types/diff@7.0.2': {}
 
-  '@types/node@22.19.12':
+  '@types/node@22.19.13':
     dependencies:
       undici-types: 6.21.0
 

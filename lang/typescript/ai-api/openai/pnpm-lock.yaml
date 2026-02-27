@@ -13,16 +13,16 @@ importers:
         version: 6.25.0
     devDependencies:
       '@types/node':
-        specifier: ^25.3.1
-        version: 25.3.1
+        specifier: ^25.3.2
+        version: 25.3.2
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
 
 packages:
 
-  '@types/node@25.3.1':
-    resolution: {integrity: sha512-hj9YIJimBCipHVfHKRMnvmHg+wfhKc0o4mTtXh9pKBjC8TLJzz0nzGmLi5UJsYAUgSvXFHgb0V2oY10DUFtImw==}
+  '@types/node@25.3.2':
+    resolution: {integrity: sha512-RpV6r/ij22zRRdyBPcxDeKAzH43phWVKEjL2iksqo1Vz3CuBUrgmPpPhALKiRfU7OMCmeeO9vECBMsV0hMTG8Q==}
 
   openai@6.25.0:
     resolution: {integrity: sha512-mEh6VZ2ds2AGGokWARo18aPISI1OhlgdEIC1ewhkZr8pSIT31dec0ecr9Nhxx0JlybyOgoAT1sWeKtwPZzJyww==}
@@ -46,7 +46,7 @@ packages:
 
 snapshots:
 
-  '@types/node@25.3.1':
+  '@types/node@25.3.2':
     dependencies:
       undici-types: 7.18.2
 

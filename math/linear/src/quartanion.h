@@ -2,6 +2,7 @@
 #define LINEAR_SRC_QUARTANION_H
 
 #include <cmath>
+#include <iostream>
 
 template <typename T>
 class quartanion
@@ -54,6 +55,17 @@ public:
     quartanion operator/(const quartanion& other) const {
         return *this * other.inverse();
     }
+
+    bool operator==(const quartanion& other) const {
+        return w == other.w && x == other.x && y == other.y && z == other.z;
+    }
 };
+
+template <typename CharT, typename Traits, typename T>
+std::basic_ostream<CharT, Traits>&
+operator<<(std::basic_ostream<CharT, Traits>& os, const quartanion<T>& q) {
+    os << q.x << "i + " << q.y << "j + " << q.z << "k + " << q.w;
+    return os;
+}
 
 #endif //LINEAR_SRC_QUARTANION_H

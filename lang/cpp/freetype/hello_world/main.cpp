@@ -88,6 +88,11 @@ int main()
         size_t buffer_size = slot->bitmap.width * slot->bitmap.rows;
         glyphs[i].bitmap_buffer.resize(buffer_size);
         std::copy_n(slot->bitmap.buffer, buffer_size, glyphs[i].bitmap_buffer.begin());
+
+        std::println(
+            "Character '{}': width={}, height={}, left={}, top={}, advance_x={}",
+            text[i], glyphs[i].width, glyphs[i].height, glyphs[i].left, glyphs[i].top, glyphs[i].advance_x
+        );
     }
 
     int top = 0;

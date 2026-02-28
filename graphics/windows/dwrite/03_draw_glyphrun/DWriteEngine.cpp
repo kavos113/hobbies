@@ -38,7 +38,7 @@ DWriteEngine::DWriteEngine(const Microsoft::WRL::ComPtr<ID2D1RenderTarget>& targ
 
     UINT32 index;
     BOOL exist;
-    hr = fontCollection->FindFamilyName(L"Segoe UI", &index, &exist);
+    hr = fontCollection->FindFamilyName(L"Arial", &index, &exist);
     if (FAILED(hr))
     {
         std::cerr << "failed to find font family" << std::endl;
@@ -111,6 +111,13 @@ void DWriteEngine::draw() const
     for (int i = 0; i < textLength; ++i)
     {
         glyphAdvances[i] = glyphMetrics[i].advanceWidth * scale;
+    }
+
+    for (int i = 0; i < textLength; ++i)
+    {
+        std::wcout << "Glyph " << STRING[i] << " advanceWidth: " << glyphMetrics[i].advanceWidth <<
+            ", advanceHeight: " << glyphMetrics[i].advanceHeight << ", leftSideBearing: " << glyphMetrics[i].leftSideBearing <<
+            ", topSideBearing: " << glyphMetrics[i].topSideBearing << std::endl;
     }
 
     DWRITE_GLYPH_RUN glyphRun = {

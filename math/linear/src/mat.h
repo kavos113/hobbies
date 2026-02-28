@@ -100,6 +100,16 @@ public:
         }
         return result;
     }
+
+    mat transpose() const {
+        mat result(cols, rows);
+        for (size_t i = 0; i < rows; ++i) {
+            for (size_t j = 0; j < cols; ++j) {
+                result(j, i) = (*this)(i, j);
+            }
+        }
+        return result;
+    }
 };
 
 template <typename CharT, typename Traits, typename T>

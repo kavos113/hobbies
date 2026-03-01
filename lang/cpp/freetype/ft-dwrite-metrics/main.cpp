@@ -15,6 +15,8 @@
 #include <vector>
 #include <iostream>
 
+char character = 'A';
+
 void freetype()
 {
     FT_Library library;
@@ -62,6 +64,23 @@ void freetype()
 
     std::println("FreeType: \n  Ascender: {}\n  Descender: {}\n  Height: {}\n  Max Advance: {}",
                  ascender, descender, height, maxAdvance);
+
+    error = FT_Load_Char(face, character, FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE);
+    if (error)
+    {
+        std::println("Error loading character '{}': {}", character, error);
+    }
+    else
+    {
+        auto *glyph = face->glyph;
+        std::println("Glyph for '{}': \n  Advance X: {}\n  Bearing X: {}\n  Bearing Y: {}\n  Width: {}\n  Height: {}",
+                        character,
+                        static_cast<float>(glyph->metrics.horiAdvance),
+                        static_cast<float>(glyph->metrics.horiBearingX),
+                        static_cast<float>(glyph->metrics.horiBearingY),
+                        static_cast<float>(glyph->metrics.width),
+                        static_cast<float>(glyph->metrics.height));
+    }
 
     FT_Done_Face(face);
     FT_Done_FreeType(library);
@@ -169,7 +188,7 @@ void freetype_dwritelike()
         metrics.strikethroughThickness = metrics.lineGap / 2; // Approximation
     }
 
-    std::println("DirectWrite: \n  Design Units Per Em: {}\n  Ascent: {}\n  Descent: {}\n  Line Gap: {}\n  Cap Height: {}\n  XHeight: {}\n  Underline Position: {}\n  Underline Thickness: {}\n  Strikethrough Position: {}\n  Strikethrough Thickness: {}",
+    std::println("FreeType: \n  Design Units Per Em: {}\n  Ascent: {}\n  Descent: {}\n  Line Gap: {}\n  Cap Height: {}\n  XHeight: {}\n  Underline Position: {}\n  Underline Thickness: {}\n  Strikethrough Position: {}\n  Strikethrough Thickness: {}",
                  metrics.designUnitsPerEm, metrics.ascent, metrics.descent, metrics.lineGap, metrics.capHeight, metrics.xHeight, metrics.underlinePosition, metrics.underlineThickness, metrics.strikethroughPosition, metrics.strikethroughThickness);
 
 }
@@ -238,12 +257,37 @@ void dwrite()
     fontFace->GetMetrics(&metrics);
     std::println("DirectWrite: \n  Design Units Per Em: {}\n  Ascent: {}\n  Descent: {}\n  Line Gap: {}\n  Cap Height: {}\n  XHeight: {}\n  Underline Position: {}\n  Underline Thickness: {}\n  Strikethrough Position: {}\n  Strikethrough Thickness: {}",
                  metrics.designUnitsPerEm, metrics.ascent, metrics.descent, metrics.lineGap, metrics.capHeight, metrics.xHeight, metrics.underlinePosition, metrics.underlineThickness, metrics.strikethroughPosition, metrics.strikethroughThickness);
+
+    UINT32 codePoint = character;
+    UINT16 glyphIndex;
+    hr = fontFace->GetGlyphIndicesW(&codePoint, 1, &glyphIndex);
+    if (FAILED(hr))
+    {
+        std::println("Error getting glyph index: 0x{:X}", hr);
+        return;
+    }
+
+    DWRITE_GLYPH_METRICS glyphMetrics = {};
+    hr = fontFace->GetDesignGlyphMetrics(&glyphIndex, 1, &glyphMetrics);
+    if (FAILED(hr))
+    {
+        std::println("Error getting glyph metrics: 0x{:X}", hr);
+        return;
+    }
+
+    std::println("Glyph for '{}': \n  Advance X: {}\n  Bearing X: {}\n  Bearing Y: {}\n  Width: {}\n  Height: {}",
+                 character,
+                 glyphMetrics.advanceWidth,
+                 glyphMetrics.leftSideBearing,
+                 glyphMetrics.verticalOriginY - glyphMetrics.topSideBearing,
+                 glyphMetrics.advanceWidth - glyphMetrics.leftSideBearing - glyphMetrics.rightSideBearing,
+                 glyphMetrics.advanceHeight - glyphMetrics.topSideBearing - glyphMetrics.bottomSideBearing);
 }
 
 int main()
 {
     freetype();
-    freetype_dwritelike();
+    // freetype_dwritelike();
     dwrite();
 
     return 0;

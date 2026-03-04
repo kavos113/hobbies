@@ -1,0 +1,18 @@
+@startuml output.png
+class OtherClass {
+}
+class AnotherClass {
+}
+class AnotherClass {
+}
+class ClassClass {
+}
+class ClassClass {
+}
+class SomeClass {
+}
+SomeClass <|-- OtherClass
+SomeClass <|-- AnotherClass
+OtherClass <|-- AnotherClass
+SomeClass <|-- ClassClass
+Otherclass <|-- ClassClass

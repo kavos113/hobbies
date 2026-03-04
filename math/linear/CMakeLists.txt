@@ -9,5 +9,6 @@ add_library(linear
 )
 set_target_properties(linear PROPERTIES LINKER_LANGUAGE CXX)
 
-add_executable(example_matrix examples/matrix.cpp)
+add_executable(example_matrix examples/matrix.cpp
+        examples/lib.h)
 add_executable(example_quartanion examples/quartanion.cpp)

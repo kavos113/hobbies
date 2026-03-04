@@ -38,6 +38,22 @@ public:
         return quartanion(w - other.w, x - other.x, y - other.y, z - other.z);
     }
 
+    quartanion operator-() const {
+        return quartanion(-w, -x, -y, -z);
+    }
+
+    quartanion operator+() const {
+        return *this;
+    }
+
+    quartanion operator*(const T& k) {
+        return quartanion(w * k, x * k, y * k, z * k);
+    }
+
+    quartanion operator/(const T& k) {
+        return quartanion(w / k, x / k, y / k, z / k);
+    }
+
     quartanion conjugate() const {
         return quartanion(w, -x, -y, -z);
     }
@@ -60,6 +76,16 @@ public:
         return w == other.w && x == other.x && y == other.y && z == other.z;
     }
 };
+
+template <typename T>
+quartanion<T> operator*(const T& k, const quartanion<T>& q) {
+    return quartanion<T>(q.w * k, q.x * k, q.y * k, q.z * k);
+}
+
+template <typename T>
+quartanion<T> operator/(const T& k, const quartanion<T>& q) {
+    return quartanion<T>(q.w * k, q.x * k, q.y * k, q.z * k) / q.norm();
+}
 
 template <typename CharT, typename Traits, typename T>
 std::basic_ostream<CharT, Traits>&

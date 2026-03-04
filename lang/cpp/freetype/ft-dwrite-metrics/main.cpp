@@ -15,7 +15,7 @@
 #include <vector>
 #include <iostream>
 
-char character = 'A';
+char character = 'g';
 
 void freetype()
 {

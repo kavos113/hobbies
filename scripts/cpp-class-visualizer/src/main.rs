@@ -1,5 +1,7 @@
+use once_cell::sync::Lazy;
 use regex::Regex;
 use std::{env, fs};
+use walkdir::WalkDir;
 
 struct Class {
     name: String,
@@ -10,20 +12,64 @@ struct Class {
 fn main() {
     let args = env::args().collect::<Vec<String>>();
     if args.len() < 2 {
-        println!("Usage: {} <file>", args[0]);
+        println!("Usage: {} <dir> [exclude dirs]", args[0]);
         return;
     }
 
-    let filename = &args[1];
+    let cpp_exts = ["cpp", "h", "hpp", "cc", "cxx", "hh", "hxx"];
 
-    let class_re = Regex::new(r##"^(?m)\s*class\s+(\S+)\s*\{"##).unwrap();
-    let class_extends_re = Regex::new(r##"(?m)^\s*class\s+(\S+)\s*:([^{]*)\{"##).unwrap();
+    let dirname = &args[1];
+    let exclude_dirs: Vec<String> = if args.len() > 2 {
+        args[2..].to_vec()
+    } else {
+        Vec::new()
+    };
+    let mut extends_list: Vec<Class> = Vec::new();
 
-    let content = fs::read_to_string(filename).expect("Failed to read file");
+    for entry in WalkDir::new(dirname)
+        .into_iter()
+        .filter_entry(|e| {
+            !e.file_name()
+                .to_str()
+                .map(|s| exclude_dirs.iter().any(|ex| s.contains(ex)))
+                .unwrap_or(false)
+        })
+        .filter_map(|e| e.ok())
+    {
+        println!("Processing: {}", entry.path().display());
+
+        if entry.file_type().is_file() {
+            if let Some(ext) = entry.path().extension() {
+                if cpp_exts.contains(&ext.to_str().unwrap_or_default()) {
+                    let content = fs::read_to_string(entry.path()).expect("Failed to read file");
+                    let mut classes = read_file(content);
+                    extends_list.append(&mut classes);
+                }
+            }
+        }
+    }
+
+    static SUPER_FILTER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r##"u?int(\d)+_t"##).unwrap());
+    extends_list.retain(|c| {
+        if let Some(super_class) = &c.super_class {
+            !SUPER_FILTER_RE.is_match(super_class)
+        } else {
+            true
+        }
+    });
+
+    let uml = generate_uml(extends_list);
+    fs::write("output.pu", uml).expect("Failed to write UML file");
+}
+
+fn read_file(content: String) -> Vec<Class> {
+    static CLASS_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r##"\s*class\s+(\S+)\s*\{"##).unwrap());
+    static CLASS_EXTENDS_RE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r##"\s*class\s+(\S+)\s*:([^{]*)\{"##).unwrap());
 
     let mut extends_list: Vec<Class> = Vec::new();
 
-    for mat in class_extends_re.captures_iter(&content) {
+    for mat in CLASS_EXTENDS_RE.captures_iter(&content) {
         let class_name = mat.get(1).unwrap().as_str();
         let extends = mat.get(2).unwrap().as_str();
 
@@ -46,7 +92,7 @@ fn main() {
         }
     }
 
-    for mat in class_re.captures_iter(&content) {
+    for mat in CLASS_RE.captures_iter(&content) {
         let class_name = mat.get(1).unwrap().as_str();
         if !extends_list.iter().any(|c| c.name == class_name) {
             extends_list.push(Class {
@@ -57,8 +103,7 @@ fn main() {
         }
     }
 
-    let uml = generate_uml(extends_list);
-    fs::write("output.pu", uml).expect("Failed to write UML file");
+    extends_list
 }
 
 fn generate_uml(classes: Vec<Class>) -> String {

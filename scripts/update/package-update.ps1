@@ -12,12 +12,9 @@ foreach ($dir in $packageDirs) {
             npm audit fix --force
             npm install
         }
-        elseif (Test-Path "pnpm-lock.yaml") {
+        if (Test-Path "pnpm-lock.yaml") {
             pnpm audit --fix
             pnpm up --lockfile-only
-        }
-        else {
-            Write-Warning "No recognized lock file found in $dir. Skipping package update."
         }
     }
     catch {

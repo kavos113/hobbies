@@ -14,10 +14,10 @@
   "license": "ISC",
   "packageManager": "pnpm@10.29.3",
   "devDependencies": {
-    "@types/node": "^25.3.3",
+    "@types/node": "^25.3.5",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "openai": "^6.25.0"
+    "openai": "^6.27.0"
   }
 }

@@ -44,3 +44,17 @@ for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1)
 ```
 
 time: 6.805 ms
+
+### double load
+2つだけロードしてきて、足し合わせてから共有メモリに保存する
+```cpp
+//before
+unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+sdata[tid] = arrayI[idx];
+
+//after
+unsigned int idx = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
+sdata[tid] = arrayI[idx] + arrayI[idx + blockDim.x];
+```
+
+timne: 3.649 ms

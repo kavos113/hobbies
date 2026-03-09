@@ -59,6 +59,8 @@ sdata[tid] = arrayI[idx] + arrayI[idx + blockDim.x];
 
 time: 3.649 ms
 
+4倍にしても特に変わらなかった
+
 ### さらに改善
 sが32以下になったら、同一warp内での計算になるので、__syncthreads()は不要になる
 ```cpp 

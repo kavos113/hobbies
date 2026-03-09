@@ -70,7 +70,7 @@ wnd_proc:
     ret
 
 main:
-    sub rsp, 128
+    sub rsp, 136 ; 8 bytes: return address + 128 bytes for local variables and alignment
 
     ; Initialize WNDCLASSEXW structure
     lea rdi, [rsp + 32]
@@ -187,5 +187,5 @@ main:
     xor rcx, rcx
     call ExitProcess
 
-    add rsp, 128
+    add rsp, 136
     ret

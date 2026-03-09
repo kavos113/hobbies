@@ -57,4 +57,21 @@ unsigned int idx = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
 sdata[tid] = arrayI[idx] + arrayI[idx + blockDim.x];
 ```
 
-timne: 3.649 ms
+time: 3.649 ms
+
+### さらに改善
+sが32以下になったら、同一warp内での計算になるので、__syncthreads()は不要になる
+```cpp 
+if (tid < 32)
+{
+  volatile int *vsmem = sdata;
+  vsmem[tid] += vsmem[tid + 32];
+  vsmem[tid] += vsmem[tid + 16];
+  vsmem[tid] += vsmem[tid + 8];
+  vsmem[tid] += vsmem[tid + 4];
+  vsmem[tid] += vsmem[tid + 2];
+  vsmem[tid] += vsmem[tid + 1];
+}
+```
+
+time: 3.070 ms

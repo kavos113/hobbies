@@ -15,13 +15,24 @@ __global__ void asum(int *arrayI, int *out)
   sdata[tid] = arrayI[idx] + arrayI[idx + blockDim.x];
   __syncthreads();
 
-  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1)
+  for (unsigned int s = blockDim.x / 2; s > 32; s >>= 1)
   {
     if (tid < s)
     {
       sdata[tid] += sdata[tid + s];
     }
     __syncthreads();
+  }
+
+  if (tid < 32)
+  {
+    volatile int *vsmem = sdata;
+    vsmem[tid] += vsmem[tid + 32];
+    vsmem[tid] += vsmem[tid + 16];
+    vsmem[tid] += vsmem[tid + 8];
+    vsmem[tid] += vsmem[tid + 4];
+    vsmem[tid] += vsmem[tid + 2];
+    vsmem[tid] += vsmem[tid + 1];
   }
 
   if (tid == 0)

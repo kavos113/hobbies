@@ -16,6 +16,9 @@ def furiwake(total, parts):
         if key != -1:
             result[value].append(key)
 
+    for part in result:
+        part.sort()
+
     return result
 
 if __name__ == "__main__":

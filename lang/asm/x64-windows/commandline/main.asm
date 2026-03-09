@@ -8,8 +8,8 @@ extern wsprintfW
 extern ExitProcess
 
 section .data
-    cap dw 'C', 'o', 'm', 'm', 'a', 'n', 'd', ' ', 'L', 'i', 'n', 'e', ' ', 'A', 'r', 'g', 'u', 'm', 'e', 'n', 't', 's', 0
-    fmt dw 'A', 'r', 'g', 'u', 'm', 'e', 'n', 't', ' ', '%', 'd', ':', ' ', '%', 's', 0
+    cap dw __utf16__("Command Line Arguments"), 0
+    fmt dw __utf16__("Argument %d: %s"), 0
 
 section .bss
     buf resb 256

@@ -3,12 +3,38 @@
 #include <time.h>
 
 #define ARRAY_SIZE 16384 * 16384
+#define BLOCK_SIZE 256
 
-__global__ void asum(int *arrayI, int *arrayO)
+__global__ void asum(int *arrayI, int *out)
 {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  __shared__ int sdata[BLOCK_SIZE];
 
-  atomicAdd(arrayO, arrayI[idx]);
+  unsigned int tid = threadIdx.x;
+  unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  sdata[tid] = arrayI[idx];
+  __syncthreads();
+
+  // s = 1: sdata[0] += sdata[1], sdata[2] += sdata[3], ...
+  // s = 2: sdata[0] += sdata[2], sdata[4] += sdata[6], ...
+  // s = 4: sdata[0] += sdata[4], sdata[8] += sdata[12], ...
+  // ...
+  // s = 128: sdata[0] += sdata[128] -> RESULT in sdata[0]
+  for (unsigned int s = 1; s < blockDim.x; s *= 2)
+  {
+    // 足される側のindex
+    int index = 2 * s * tid;
+    if (index < blockDim.x)
+    {
+      sdata[index] += sdata[index + s];
+    }
+    __syncthreads();
+  }
+
+  if (tid == 0)
+  {
+    atomicAdd(out, sdata[0]);
+  }
 }
 
 __global__ void init_array(int *array)
@@ -32,14 +58,13 @@ void init_array(int block_size)
 
 int main(int argc, char *argv[])
 {
-  if (argc < 3)
+  if (argc < 2)
   {
-    printf("Usage: %s <iterations> <block_size>\n", argv[0]);
+    printf("Usage: %s <iterations>\n", argv[0]);
     return 1;
   }
 
   int iterations = atoi(argv[1]);
-  int block_size = atoi(argv[2]);
 
   srand(time(NULL));
 
@@ -54,8 +79,8 @@ int main(int argc, char *argv[])
   cudaMalloc((void **)&d_out, sizeof(int));
 
   // warmup
-  init_array(block_size);
-  dim3 block(block_size);
+  init_array(BLOCK_SIZE);
+  dim3 block(BLOCK_SIZE);
   dim3 grid((ARRAY_SIZE + block.x - 1) / block.x);
   asum<<<grid, block>>>(d_arrayI, d_out);
   cudaDeviceSynchronize();
@@ -64,9 +89,9 @@ int main(int argc, char *argv[])
   double total_time = 0;
   for (int i = 0; i < iterations; i++)
   {
-    init_array(block_size);
+    init_array(BLOCK_SIZE);
 
-    dim3 block(block_size);
+    dim3 block(BLOCK_SIZE);
     dim3 grid((ARRAY_SIZE + block.x - 1) / block.x);
 
     start = clock();

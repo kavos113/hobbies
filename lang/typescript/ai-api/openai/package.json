@@ -18,6 +18,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "openai": "^6.32.0"
+    "openai": "^6.33.0"
   }
 }

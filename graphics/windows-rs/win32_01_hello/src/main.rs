@@ -1,8 +1,15 @@
 use windows::core::w;
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
-use windows::Win32::Graphics::Gdi::{GetSysColorBrush, UpdateWindow, COLOR_WINDOW, SYS_COLOR_INDEX};
+use windows::Win32::Graphics::Gdi::{
+    GetSysColorBrush, UpdateWindow, COLOR_WINDOW, SYS_COLOR_INDEX,
+};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
-use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, LoadCursorW, LoadIconW, PostQuitMessage, RegisterClassExW, ShowWindow, TranslateMessage, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW, IDI_APPLICATION, MSG, SW_SHOW, WINDOW_EX_STYLE, WNDCLASSEXW, WS_OVERLAPPEDWINDOW, WS_VISIBLE};
+use windows::Win32::UI::WindowsAndMessaging::{
+    CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, LoadCursorW, LoadIconW,
+    PostQuitMessage, RegisterClassExW, ShowWindow, TranslateMessage, CS_HREDRAW, CS_VREDRAW
+    , IDC_ARROW, IDI_APPLICATION, MSG, SW_SHOW, WINDOW_EX_STYLE, WNDCLASSEXW,
+    WS_OVERLAPPEDWINDOW, WM_PAINT, WM_DESTROY
+};
 
 fn main() {
     unsafe {
@@ -31,11 +38,13 @@ fn main() {
             window_class,
             w!("Hello, Windows!"),
             WS_OVERLAPPEDWINDOW,
-            100, 100,
-            800, 600,
+            100,
+            100,
+            800,
+            600,
             None,
             None,
-            None,
+            Some(instance.into()),
             None,
         ) {
             Ok(hwnd) => hwnd,

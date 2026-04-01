@@ -6,9 +6,9 @@ use windows::Win32::Graphics::Gdi::{
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, LoadCursorW, LoadIconW,
-    PostQuitMessage, RegisterClassExW, ShowWindow, TranslateMessage, CS_HREDRAW, CS_VREDRAW
-    , IDC_ARROW, IDI_APPLICATION, MSG, SW_SHOW, WINDOW_EX_STYLE, WNDCLASSEXW,
-    WS_OVERLAPPEDWINDOW, WM_PAINT, WM_DESTROY
+    PostQuitMessage, RegisterClassExW, ShowWindow, TranslateMessage, CS_HREDRAW, CS_VREDRAW,
+    IDC_ARROW, IDI_APPLICATION, MSG, SW_SHOW, WINDOW_EX_STYLE, WM_DESTROY, WM_PAINT, WNDCLASSEXW,
+    WS_OVERLAPPEDWINDOW,
 };
 
 fn main() {

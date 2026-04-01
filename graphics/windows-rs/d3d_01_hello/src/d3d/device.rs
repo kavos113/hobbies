@@ -1,6 +1,12 @@
+use windows::Win32::Graphics::Direct3D::{
+    D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_12_0, D3D_FEATURE_LEVEL_12_1,
+};
 use windows::Win32::Graphics::Direct3D12::{D3D12CreateDevice, ID3D12Device};
-use windows::Win32::Graphics::Direct3D::{D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_12_0, D3D_FEATURE_LEVEL_12_1};
-use windows::Win32::Graphics::Dxgi::{CreateDXGIFactory2, IDXGIAdapter1, IDXGIFactory7, DXGI_ADAPTER_DESC1, DXGI_ADAPTER_FLAG, DXGI_ADAPTER_FLAG_NONE, DXGI_ADAPTER_FLAG_SOFTWARE, DXGI_CREATE_FACTORY_DEBUG, DXGI_ERROR_ACCESS_DENIED, DXGI_ERROR_NOT_FOUND, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE};
+use windows::Win32::Graphics::Dxgi::{
+    CreateDXGIFactory2, IDXGIAdapter1, IDXGIFactory7, DXGI_ADAPTER_DESC1, DXGI_ADAPTER_FLAG,
+    DXGI_ADAPTER_FLAG_NONE, DXGI_ADAPTER_FLAG_SOFTWARE, DXGI_CREATE_FACTORY_DEBUG,
+    DXGI_ERROR_ACCESS_DENIED, DXGI_ERROR_NOT_FOUND, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+};
 
 pub struct Device {
     dxgi_factory: IDXGIFactory7,
@@ -37,19 +43,20 @@ fn create_device(adapter: &IDXGIAdapter1) -> ID3D12Device {
         D3D_FEATURE_LEVEL_12_1,
         D3D_FEATURE_LEVEL_12_0,
         D3D_FEATURE_LEVEL_11_1,
-        D3D_FEATURE_LEVEL_11_0
+        D3D_FEATURE_LEVEL_11_0,
     ];
 
     let mut device: Option<ID3D12Device> = None;
     for &level in &feature_levels {
-        match unsafe {
-            D3D12CreateDevice(adapter, level, &mut device)
-        } {
+        match unsafe { D3D12CreateDevice(adapter, level, &mut device) } {
             Ok(_) => {
                 return device.unwrap();
             }
             Err(hr) => {
-                println!("Failed to create D3D12 device with feature level {:?}: {:?}", level, hr);
+                println!(
+                    "Failed to create D3D12 device with feature level {:?}: {:?}",
+                    level, hr
+                );
             }
         }
     }
@@ -90,31 +97,27 @@ fn get_adapter(factory: &IDXGIFactory7) -> IDXGIAdapter1 {
     }
 
     let mut adapters: Vec<(IDXGIAdapter1, DXGI_ADAPTER_DESC1)> = (0..)
-        .map_while(|i| {
-            match unsafe {
-                factory.EnumAdapters1(i)
-            } {
-                Ok(adapter) => {
-                    let desc = match unsafe { adapter.GetDesc1()} {
-                        Ok(desc) => desc,
-                        Err(_) => panic!("Failed to get adapter description"),
-                    };
-                    if (DXGI_ADAPTER_FLAG(desc.Flags as _) & DXGI_ADAPTER_FLAG_SOFTWARE)
-                        != DXGI_ADAPTER_FLAG_NONE
-                    {
-                        None
-                    } else {
-                        Some((adapter, desc))
-                    }
+        .map_while(|i| match unsafe { factory.EnumAdapters1(i) } {
+            Ok(adapter) => {
+                let desc = match unsafe { adapter.GetDesc1() } {
+                    Ok(desc) => desc,
+                    Err(_) => panic!("Failed to get adapter description"),
+                };
+                if (DXGI_ADAPTER_FLAG(desc.Flags as _) & DXGI_ADAPTER_FLAG_SOFTWARE)
+                    != DXGI_ADAPTER_FLAG_NONE
+                {
+                    None
+                } else {
+                    Some((adapter, desc))
                 }
+            }
 
-                Err(hr) => {
-                    if hr.code() == DXGI_ERROR_NOT_FOUND {
-                        None
-                    } else {
-                        println!("No more adapters found at index {}", i);
-                        None
-                    }
+            Err(hr) => {
+                if hr.code() == DXGI_ERROR_NOT_FOUND {
+                    None
+                } else {
+                    println!("No more adapters found at index {}", i);
+                    None
                 }
             }
         })

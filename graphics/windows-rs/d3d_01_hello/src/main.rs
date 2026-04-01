@@ -1,3 +1,6 @@
+mod d3d;
+
+use crate::d3d::D3DRenderer;
 use windows::core::{w, PCWSTR};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::Graphics::Gdi::UpdateWindow;
@@ -9,8 +12,18 @@ use windows::Win32::UI::WindowsAndMessaging::{
     WS_OVERLAPPEDWINDOW,
 };
 
+trait Renderer {
+    fn new() -> Self
+    where
+        Self: Sized;
+
+    fn bind_window(&mut self, hwnd: &HWND);
+    fn render(&mut self);
+}
+
 struct Window {
     hwnd: HWND,
+    renderer: Box<dyn Renderer>,
 }
 
 impl Window {
@@ -54,19 +67,35 @@ impl Window {
                 Err(e) => panic!("Failed to create window: {:?}", e),
             };
 
-            Self { hwnd }
+            Self {
+                hwnd,
+                renderer: Box::new(D3DRenderer::new()),
+            }
         }
     }
 
-    fn run(&self) {
+    fn bind_renderer(&mut self) {
+        self.renderer.bind_window(&self.hwnd);
+    }
+
+    fn run(&mut self) {
         unsafe {
             ShowWindow(self.hwnd, SW_SHOW);
             UpdateWindow(self.hwnd);
 
             let mut msg = MSG::default();
-            while GetMessageW(&mut msg, None, 0, 0).into() {
-                let _ = TranslateMessage(&msg);
-                DispatchMessageW(&msg);
+            loop {
+                let ret = GetMessageW(&mut msg, None, 0, 0);
+                if ret.0 == -1 {
+                    panic!("Error in message loop");
+                } else if ret.0 == 0 {
+                    break;
+                } else {
+                    TranslateMessage(&msg);
+                    DispatchMessageW(&msg);
+                }
+
+                self.renderer.render();
             }
         }
     }
@@ -86,6 +115,7 @@ impl Window {
 }
 
 fn main() {
-    let window = Window::new(100, 100, 800, 600);
+    let mut window = Window::new(100, 100, 800, 600);
+    window.bind_renderer();
     window.run();
 }

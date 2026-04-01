@@ -3,6 +3,13 @@
 version = 4
 
 [[package]]
+name = "d3d_01_hello"
+version = "0.1.0"
+dependencies = [
+ "windows",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"

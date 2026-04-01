@@ -1,6 +1,6 @@
 [workspace]
 members = [
-#    "d3d_01_hello",
+    "d3d_01_hello",
     "win32_01_hello",
     "win32_02_window_struct"
 ]

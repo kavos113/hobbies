@@ -1,19 +1,23 @@
+use crate::d3d::pipeline::Pipeline;
 use windows::core::Interface;
-use windows::Win32::Foundation::{HWND, RECT};
+use windows::Win32::Foundation::{HANDLE, HWND, RECT};
 use windows::Win32::Graphics::Direct3D12::{
     ID3D12CommandAllocator, ID3D12CommandQueue, ID3D12DescriptorHeap, ID3D12Device, ID3D12Fence,
     ID3D12GraphicsCommandList, ID3D12PipelineState, ID3D12Resource, ID3D12RootSignature,
     D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_DESC, D3D12_COMMAND_QUEUE_PRIORITY_NORMAL,
-    D3D12_DESCRIPTOR_HEAP_DESC, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_VERTEX_BUFFER_VIEW,
-    D3D12_VIEWPORT,
+    D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_DESCRIPTOR_HEAP_DESC, D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+    D3D12_HEAP_PROPERTIES, D3D12_HEAP_TYPE_UPLOAD, D3D12_MEMORY_POOL_UNKNOWN, D3D12_RESOURCE_DESC,
+    D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_STATE_GENERIC_READ,
+    D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_VERTEX_BUFFER_VIEW, D3D12_VIEWPORT,
 };
 use windows::Win32::Graphics::Dxgi::Common::{
-    DXGI_ALPHA_MODE_UNSPECIFIED, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SAMPLE_DESC,
+    DXGI_ALPHA_MODE_UNSPECIFIED, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_UNKNOWN, DXGI_SAMPLE_DESC,
 };
 use windows::Win32::Graphics::Dxgi::{
     IDXGIFactory7, IDXGISwapChain4, DXGI_SCALING_STRETCH, DXGI_SWAP_CHAIN_DESC1,
     DXGI_SWAP_EFFECT_FLIP_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT,
 };
+use windows::Win32::System::Threading::CreateEventW;
 use windows::Win32::UI::WindowsAndMessaging::GetClientRect;
 
 pub struct Resources {
@@ -24,6 +28,40 @@ pub struct Resources {
     pipeline: Pipeline,
     view_port: D3D12_VIEWPORT,
     scissor_rect: RECT,
+}
+
+impl Resources {
+    pub fn new(device: &ID3D12Device, factory: &IDXGIFactory7, hwnd: &HWND) -> Self {
+        let commands = Commands::new(device);
+        let display = Display::new(factory, device, hwnd, &commands.command_queue);
+        let vertex_resource = VertexResource::new(device);
+        let fence = Fence::new(device);
+        let pipeline = Pipeline::new(device);
+
+        let mut rect = RECT::default();
+        unsafe {
+            GetClientRect(*hwnd, &mut rect);
+        }
+        let view_port = D3D12_VIEWPORT {
+            TopLeftX: 0.0,
+            TopLeftY: 0.0,
+            Width: (rect.right - rect.left) as f32,
+            Height: (rect.bottom - rect.top) as f32,
+            MinDepth: 0.0,
+            MaxDepth: 1.0,
+        };
+        let scissor_rect = rect;
+
+        Self {
+            commands,
+            display,
+            vertex_resource,
+            fence,
+            pipeline,
+            view_port,
+            scissor_rect,
+        }
+    }
 }
 
 struct Commands {
@@ -46,11 +84,7 @@ impl Display {
 struct Fence {
     fence: ID3D12Fence,
     value: u64,
-}
-
-struct Pipeline {
-    root_signature: ID3D12RootSignature,
-    pipeline: ID3D12PipelineState,
+    event: HANDLE,
 }
 
 struct Vertex {
@@ -64,7 +98,7 @@ struct VertexResource {
 }
 
 impl Commands {
-    fn new(device: &ID3D12Device) -> Self {
+    pub fn new(device: &ID3D12Device) -> Self {
         let command_allocator: ID3D12CommandAllocator =
             match unsafe { device.CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT) } {
                 Ok(allocator) => allocator,
@@ -99,7 +133,7 @@ impl Commands {
 }
 
 impl Display {
-    fn new(
+    pub fn new(
         factory: &IDXGIFactory7,
         device: &ID3D12Device,
         hwnd: &HWND,
@@ -174,6 +208,110 @@ impl Display {
             swap_chain,
             back_buffers,
             rtv_heap,
+        }
+    }
+}
+
+impl Fence {
+    pub fn new(device: &ID3D12Device) -> Self {
+        let fence: ID3D12Fence = match unsafe { device.CreateFence(0, Default::default()) } {
+            Ok(fence) => fence,
+            Err(hr) => panic!("Failed to create fence: {:?}", hr),
+        };
+
+        let event = unsafe { CreateEventW(None, false, false, None) }
+            .expect("Failed to create event for fence synchronization");
+
+        Self {
+            fence,
+            value: 1,
+            event,
+        }
+    }
+}
+
+impl VertexResource {
+    pub fn new(device: &ID3D12Device) -> Self {
+        let vertices = [
+            Vertex {
+                position: [0.0, 0.5, 0.0],
+                color: [1.0, 0.0, 0.0, 1.0],
+            },
+            Vertex {
+                position: [0.5, -0.5, 0.0],
+                color: [0.0, 1.0, 0.0, 1.0],
+            },
+            Vertex {
+                position: [-0.5, -0.5, 0.0],
+                color: [0.0, 0.0, 1.0, 1.0],
+            },
+        ];
+
+        let vertex_buffer_size = (size_of::<Vertex>() * vertices.len()) as u64;
+
+        let heap_properties = D3D12_HEAP_PROPERTIES {
+            Type: D3D12_HEAP_TYPE_UPLOAD,
+            CPUPageProperty: D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+            MemoryPoolPreference: D3D12_MEMORY_POOL_UNKNOWN,
+            CreationNodeMask: 0,
+            VisibleNodeMask: 0,
+        };
+        let resource_desc = D3D12_RESOURCE_DESC {
+            Dimension: D3D12_RESOURCE_DIMENSION_BUFFER,
+            Alignment: 0,
+            Width: vertex_buffer_size,
+            Height: 1,
+            DepthOrArraySize: 1,
+            MipLevels: 1,
+            Format: DXGI_FORMAT_UNKNOWN,
+            SampleDesc: DXGI_SAMPLE_DESC {
+                Count: 1,
+                Quality: 0,
+            },
+            Layout: D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+            Flags: Default::default(),
+        };
+
+        let mut vertex_buffer: Option<ID3D12Resource> = None;
+        match unsafe {
+            device.CreateCommittedResource(
+                &heap_properties,
+                Default::default(),
+                &resource_desc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                None,
+                &mut vertex_buffer,
+            )
+        } {
+            Ok(_) => (),
+            Err(hr) => panic!("Failed to create vertex buffer resource: {:?}", hr),
+        }
+        let vertex_buffer = vertex_buffer.expect("Vertex buffer resource was not created");
+
+        unsafe {
+            let mut data = std::ptr::null_mut();
+            match vertex_buffer.Map(0, None, Some(&mut data)) {
+                Ok(_) => {
+                    std::ptr::copy_nonoverlapping(
+                        vertices.as_ptr(),
+                        data as *mut Vertex,
+                        vertices.len(),
+                    );
+                    vertex_buffer.Unmap(0, None);
+                }
+                Err(hr) => panic!("Failed to map vertex buffer resource: {:?}", hr),
+            }
+        }
+
+        let vertex_buffer_view = D3D12_VERTEX_BUFFER_VIEW {
+            BufferLocation: unsafe { vertex_buffer.GetGPUVirtualAddress() },
+            SizeInBytes: vertex_buffer_size as u32,
+            StrideInBytes: size_of::<Vertex>() as u32,
+        };
+
+        Self {
+            vertex_buffer,
+            vertex_buffer_view,
         }
     }
 }

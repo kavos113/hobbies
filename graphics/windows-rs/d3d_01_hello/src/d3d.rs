@@ -1,4 +1,5 @@
 mod device;
+mod pipeline;
 mod resource;
 
 use crate::d3d::device::Device;

@@ -86,6 +86,28 @@ impl Pipeline {
             Err(hr) => panic!("Failed to create root signature: {:?}", hr),
         };
 
+        let input_layout =
+            [
+                D3D12_INPUT_ELEMENT_DESC {
+                    SemanticName: s!("`POSITION"),
+                    SemanticIndex: 0,
+                    Format: DXGI_FORMAT_R32G32B32_FLOAT,
+                    InputSlot: 0,
+                    AlignedByteOffset: 0,
+                    InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+                    InstanceDataStepRate: 0,
+                },
+                D3D12_INPUT_ELEMENT_DESC {
+                    SemanticName: s!("`COLOR"),
+                    SemanticIndex: 0,
+                    Format: DXGI_FORMAT_R32G32B32A32_FLOAT,
+                    InputSlot: 0,
+                    AlignedByteOffset: D3D12_APPEND_ALIGNED_ELEMENT,
+                    InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+                    InstanceDataStepRate: 0,
+                },
+            ];
+
         let pipeline_desc = D3D12_GRAPHICS_PIPELINE_STATE_DESC {
             pRootSignature: unsafe { std::mem::transmute_copy(&root_signature) },
             VS: D3D12_SHADER_BYTECODE {
@@ -136,8 +158,8 @@ impl Pipeline {
                 ConservativeRaster: D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF,
             },
             InputLayout: D3D12_INPUT_LAYOUT_DESC {
-                pInputElementDescs: Self::input_layout().as_ptr(),
-                NumElements: Self::input_layout().len() as u32,
+                pInputElementDescs: input_layout.as_ptr(),
+                NumElements: input_layout.len() as u32,
             },
             PrimitiveTopologyType: D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
             NumRenderTargets: 1,
@@ -170,29 +192,6 @@ impl Pipeline {
             root_signature,
             pipeline,
         }
-    }
-
-    fn input_layout() -> Vec<D3D12_INPUT_ELEMENT_DESC> {
-        vec![
-            D3D12_INPUT_ELEMENT_DESC {
-                SemanticName: s!("`POSITION"),
-                SemanticIndex: 0,
-                Format: DXGI_FORMAT_R32G32B32_FLOAT,
-                InputSlot: 0,
-                AlignedByteOffset: 0,
-                InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-                InstanceDataStepRate: 0,
-            },
-            D3D12_INPUT_ELEMENT_DESC {
-                SemanticName: s!("`COLOR"),
-                SemanticIndex: 0,
-                Format: DXGI_FORMAT_R32G32B32A32_FLOAT,
-                InputSlot: 0,
-                AlignedByteOffset: D3D12_APPEND_ALIGNED_ELEMENT,
-                InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-                InstanceDataStepRate: 0,
-            },
-        ]
     }
 
     pub fn record_commands(&self, command_list: &ID3D12GraphicsCommandList) {

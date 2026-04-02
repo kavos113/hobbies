@@ -4,10 +4,10 @@ use windows::Win32::Foundation::{FALSE, TRUE};
 use windows::Win32::Graphics::Direct3D::Fxc::D3DCompileFromFile;
 use windows::Win32::Graphics::Direct3D::ID3DBlob;
 use windows::Win32::Graphics::Direct3D12::{
-    D3D12SerializeRootSignature, ID3D12Device, ID3D12PipelineState, ID3D12RootSignature,
-    D3D12_APPEND_ALIGNED_ELEMENT, D3D12_BLEND_DESC, D3D12_COLOR_WRITE_ENABLE_ALL,
-    D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF, D3D12_CULL_MODE_NONE, D3D12_DEFAULT_DEPTH_BIAS,
-    D3D12_DEFAULT_DEPTH_BIAS_CLAMP, D3D12_DEFAULT_SAMPLE_MASK,
+    D3D12SerializeRootSignature, ID3D12Device, ID3D12GraphicsCommandList, ID3D12PipelineState,
+    ID3D12RootSignature, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_BLEND_DESC,
+    D3D12_COLOR_WRITE_ENABLE_ALL, D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF, D3D12_CULL_MODE_NONE,
+    D3D12_DEFAULT_DEPTH_BIAS, D3D12_DEFAULT_DEPTH_BIAS_CLAMP, D3D12_DEFAULT_SAMPLE_MASK,
     D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS, D3D12_FILL_MODE_SOLID,
     D3D12_GRAPHICS_PIPELINE_STATE_DESC, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
     D3D12_INPUT_ELEMENT_DESC, D3D12_INPUT_LAYOUT_DESC, D3D12_PIPELINE_STATE_FLAG_NONE,
@@ -193,6 +193,13 @@ impl Pipeline {
                 InstanceDataStepRate: 0,
             },
         ]
+    }
+
+    pub fn record_commands(&self, command_list: &ID3D12GraphicsCommandList) {
+        unsafe {
+            command_list.SetPipelineState(&self.pipeline);
+            command_list.SetGraphicsRootSignature(&self.root_signature);
+        }
     }
 }
 

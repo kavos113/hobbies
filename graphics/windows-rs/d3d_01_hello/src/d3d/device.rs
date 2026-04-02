@@ -9,12 +9,12 @@ use windows::Win32::Graphics::Dxgi::{
 };
 
 pub struct Device {
-    dxgi_factory: IDXGIFactory7,
-    device: ID3D12Device,
+    pub dxgi_factory: IDXGIFactory7,
+    pub device: ID3D12Device,
 }
 
 impl Device {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let dxgi_factory = create_factory();
         let adapter = get_adapter(&dxgi_factory);
         let device = create_device(&adapter);

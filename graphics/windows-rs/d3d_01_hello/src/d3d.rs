@@ -13,18 +13,17 @@ pub struct D3DRenderer {
 }
 
 impl Renderer for D3DRenderer {
-    fn new() -> Self
+    fn new(hwnd: &HWND) -> Self
     where
         Self: Sized,
     {
-        todo!()
-    }
+        let device = Device::new();
+        let resources = Resources::new(&device.device, &device.dxgi_factory, hwnd);
 
-    fn bind_window(&mut self, hwnd: &HWND) {
-        todo!()
+        Self { device, resources }
     }
 
     fn render(&mut self) {
-        todo!()
+        self.resources.render(&self.device.device);
     }
 }

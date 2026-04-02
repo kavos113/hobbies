@@ -1,13 +1,17 @@
 use crate::d3d::pipeline::Pipeline;
-use windows::core::Interface;
+use windows::core::{s, Interface};
 use windows::Win32::Foundation::{HANDLE, HWND, RECT};
+use windows::Win32::Graphics::Direct3D::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 use windows::Win32::Graphics::Direct3D12::{
     ID3D12CommandAllocator, ID3D12CommandQueue, ID3D12DescriptorHeap, ID3D12Device, ID3D12Fence,
     ID3D12GraphicsCommandList, ID3D12PipelineState, ID3D12Resource, ID3D12RootSignature,
     D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_DESC, D3D12_COMMAND_QUEUE_PRIORITY_NORMAL,
     D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_DESCRIPTOR_HEAP_DESC, D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-    D3D12_HEAP_PROPERTIES, D3D12_HEAP_TYPE_UPLOAD, D3D12_MEMORY_POOL_UNKNOWN, D3D12_RESOURCE_DESC,
-    D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_STATE_GENERIC_READ,
+    D3D12_HEAP_PROPERTIES, D3D12_HEAP_TYPE_UPLOAD, D3D12_MEMORY_POOL_UNKNOWN,
+    D3D12_RESOURCE_BARRIER, D3D12_RESOURCE_BARRIER_0, D3D12_RESOURCE_BARRIER_FLAG_NONE,
+    D3D12_RESOURCE_BARRIER_TYPE_TRANSITION, D3D12_RESOURCE_DESC, D3D12_RESOURCE_DIMENSION_BUFFER,
+    D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_PRESENT,
+    D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_TRANSITION_BARRIER,
     D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_VERTEX_BUFFER_VIEW, D3D12_VIEWPORT,
 };
 use windows::Win32::Graphics::Dxgi::Common::{
@@ -17,14 +21,13 @@ use windows::Win32::Graphics::Dxgi::{
     IDXGIFactory7, IDXGISwapChain4, DXGI_SCALING_STRETCH, DXGI_SWAP_CHAIN_DESC1,
     DXGI_SWAP_EFFECT_FLIP_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT,
 };
-use windows::Win32::System::Threading::CreateEventW;
+use windows::Win32::System::Threading::{CreateEventW, WaitForSingleObject, INFINITE};
 use windows::Win32::UI::WindowsAndMessaging::GetClientRect;
 
 pub struct Resources {
     commands: Commands,
     display: Display,
     vertex_resource: VertexResource,
-    fence: Fence,
     pipeline: Pipeline,
     view_port: D3D12_VIEWPORT,
     scissor_rect: RECT,
@@ -35,7 +38,6 @@ impl Resources {
         let commands = Commands::new(device);
         let display = Display::new(factory, device, hwnd, &commands.command_queue);
         let vertex_resource = VertexResource::new(device);
-        let fence = Fence::new(device);
         let pipeline = Pipeline::new(device);
 
         let mut rect = RECT::default();
@@ -56,18 +58,39 @@ impl Resources {
             commands,
             display,
             vertex_resource,
-            fence,
             pipeline,
             view_port,
             scissor_rect,
         }
+    }
+
+    pub fn render(&mut self, device: &ID3D12Device) {
+        let frame_index = self.display.frame_index();
+
+        let command_list = &self.commands.command_list;
+        self.display.begin_frame(device, command_list, frame_index);
+
+        unsafe {
+            command_list.RSSetViewports(&[self.view_port]);
+            command_list.RSSetScissorRects(&[self.scissor_rect]);
+            command_list.IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            self.vertex_resource.record_draw_commands(command_list);
+            self.pipeline.record_commands(command_list);
+
+            command_list.DrawInstanced(3, 1, 0, 0);
+        }
+
+        self.display.end_frame(command_list, frame_index);
+        self.commands.end_frame();
+        self.display.present();
     }
 }
 
 struct Commands {
     command_allocator: ID3D12CommandAllocator,
     command_queue: ID3D12CommandQueue,
-    command_list: ID3D12GraphicsCommandList,
+    pub command_list: ID3D12GraphicsCommandList,
+    fence: Fence,
 }
 
 struct Display {
@@ -124,10 +147,34 @@ impl Commands {
                 Err(hr) => panic!("Failed to create command queue: {:?}", hr),
             };
 
+        let fence = Fence::new(device);
+
         Self {
             command_allocator,
             command_queue,
             command_list,
+            fence,
+        }
+    }
+
+    pub fn end_frame(&mut self) {
+        match unsafe { self.command_list.Close() } {
+            Ok(_) => (),
+            Err(hr) => panic!("Failed to close command list: {:?}", hr),
+        }
+
+        let command_lists = [Some(self.command_list.clone().into())];
+        unsafe { self.command_queue.ExecuteCommandLists(&command_lists) };
+
+        self.fence.wait(&self.command_queue);
+
+        match unsafe { self.command_allocator.Reset() } {
+            Ok(_) => (),
+            Err(hr) => panic!("Failed to reset command allocator: {:?}", hr),
+        }
+        match unsafe { self.command_list.Reset(&self.command_allocator, None) } {
+            Ok(_) => (),
+            Err(hr) => panic!("Failed to reset command list: {:?}", hr),
         }
     }
 }
@@ -210,6 +257,70 @@ impl Display {
             rtv_heap,
         }
     }
+
+    pub fn begin_frame(
+        &self,
+        device: &ID3D12Device,
+        command_list: &ID3D12GraphicsCommandList,
+        frame_index: u32,
+    ) {
+        let back_buffer = &self.back_buffers[frame_index as usize];
+
+        let barrier = D3D12_RESOURCE_BARRIER {
+            Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+            Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
+            Anonymous: D3D12_RESOURCE_BARRIER_0 {
+                Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                    pResource: unsafe { std::mem::transmute_copy(back_buffer) },
+                    Subresource: 0,
+                    StateBefore: D3D12_RESOURCE_STATE_PRESENT,
+                    StateAfter: D3D12_RESOURCE_STATE_RENDER_TARGET,
+                }),
+            },
+        };
+        unsafe { command_list.ResourceBarrier(&[barrier]) };
+
+        let mut rtv_handle = unsafe { self.rtv_heap.GetCPUDescriptorHandleForHeapStart() };
+        let offset = unsafe {
+            device.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV) as usize
+                * frame_index as usize
+        };
+        rtv_handle.ptr = rtv_handle.ptr.wrapping_add(offset);
+
+        unsafe {
+            command_list.OMSetRenderTargets(1, Some(&rtv_handle), false, None);
+            command_list.ClearRenderTargetView(rtv_handle, &Self::CLEAR_COLOR, None);
+        }
+    }
+
+    pub fn end_frame(&self, command_list: &ID3D12GraphicsCommandList, frame_index: u32) {
+        let back_buffer = &self.back_buffers[frame_index as usize];
+
+        let barrier = D3D12_RESOURCE_BARRIER {
+            Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+            Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
+            Anonymous: D3D12_RESOURCE_BARRIER_0 {
+                Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                    pResource: unsafe { std::mem::transmute_copy(back_buffer) },
+                    Subresource: 0,
+                    StateBefore: D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    StateAfter: D3D12_RESOURCE_STATE_PRESENT,
+                }),
+            },
+        };
+        unsafe { command_list.ResourceBarrier(&[barrier]) };
+    }
+
+    pub fn present(&self) {
+        let hr = unsafe { self.swap_chain.Present(1, Default::default()) };
+        if hr.is_err() {
+            panic!("Failed to present swap chain: {:?}", hr);
+        }
+    }
+
+    pub fn frame_index(&self) -> u32 {
+        unsafe { self.swap_chain.GetCurrentBackBufferIndex() }
+    }
 }
 
 impl Fence {
@@ -227,6 +338,30 @@ impl Fence {
             value: 1,
             event,
         }
+    }
+
+    pub fn wait(&mut self, command_queue: &ID3D12CommandQueue) {
+        let current_value = self.value;
+        match unsafe { command_queue.Signal(&self.fence, current_value) } {
+            Ok(_) => (),
+            Err(hr) => panic!(
+                "Failed to signal command queue for fence synchronization: {:?}",
+                hr
+            ),
+        }
+
+        if let Err(hr) = unsafe { self.fence.SetEventOnCompletion(current_value, self.event) } {
+            panic!(
+                "Failed to set event on fence completion for synchronization: {:?}",
+                hr
+            );
+        }
+
+        unsafe {
+            WaitForSingleObject(self.event, INFINITE);
+        }
+
+        self.value += 1;
     }
 }
 
@@ -312,6 +447,12 @@ impl VertexResource {
         Self {
             vertex_buffer,
             vertex_buffer_view,
+        }
+    }
+
+    pub fn record_draw_commands(&self, command_list: &ID3D12GraphicsCommandList) {
+        unsafe {
+            command_list.IASetVertexBuffers(0, Some(&[self.vertex_buffer_view]));
         }
     }
 }

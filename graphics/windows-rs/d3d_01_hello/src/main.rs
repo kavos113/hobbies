@@ -13,11 +13,10 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 
 trait Renderer {
-    fn new() -> Self
+    fn new(hwnd: &HWND) -> Self
     where
         Self: Sized;
 
-    fn bind_window(&mut self, hwnd: &HWND);
     fn render(&mut self);
 }
 
@@ -69,13 +68,9 @@ impl Window {
 
             Self {
                 hwnd,
-                renderer: Box::new(D3DRenderer::new()),
+                renderer: Box::new(D3DRenderer::new(&hwnd)),
             }
         }
-    }
-
-    fn bind_renderer(&mut self) {
-        self.renderer.bind_window(&self.hwnd);
     }
 
     fn run(&mut self) {
@@ -116,6 +111,5 @@ impl Window {
 
 fn main() {
     let mut window = Window::new(100, 100, 800, 600);
-    window.bind_renderer();
     window.run();
 }

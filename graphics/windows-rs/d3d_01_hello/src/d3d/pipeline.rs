@@ -3,22 +3,8 @@ use windows::core::{s, w, PCSTR, PCWSTR};
 use windows::Win32::Foundation::{FALSE, TRUE};
 use windows::Win32::Graphics::Direct3D::Fxc::D3DCompileFromFile;
 use windows::Win32::Graphics::Direct3D::ID3DBlob;
-use windows::Win32::Graphics::Direct3D12::{
-    D3D12SerializeRootSignature, ID3D12Device, ID3D12GraphicsCommandList, ID3D12PipelineState,
-    ID3D12RootSignature, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_BLEND_DESC,
-    D3D12_COLOR_WRITE_ENABLE_ALL, D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF, D3D12_CULL_MODE_NONE,
-    D3D12_DEFAULT_DEPTH_BIAS, D3D12_DEFAULT_DEPTH_BIAS_CLAMP, D3D12_DEFAULT_SAMPLE_MASK,
-    D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS, D3D12_FILL_MODE_SOLID,
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-    D3D12_INPUT_ELEMENT_DESC, D3D12_INPUT_LAYOUT_DESC, D3D12_PIPELINE_STATE_FLAG_NONE,
-    D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D12_RASTERIZER_DESC, D3D12_RENDER_TARGET_BLEND_DESC,
-    D3D12_ROOT_SIGNATURE_DESC, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT,
-    D3D12_SHADER_BYTECODE, D3D_ROOT_SIGNATURE_VERSION_1,
-};
-use windows::Win32::Graphics::Dxgi::Common::{
-    DXGI_FORMAT_D32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32_FLOAT,
-    DXGI_FORMAT_UNKNOWN, DXGI_SAMPLE_DESC,
-};
+use windows::Win32::Graphics::Direct3D12::{D3D12SerializeRootSignature, ID3D12Device, ID3D12GraphicsCommandList, ID3D12PipelineState, ID3D12RootSignature, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_BLEND_DESC, D3D12_BLEND_ONE, D3D12_BLEND_OP_ADD, D3D12_BLEND_ZERO, D3D12_COLOR_WRITE_ENABLE_ALL, D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF, D3D12_CULL_MODE_NONE, D3D12_DEFAULT_DEPTH_BIAS, D3D12_DEFAULT_DEPTH_BIAS_CLAMP, D3D12_DEFAULT_SAMPLE_MASK, D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS, D3D12_DEPTH_STENCIL_DESC, D3D12_FILL_MODE_SOLID, D3D12_GRAPHICS_PIPELINE_STATE_DESC, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, D3D12_INPUT_ELEMENT_DESC, D3D12_INPUT_LAYOUT_DESC, D3D12_LOGIC_OP_NOOP, D3D12_PIPELINE_STATE_FLAG_NONE, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D12_RASTERIZER_DESC, D3D12_RENDER_TARGET_BLEND_DESC, D3D12_ROOT_SIGNATURE_DESC, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, D3D12_SHADER_BYTECODE, D3D_ROOT_SIGNATURE_VERSION_1};
+use windows::Win32::Graphics::Dxgi::Common::{DXGI_FORMAT_D32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32_FLOAT, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_UNKNOWN, DXGI_SAMPLE_DESC};
 
 pub struct Pipeline {
     root_signature: ID3D12RootSignature,
@@ -86,27 +72,26 @@ impl Pipeline {
             Err(hr) => panic!("Failed to create root signature: {:?}", hr),
         };
 
-        let input_layout =
-            [
-                D3D12_INPUT_ELEMENT_DESC {
-                    SemanticName: s!("`POSITION"),
-                    SemanticIndex: 0,
-                    Format: DXGI_FORMAT_R32G32B32_FLOAT,
-                    InputSlot: 0,
-                    AlignedByteOffset: 0,
-                    InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-                    InstanceDataStepRate: 0,
-                },
-                D3D12_INPUT_ELEMENT_DESC {
-                    SemanticName: s!("`COLOR"),
-                    SemanticIndex: 0,
-                    Format: DXGI_FORMAT_R32G32B32A32_FLOAT,
-                    InputSlot: 0,
-                    AlignedByteOffset: D3D12_APPEND_ALIGNED_ELEMENT,
-                    InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-                    InstanceDataStepRate: 0,
-                },
-            ];
+        let input_layout = [
+            D3D12_INPUT_ELEMENT_DESC {
+                SemanticName: s!("POSITION"),
+                SemanticIndex: 0,
+                Format: DXGI_FORMAT_R32G32B32_FLOAT,
+                InputSlot: 0,
+                AlignedByteOffset: 0,
+                InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+                InstanceDataStepRate: 0,
+            },
+            D3D12_INPUT_ELEMENT_DESC {
+                SemanticName: s!("COLOR"),
+                SemanticIndex: 0,
+                Format: DXGI_FORMAT_R32G32B32A32_FLOAT,
+                InputSlot: 0,
+                AlignedByteOffset: D3D12_APPEND_ALIGNED_ELEMENT,
+                InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+                InstanceDataStepRate: 0,
+            },
+        ];
 
         let pipeline_desc = D3D12_GRAPHICS_PIPELINE_STATE_DESC {
             pRootSignature: unsafe { std::mem::transmute_copy(&root_signature) },
@@ -125,13 +110,13 @@ impl Pipeline {
                     D3D12_RENDER_TARGET_BLEND_DESC {
                         BlendEnable: FALSE,
                         LogicOpEnable: FALSE,
-                        SrcBlend: Default::default(),
-                        DestBlend: Default::default(),
-                        BlendOp: Default::default(),
-                        SrcBlendAlpha: Default::default(),
-                        DestBlendAlpha: Default::default(),
-                        BlendOpAlpha: Default::default(),
-                        LogicOp: Default::default(),
+                        SrcBlend: D3D12_BLEND_ONE,
+                        DestBlend: D3D12_BLEND_ZERO,
+                        BlendOp: D3D12_BLEND_OP_ADD,
+                        SrcBlendAlpha: D3D12_BLEND_ONE,
+                        DestBlendAlpha: D3D12_BLEND_ZERO,
+                        BlendOpAlpha: D3D12_BLEND_OP_ADD,
+                        LogicOp: D3D12_LOGIC_OP_NOOP,
                         RenderTargetWriteMask: D3D12_COLOR_WRITE_ENABLE_ALL.0 as u8,
                     },
                     D3D12_RENDER_TARGET_BLEND_DESC::default(),
@@ -164,7 +149,7 @@ impl Pipeline {
             PrimitiveTopologyType: D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
             NumRenderTargets: 1,
             RTVFormats: [
-                DXGI_FORMAT_R32G32B32A32_FLOAT,
+                DXGI_FORMAT_R8G8B8A8_UNORM,
                 DXGI_FORMAT_UNKNOWN,
                 DXGI_FORMAT_UNKNOWN,
                 DXGI_FORMAT_UNKNOWN,
@@ -174,6 +159,7 @@ impl Pipeline {
                 DXGI_FORMAT_UNKNOWN,
             ],
             DSVFormat: DXGI_FORMAT_D32_FLOAT,
+            DepthStencilState: D3D12_DEPTH_STENCIL_DESC::default(),
             SampleDesc: DXGI_SAMPLE_DESC {
                 Count: 1,
                 Quality: 0,

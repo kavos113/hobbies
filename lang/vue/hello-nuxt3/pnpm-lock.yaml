@@ -1500,8 +1500,8 @@ packages:
   caniuse-api@3.0.0:
     resolution: {integrity: sha512-bsTwuIg/BZZK/vreVTYYbSWoe2F+71P7K5QGEX+pT250DZbfU1MQ5prOKpPR+LL6uWKK3KMwMCAS74QB3Um1uw==}
 
-  caniuse-lite@1.0.30001784:
-    resolution: {integrity: sha512-WU346nBTklUV9YfUl60fqRbU5ZqyXlqvo1SgigE1OAXK5bFL8LL9q1K7aap3N739l4BvNqnkm3YrGHiY9sfUQw==}
+  caniuse-lite@1.0.30001785:
+    resolution: {integrity: sha512-blhOL/WNR+Km1RI/LCVAvA73xplXA7ZbjzI4YkMK9pa6T/P3F2GxjNpEkyw5repTw9IvkyrjyHpwjnhZ5FOvYQ==}
 
   chokidar@4.0.3:
     resolution: {integrity: sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA==}
@@ -1895,8 +1895,8 @@ packages:
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
 
-  fuse.js@7.2.0:
-    resolution: {integrity: sha512-zf4vdcIGpjNKTuXwug33Hm2okqX6a0t2ZEbez+o9oBJQSNhVJ5AqERfeiRD3r8HcLqP66MrjdkmzxrncbAOTUQ==}
+  fuse.js@7.3.0:
+    resolution: {integrity: sha512-plz8RVjfcDedTGfVngWH1jmJvBvAwi1v2jecfDerbEnMcmOYUEEwKFTHbNoCiYyzaK2Ws8lABkTCcRSqCY1q4w==}
     engines: {node: '>=10'}
 
   fzf@0.5.2:
@@ -3674,7 +3674,7 @@ snapshots:
       debug: 4.4.3
       defu: 6.1.6
       exsolve: 1.0.8
-      fuse.js: 7.2.0
+      fuse.js: 7.3.0
       fzf: 0.5.2
       giget: 3.2.0
       jiti: 2.6.1
@@ -4598,7 +4598,7 @@ snapshots:
   autoprefixer@10.4.27(postcss@8.5.8):
     dependencies:
       browserslist: 4.28.2
-      caniuse-lite: 1.0.30001784
+      caniuse-lite: 1.0.30001785
       fraction.js: 5.3.4
       picocolors: 1.1.1
       postcss: 8.5.8
@@ -4665,7 +4665,7 @@ snapshots:
   browserslist@4.28.2:
     dependencies:
       baseline-browser-mapping: 2.10.14
-      caniuse-lite: 1.0.30001784
+      caniuse-lite: 1.0.30001785
       electron-to-chromium: 1.5.331
       node-releases: 2.0.37
       update-browserslist-db: 1.2.3(browserslist@4.28.2)
@@ -4705,11 +4705,11 @@ snapshots:
   caniuse-api@3.0.0:
     dependencies:
       browserslist: 4.28.2
-      caniuse-lite: 1.0.30001784
+      caniuse-lite: 1.0.30001785
       lodash.memoize: 4.1.2
       lodash.uniq: 4.5.0
 
-  caniuse-lite@1.0.30001784: {}
+  caniuse-lite@1.0.30001785: {}
 
   chokidar@4.0.3:
     dependencies:
@@ -5070,7 +5070,7 @@ snapshots:
 
   function-bind@1.1.2: {}
 
-  fuse.js@7.2.0: {}
+  fuse.js@7.3.0: {}
 
   fzf@0.5.2: {}
 

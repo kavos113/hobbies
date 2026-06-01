@@ -6,7 +6,14 @@
 
 void Application::initD2D()
 {
-    HRESULT hr = D2D1CreateFactory(
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to initialize COM", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    hr = D2D1CreateFactory(
         D2D1_FACTORY_TYPE_SINGLE_THREADED,
         m_d2dFactory.GetAddressOf()
     );

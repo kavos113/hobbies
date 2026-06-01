@@ -7,4 +7,4 @@ add_executable(d2d_07_offscreen_rendering
         main.cpp
         Application.cpp
 )
-target_link_libraries(d2d_07_offscreen_rendering PRIVATE d2d1 d3d11 dxgi)
+target_link_libraries(d2d_07_offscreen_rendering PRIVATE d2d1 d3d11 dxgi windowscodecs)

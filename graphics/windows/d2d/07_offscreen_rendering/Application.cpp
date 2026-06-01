@@ -2,6 +2,7 @@
 
 #include <array>
 #include <d3d11.h>
+#include <wincodec.h>
 
 void Application::initD2D()
 {
@@ -187,9 +188,106 @@ void Application::onPaint()
     }
 }
 
-void Application::saveImage(const wchar_t* filename)
+void Application::saveImage(const wchar_t* filename) const
 {
+    Microsoft::WRL::ComPtr<IWICImagingFactory2> wicFactory;
+    HRESULT hr = CoCreateInstance(
+        CLSID_WICImagingFactory2,
+        nullptr,
+        CLSCTX_INPROC_SERVER,
+        IID_PPV_ARGS(&wicFactory)
+    );
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to create WIC Imaging Factory", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
 
+    Microsoft::WRL::ComPtr<IWICBitmapEncoder> encoder;
+    hr = wicFactory->CreateEncoder(
+        GUID_ContainerFormatPng,
+        nullptr,
+        &encoder
+    );
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to create WIC Bitmap Encoder", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    Microsoft::WRL::ComPtr<IWICStream> stream;
+    hr = wicFactory->CreateStream(&stream);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to create WIC Stream", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    hr = stream->InitializeFromFilename(filename, GENERIC_WRITE);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to initialize WIC Stream from filename", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    hr = encoder->Initialize(stream.Get(), WICBitmapEncoderNoCache);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to initialize WIC Bitmap Encoder", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    Microsoft::WRL::ComPtr<IWICBitmapFrameEncode> frameEncode;
+    Microsoft::WRL::ComPtr<IPropertyBag2> propertyBag;
+    hr = encoder->CreateNewFrame(&frameEncode, &propertyBag);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to create new frame for WIC Bitmap Encoder", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    hr = frameEncode->Initialize(propertyBag.Get());
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to initialize frame for WIC Bitmap Encoder", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    Microsoft::WRL::ComPtr<IWICImageEncoder> wicImageEncoder;
+    hr = wicFactory->CreateImageEncoder(m_d2dDevice.Get(), &wicImageEncoder);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to create WIC Image Encoder", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    hr = wicImageEncoder->WriteFrame(m_bitmap.Get(), frameEncode.Get(), nullptr);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to write frame using WIC Image Encoder", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    hr = frameEncode->Commit();
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to commit frame for WIC Bitmap Encoder", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    hr = encoder->Commit();
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to commit WIC Bitmap Encoder", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    hr = stream->Commit(STGC_DEFAULT);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to commit WIC Stream", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
 }
 
 Application::Application(int width, int height)

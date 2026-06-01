@@ -21,7 +21,7 @@ public:
 
 private:
     void onPaint();
-    void saveImage(const wchar_t* filename);
+    void saveImage(const wchar_t* filename) const;
 
     void createSurfaceBitmap();
     void createResources();

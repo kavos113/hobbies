@@ -2,3 +2,7 @@
 
 - freetype
 - harfbuzz
+- cairo
+- grpc
+- protobuf
+- yoga

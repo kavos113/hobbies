@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <fstream>
 
 #include <clang-c/Index.h>
 #include <clang-c/CXCompilationDatabase.h>
@@ -10,6 +11,9 @@
 std::set<std::string> visited_classes;
 
 std::string project_root = "";
+std::string build_dir = "";
+
+std::ofstream output_file;
 
 CXChildVisitResult baseClassVisitor(CXCursor cursor, CXCursor parent, CXClientData client_data)
 {
@@ -61,7 +65,23 @@ CXChildVisitResult dumpVisitor(CXCursor cursor, CXCursor parent, CXClientData cl
 CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client_data)
 {
     CXSourceLocation location = clang_getCursorLocation(cursor);
-    if (clang_Location_isFromMainFile(location) == 0)
+    CXFile file;
+    clang_getSpellingLocation(location, &file, nullptr, nullptr, nullptr);
+    if (file == nullptr)
+    {
+        return CXChildVisit_Continue;
+    }
+
+    CXString file_name_cxstr = clang_getFileName(file);
+    std::string file_name = clang_getCString(file_name_cxstr);
+    clang_disposeString(file_name_cxstr);
+
+    if (file_name.find(project_root) == std::string::npos)
+    {
+        return CXChildVisit_Continue;
+    }
+
+    if (file_name.find(build_dir) != std::string::npos)
     {
         return CXChildVisit_Continue;
     }
@@ -76,18 +96,24 @@ CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client
         }
 
         CXString name = clang_getCursorDisplayName(cursor);
-        std::cout << "class: " << clang_getCString(name) << std::endl;
+        std::string class_name = clang_getCString(name);
         clang_disposeString(name);
+
+        if (visited_classes.contains(class_name))
+        {
+            return CXChildVisit_Continue;
+        }
+        visited_classes.insert(class_name);
+        output_file << "class \"" << class_name << "\"" << std::endl;
 
         std::vector<std::string> base_classes;
         clang_visitChildren(cursor, baseClassVisitor, &base_classes);
 
         if (!base_classes.empty())
         {
-            std::cout << "  base classes: ";
             for (const auto& base : base_classes)
             {
-                std::cout << base << " ";
+                output_file << " \"" << base << "\" <|-- \"" << class_name << "\"" << std::endl;
             }
             std::cout << std::endl;
         }
@@ -98,18 +124,24 @@ CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client
 
 void usage()
 {
-    std::cerr << "Usage: cpp_visu [compile_command.json path] [project_root]" << std::endl;
+    std::cerr << "Usage: cpp_visu [compile_command.json path] [project_root] [build_dir] [out_file]" << std::endl;
 }
 
 int main(int argc, char* argv[])
 {
     std::cout << "C++ Code Visualizer" << std::endl;
 
-    if (argc != 2)
+    if (argc != 5)
     {
         usage();
         return 1;
     }
+
+    project_root = argv[2];
+    build_dir = argv[3];
+
+    std::string out_file_path = argv[4];
+    output_file.open(out_file_path);
 
     CXCompilationDatabase_Error error;
     CXCompilationDatabase comp_db = clang_CompilationDatabase_fromDirectory(argv[1], &error);
@@ -132,6 +164,8 @@ int main(int argc, char* argv[])
     std::cerr << "found " << num_commands << " compile commands in the database" << std::endl;
 
     CXIndex index = clang_createIndex(0, 0);
+
+    output_file << "@startuml" << std::endl;
 
     for (unsigned int f = 0; f < num_commands; ++f)
     {
@@ -224,9 +258,13 @@ int main(int argc, char* argv[])
         }
     }
 
+    output_file << "@enduml" << std::endl;
+
     clang_CompileCommands_dispose(compile_commands);
     clang_CompilationDatabase_dispose(comp_db);
     clang_disposeIndex(index);
+
+    output_file.close();
 
     return 0;
 }

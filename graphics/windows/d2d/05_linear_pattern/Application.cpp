@@ -1,6 +1,7 @@
 #include "Application.h"
 
 #include <array>
+#include <vector>
 
 void Application::initD2D()
 {
@@ -197,15 +198,16 @@ void Application::createResources()
     }
 
     Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> gradientStops;
-    std::array<D2D1_GRADIENT_STOP, 2> stops = {
-        { { 0.0f, D2D1::ColorF(D2D1::ColorF::White) },
-          { 1.0f, D2D1::ColorF(D2D1::ColorF::Black) } }
+    std::vector<D2D1_GRADIENT_STOP> stops = {
+        { { 0.0f, D2D1::ColorF(D2D1::ColorF::Red) },
+            { 0.5f, D2D1::ColorF(D2D1::ColorF::Lime) },
+          { 1.0f, D2D1::ColorF(D2D1::ColorF::Blue) } }
     };
     hr = m_d2dContext->CreateGradientStopCollection(
         stops.data(),
         stops.size(),
         D2D1_GAMMA_2_2,
-        D2D1_EXTEND_MODE_WRAP,
+        D2D1_EXTEND_MODE_CLAMP,
         &gradientStops
     );
     if (FAILED(hr))
@@ -217,7 +219,7 @@ void Application::createResources()
     hr = m_d2dContext->CreateLinearGradientBrush(
         D2D1::LinearGradientBrushProperties(
             D2D1::Point2F(0, 0), // Start point
-            D2D1::Point2F(200, 600) // End point
+            D2D1::Point2F(500, 500) // End point
         ),
         gradientStops.Get(),
         &m_linearGradientBrush

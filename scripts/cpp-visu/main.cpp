@@ -4,6 +4,7 @@
 #include <vector>
 #include <set>
 #include <fstream>
+#include <future>
 
 #include <clang-c/Index.h>
 #include <clang-c/CXCompilationDatabase.h>
@@ -262,7 +263,7 @@ int main(int argc, char* argv[])
 
     CXIndex index = clang_createIndex(0, 0);
 
-    std::vector<ClassInfo> classes;
+    std::vector<std::future<std::vector<ClassInfo>>> futures;
 
     for (unsigned int f = 0; f < num_commands; ++f)
     {
@@ -271,11 +272,20 @@ int main(int argc, char* argv[])
         CXString source_file_cxstr = clang_CompileCommand_getFilename(compile_command);
         std::string source_file = clang_getCString(source_file_cxstr);
         clang_disposeString(source_file_cxstr);
+        
+        futures.push_back(std::async(std::launch::async, [compile_command, source_file]()
+        {
+            CXIndex index = clang_createIndex(0, 0);
+            std::vector<ClassInfo> classes = parseSingleFile(index, compile_command, source_file);
+            clang_disposeIndex(index);
+            return classes;
+        }));
+    }
 
-        std::cerr << "[" << f << "/" << num_commands << "] processing file: " << source_file << std::endl;
-
-        CXIndex i = clang_createIndex(0, 0);
-        std::vector<ClassInfo> file_classes = parseSingleFile(i, compile_command, source_file);
+    std::vector<ClassInfo> classes;
+    for (auto& future : futures)
+    {
+        std::vector<ClassInfo> file_classes = future.get();
         classes.insert(classes.end(), file_classes.begin(), file_classes.end());
     }
 

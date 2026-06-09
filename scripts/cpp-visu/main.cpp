@@ -14,8 +14,6 @@ struct ClassInfo
     std::vector<std::string> base_classes;
 };
 
-std::set<std::string> visited_classes;
-
 std::string project_root = "";
 std::string build_dir = "";
 
@@ -103,11 +101,11 @@ CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client
         std::string class_name = clang_getCString(name);
         clang_disposeString(name);
 
-        if (visited_classes.contains(class_name))
-        {
-            return CXChildVisit_Continue;
-        }
-        visited_classes.insert(class_name);
+        // if (visited_classes.contains(class_name))
+        // {
+        //     return CXChildVisit_Continue;
+        // }
+        // visited_classes.insert(class_name);
         // output_file << "class \"" << class_name << "\"" << std::endl;
 
         std::vector<std::string> base_classes;
@@ -127,6 +125,88 @@ CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client
     }
 
     return CXChildVisit_Recurse;
+}
+
+std::vector<ClassInfo> parseSingleFile(CXIndex index, CXCompileCommand compile_command, const std::string& source_file)
+{
+    std::vector<const char*> args;
+    std::vector<std::string> allocated_strings;
+    unsigned int num_args = clang_CompileCommand_getNumArgs(compile_command);
+    for (unsigned int i = 1; i < num_args; ++i)
+    {
+        CXString arg = clang_CompileCommand_getArg(compile_command, i);
+        std::string arg_str = clang_getCString(arg);
+
+        if (arg_str == "--")
+        {
+            clang_disposeString(arg);
+            continue;
+        }
+
+        if (arg_str == source_file || arg_str.ends_with(".cpp") || arg_str.ends_with(".h") || arg_str.ends_with(".hpp") ||
+            arg_str.ends_with(".c") || arg_str.ends_with(".cc"))
+        {
+            clang_disposeString(arg);
+            continue;
+        }
+
+        if (arg_str == "/c" || arg_str == "-c" || arg_str == "-TP" || arg_str == "-TP" || arg_str.starts_with("/Fd") ||
+            arg_str.starts_with("-Fd"))
+        {
+            clang_disposeString(arg);
+            continue;
+        }
+
+        if (arg_str.starts_with("-external:I"))
+        {
+            std::string include_path = "-I" + arg_str.substr(11);
+            allocated_strings.push_back(include_path);
+            clang_disposeString(arg);
+            continue;
+        }
+
+        if (arg_str.starts_with("-external:"))
+        {
+            clang_disposeString(arg);
+            continue;
+        }
+
+        allocated_strings.push_back(arg_str);
+        clang_disposeString(arg);
+    }
+
+    for (const auto& str : allocated_strings)
+    {
+        args.push_back(str.c_str());
+    }
+
+    args.push_back("-x");
+    args.push_back("c++");
+    args.push_back("-fms-compatibility");
+    args.push_back("-fms-extensions");
+
+    CXTranslationUnit tu = clang_parseTranslationUnit(
+        index,
+        source_file.c_str(),
+        args.data(), static_cast<int>(args.size()),
+        nullptr, 0,
+        CXTranslationUnit_None
+    );
+
+    std::vector<ClassInfo> classes;
+
+    if (tu != nullptr)
+    {
+        CXCursor root_cursor = clang_getTranslationUnitCursor(tu);
+        clang_visitChildren(root_cursor, visitor, &classes);
+        clang_disposeTranslationUnit(tu);
+    }
+    else
+    {
+        std::cerr << "failed to parse translation unit for file: " << source_file << std::endl;
+    }
+
+    return classes;
 }
 
 void usage()
@@ -189,90 +269,21 @@ int main(int argc, char* argv[])
 
         std::cerr << "[" << f << "/" << num_commands << "] processing file: " << source_file << std::endl;
 
-        std::vector<const char*> args;
-        std::vector<std::string> allocated_strings;
-        unsigned int num_args = clang_CompileCommand_getNumArgs(compile_command);
-        for (unsigned int i = 1; i < num_args; ++i)
-        {
-            CXString arg = clang_CompileCommand_getArg(compile_command, i);
-            std::string arg_str = clang_getCString(arg);
-
-            if (arg_str == "--")
-            {
-                clang_disposeString(arg);
-                continue;
-            }
-
-            if (arg_str == source_file || arg_str.ends_with(".cpp") || arg_str.ends_with(".h") || arg_str.
-                ends_with(".hpp") || arg_str.ends_with(".c") || arg_str.ends_with(".cc"))
-            {
-                clang_disposeString(arg);
-                continue;
-            }
-
-            if (arg_str == "/c" || arg_str == "-c" || arg_str == "-TP" || arg_str == "-TP" || arg_str.starts_with("/Fd")
-                || arg_str.starts_with("-Fd"))
-            {
-                clang_disposeString(arg);
-                continue;
-            }
-
-            if (arg_str.starts_with("-external:I"))
-            {
-                std::string include_path = "-I" + arg_str.substr(11);
-                allocated_strings.push_back(include_path);
-                clang_disposeString(arg);
-                continue;
-            }
-
-            if (arg_str.starts_with("-external:"))
-            {
-                clang_disposeString(arg);
-                continue;
-            }
-
-            allocated_strings.push_back(arg_str);
-            clang_disposeString(arg);
-        }
-
-        for (const auto& str : allocated_strings)
-        {
-            args.push_back(str.c_str());
-        }
-
-        // std::cout << "compile command arguments:" << std::endl;
-        // for (const auto& arg : args)
-        // {
-        //     std::cout << "  " << arg << std::endl;
-        // }
-
-        args.push_back("-x");
-        args.push_back("c++");
-        args.push_back("-fms-compatibility");
-        args.push_back("-fms-extensions");
-
-        CXTranslationUnit tu = clang_parseTranslationUnit(
-            index,
-            source_file.c_str(),
-            args.data(), static_cast<int>(args.size()),
-            nullptr, 0,
-            CXTranslationUnit_None
-        );
-        if (tu != nullptr)
-        {
-            CXCursor root_cursor = clang_getTranslationUnitCursor(tu);
-            clang_visitChildren(root_cursor, visitor, &classes);
-            clang_disposeTranslationUnit(tu);
-        }
-        else
-        {
-            std::cerr << "failed to parse translation unit for file: " << source_file << std::endl;
-        }
+        CXIndex i = clang_createIndex(0, 0);
+        std::vector<ClassInfo> file_classes = parseSingleFile(i, compile_command, source_file);
+        classes.insert(classes.end(), file_classes.begin(), file_classes.end());
     }
 
     output_file << "@startuml" << std::endl;
+    std::set<std::string> unique_classes;
     for (const auto& class_info : classes)
     {
+        if (unique_classes.contains(class_info.name))
+        {
+            continue;
+        }
+        unique_classes.insert(class_info.name);
+
         output_file << "class \"" << class_info.name << "\"" << std::endl;
 
         for (const auto& base : class_info.base_classes)

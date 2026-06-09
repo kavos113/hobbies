@@ -1,17 +1,22 @@
 #include <iostream>
-#include <iomanip>
 #include <format>
-#include <fstream>
 #include <string>
 #include <vector>
+#include <set>
 
 #include <clang-c/Index.h>
 #include <clang-c/CXCompilationDatabase.h>
 
-CXChildVisitResult baseClassVisitor(CXCursor cursor, CXCursor parent, CXClientData client_data) {
+std::set<std::string> visited_classes;
+
+std::string project_root = "";
+
+CXChildVisitResult baseClassVisitor(CXCursor cursor, CXCursor parent, CXClientData client_data)
+{
     CXCursorKind kind = clang_getCursorKind(cursor);
 
-    if (kind == CXCursor_CXXBaseSpecifier) {
+    if (kind == CXCursor_CXXBaseSpecifier)
+    {
         CXString name = clang_getCursorDisplayName(cursor);
 
         auto* base_classes = static_cast<std::vector<std::string>*>(client_data);
@@ -23,13 +28,16 @@ CXChildVisitResult baseClassVisitor(CXCursor cursor, CXCursor parent, CXClientDa
     return CXChildVisit_Continue;
 }
 
-std::string indent(int level) {
+std::string indent(int level)
+{
     return std::string(level * 2, ' ');
 }
 
-CXChildVisitResult dumpVisitor(CXCursor cursor, CXCursor parent, CXClientData client_data) {
+CXChildVisitResult dumpVisitor(CXCursor cursor, CXCursor parent, CXClientData client_data)
+{
     CXSourceLocation location = clang_getCursorLocation(cursor);
-    if (clang_Location_isFromMainFile(location) == 0) {
+    if (clang_Location_isFromMainFile(location) == 0)
+    {
         return CXChildVisit_Continue;
     }
 
@@ -50,16 +58,20 @@ CXChildVisitResult dumpVisitor(CXCursor cursor, CXCursor parent, CXClientData cl
     return CXChildVisit_Continue;
 }
 
-CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client_data) {
+CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client_data)
+{
     CXSourceLocation location = clang_getCursorLocation(cursor);
-    if (clang_Location_isFromMainFile(location) == 0) {
+    if (clang_Location_isFromMainFile(location) == 0)
+    {
         return CXChildVisit_Continue;
     }
 
     CXCursorKind kind = clang_getCursorKind(cursor);
 
-    if (kind == CXCursor_ClassDecl || kind == CXCursor_StructDecl) {
-        if (!clang_isCursorDefinition(cursor)) {
+    if (kind == CXCursor_ClassDecl || kind == CXCursor_StructDecl)
+    {
+        if (!clang_isCursorDefinition(cursor))
+        {
             return CXChildVisit_Continue;
         }
 
@@ -70,9 +82,11 @@ CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client
         std::vector<std::string> base_classes;
         clang_visitChildren(cursor, baseClassVisitor, &base_classes);
 
-        if (!base_classes.empty()) {
+        if (!base_classes.empty())
+        {
             std::cout << "  base classes: ";
-            for (const auto& base : base_classes) {
+            for (const auto& base : base_classes)
+            {
                 std::cout << base << " ";
             }
             std::cout << std::endl;
@@ -82,21 +96,25 @@ CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client
     return CXChildVisit_Recurse;
 }
 
-void usage() {
-    std::cerr << "Usage: cpp_visu [compile_command.json path]" << std::endl;
+void usage()
+{
+    std::cerr << "Usage: cpp_visu [compile_command.json path] [project_root]" << std::endl;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
     std::cout << "C++ Code Visualizer" << std::endl;
 
-    if (argc != 2) {
+    if (argc != 2)
+    {
         usage();
         return 1;
     }
 
     CXCompilationDatabase_Error error;
     CXCompilationDatabase comp_db = clang_CompilationDatabase_fromDirectory(argv[1], &error);
-    if (error != CXCompilationDatabase_NoError) {
+    if (error != CXCompilationDatabase_NoError)
+    {
         std::cerr << "failed to load compilation database: " << error << std::endl;
         return 1;
     }
@@ -139,13 +157,15 @@ int main(int argc, char* argv[]) {
                 continue;
             }
 
-            if (arg_str == source_file || arg_str.ends_with(".cpp") || arg_str.ends_with(".h") || arg_str.ends_with(".hpp") || arg_str.ends_with(".c") || arg_str.ends_with(".cc"))
+            if (arg_str == source_file || arg_str.ends_with(".cpp") || arg_str.ends_with(".h") || arg_str.
+                ends_with(".hpp") || arg_str.ends_with(".c") || arg_str.ends_with(".cc"))
             {
                 clang_disposeString(arg);
                 continue;
             }
 
-            if (arg_str == "/c" || arg_str == "-c" || arg_str == "-TP" || arg_str == "-TP" || arg_str.starts_with("/Fd") || arg_str.starts_with("-Fd"))
+            if (arg_str == "/c" || arg_str == "-c" || arg_str == "-TP" || arg_str == "-TP" || arg_str.starts_with("/Fd")
+                || arg_str.starts_with("-Fd"))
             {
                 clang_disposeString(arg);
                 continue;

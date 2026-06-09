@@ -101,6 +101,11 @@ CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client
         std::string class_name = clang_getCString(name);
         clang_disposeString(name);
 
+        if (class_name.find("unnamed") != std::string::npos || class_name.empty())
+        {
+            return CXChildVisit_Continue;
+        }
+
         // if (visited_classes.contains(class_name))
         // {
         //     return CXChildVisit_Continue;

@@ -5,6 +5,8 @@
 #include <set>
 #include <fstream>
 #include <future>
+#include <atomic>
+#include <mutex>
 
 #include <clang-c/Index.h>
 #include <clang-c/CXCompilationDatabase.h>
@@ -209,7 +211,7 @@ std::vector<ClassInfo> parseSingleFile(CXIndex index, CXCompileCommand compile_c
     }
     else
     {
-        std::cerr << "failed to parse translation unit for file: " << source_file << std::endl;
+        // std::cerr << "failed to parse translation unit for file: " << source_file << std::endl;
     }
 
     return classes;
@@ -263,6 +265,8 @@ int main(int argc, char* argv[])
 
     CXIndex index = clang_createIndex(0, 0);
 
+    std::atomic<unsigned int> files_processed = 0;
+    std::mutex cerr_mutex;
     std::vector<std::future<std::vector<ClassInfo>>> futures;
 
     for (unsigned int f = 0; f < num_commands; ++f)
@@ -272,12 +276,19 @@ int main(int argc, char* argv[])
         CXString source_file_cxstr = clang_CompileCommand_getFilename(compile_command);
         std::string source_file = clang_getCString(source_file_cxstr);
         clang_disposeString(source_file_cxstr);
-        
-        futures.push_back(std::async(std::launch::async, [compile_command, source_file]()
+
+        futures.push_back(std::async(std::launch::async, [compile_command, source_file, &files_processed, &cerr_mutex, num_commands]
         {
             CXIndex index = clang_createIndex(0, 0);
             std::vector<ClassInfo> classes = parseSingleFile(index, compile_command, source_file);
             clang_disposeIndex(index);
+
+            unsigned int processed = ++files_processed;
+            {
+                std::lock_guard lock(cerr_mutex);
+                std::cerr << std::format("[{}/{}] processed file: {}", processed, num_commands, source_file) << std::endl;
+            }
+
             return classes;
         }));
     }

@@ -83,135 +83,129 @@ CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client
 }
 
 void usage() {
-    std::cerr << "Usage: cpp_visu [source_file] [compile_command.json path]" << std::endl;
+    std::cerr << "Usage: cpp_visu [compile_command.json path]" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
     std::cout << "C++ Code Visualizer" << std::endl;
 
-    if (argc != 3) {
+    if (argc != 2) {
         usage();
         return 1;
     }
 
-    std::cout << "Parsing source file: " << argv[1] << std::endl;
-
-    std::string source_file = argv[1];
-
-    std::ifstream file(source_file);
-    if (!file.is_open())
-    {
-        std::cerr << "failed to open source file: " << source_file << std::endl;
-        return 1;
-    }
-
-    std::string source_code((std::istreambuf_iterator(file)), std::istreambuf_iterator<char>());
-
     CXCompilationDatabase_Error error;
-    CXCompilationDatabase comp_db = clang_CompilationDatabase_fromDirectory(argv[2], &error);
+    CXCompilationDatabase comp_db = clang_CompilationDatabase_fromDirectory(argv[1], &error);
     if (error != CXCompilationDatabase_NoError) {
         std::cerr << "failed to load compilation database: " << error << std::endl;
         return 1;
     }
 
-    CXCompileCommands compile_commands = clang_CompilationDatabase_getCompileCommands(comp_db, source_file.c_str());
+    CXCompileCommands compile_commands = clang_CompilationDatabase_getAllCompileCommands(comp_db);
     unsigned int num_commands = clang_CompileCommands_getSize(compile_commands);
     if (num_commands == 0)
     {
-        std::cerr << "no compile commands found for source file: " << source_file << std::endl;
+        std::cerr << "no compile commands found in the database" << std::endl;
         clang_CompileCommands_dispose(compile_commands);
         clang_CompilationDatabase_dispose(comp_db);
         return 1;
     }
 
-    std::vector<const char*> args;
-    std::vector<CXString> allocated_strings;
-
-    CXCompileCommand compile_command = clang_CompileCommands_getCommand(compile_commands, 0);
-    unsigned int num_args = clang_CompileCommand_getNumArgs(compile_command);
-    for (unsigned int i = 1; i < num_args; ++i)
-    {
-        CXString arg = clang_CompileCommand_getArg(compile_command, i);
-        std::string arg_str = clang_getCString(arg);
-        allocated_strings.push_back(arg);
-
-        if (arg_str == "--")
-        {
-            continue;
-        }
-
-        if (arg_str == source_file || arg_str.ends_with(".cpp") || arg_str.ends_with(".h") || arg_str.ends_with(".hpp") || arg_str.ends_with(".c") || arg_str.ends_with(".cc"))
-        {
-            continue;
-        }
-
-        if (arg_str == "/c" || arg_str == "-c" || arg_str == "-TP" || arg_str == "-TP" || arg_str.starts_with("/Fd") || arg_str.starts_with("-Fd"))
-        {
-            continue;
-        }
-
-        if (arg_str.starts_with("-external:I"))
-        {
-            std::string include_path = "-I" + arg_str.substr(11);
-
-            char *include_path_cstr = new char[include_path.size() + 1];
-            std::strcpy(include_path_cstr, include_path.c_str());
-
-            args.push_back(include_path_cstr);
-            continue;
-        }
-
-        if (arg_str.starts_with("-external:"))
-        {
-            continue;
-        }
-
-        args.push_back(clang_getCString(arg));
-    }
-
-    std::cout << "compile command arguments:" << std::endl;
-    for (const auto& arg : args)
-    {
-        std::cout << "  " << arg << std::endl;
-    }
-
-    args.push_back("-x");
-    args.push_back("c++");
-    args.push_back("-fms-compatibility");
-    args.push_back("-fms-extensions");
+    std::cerr << "found " << num_commands << " compile commands in the database" << std::endl;
 
     CXIndex index = clang_createIndex(0, 0);
 
-    CXTranslationUnit tu = clang_parseTranslationUnit(
-        index,
-        source_file.c_str(),
-        args.data(), static_cast<int>(args.size()),
-        nullptr, 0,
-        CXTranslationUnit_None
-    );
+    for (unsigned int f = 0; f < num_commands; ++f)
+    {
+        CXCompileCommand compile_command = clang_CompileCommands_getCommand(compile_commands, f);
 
-    if (tu == nullptr) {
-        std::cerr << "failed to parse translation unit" << std::endl;
+        CXString source_file_cxstr = clang_CompileCommand_getFilename(compile_command);
+        std::string source_file = clang_getCString(source_file_cxstr);
+        clang_disposeString(source_file_cxstr);
+
+        std::cerr << "[" << f << "/" << num_commands << "] processing file: " << source_file << std::endl;
+
+        std::vector<const char*> args;
+        std::vector<std::string> allocated_strings;
+        unsigned int num_args = clang_CompileCommand_getNumArgs(compile_command);
+        for (unsigned int i = 1; i < num_args; ++i)
+        {
+            CXString arg = clang_CompileCommand_getArg(compile_command, i);
+            std::string arg_str = clang_getCString(arg);
+
+            if (arg_str == "--")
+            {
+                clang_disposeString(arg);
+                continue;
+            }
+
+            if (arg_str == source_file || arg_str.ends_with(".cpp") || arg_str.ends_with(".h") || arg_str.ends_with(".hpp") || arg_str.ends_with(".c") || arg_str.ends_with(".cc"))
+            {
+                clang_disposeString(arg);
+                continue;
+            }
+
+            if (arg_str == "/c" || arg_str == "-c" || arg_str == "-TP" || arg_str == "-TP" || arg_str.starts_with("/Fd") || arg_str.starts_with("-Fd"))
+            {
+                clang_disposeString(arg);
+                continue;
+            }
+
+            if (arg_str.starts_with("-external:I"))
+            {
+                std::string include_path = "-I" + arg_str.substr(11);
+                allocated_strings.push_back(include_path);
+                clang_disposeString(arg);
+                continue;
+            }
+
+            if (arg_str.starts_with("-external:"))
+            {
+                clang_disposeString(arg);
+                continue;
+            }
+
+            allocated_strings.push_back(arg_str);
+            clang_disposeString(arg);
+        }
+
         for (const auto& str : allocated_strings)
         {
-            clang_disposeString(str);
+            args.push_back(str.c_str());
         }
-        clang_CompileCommands_dispose(compile_commands);
-        clang_CompilationDatabase_dispose(comp_db);
-        clang_disposeIndex(index);
-        return 1;
-    }
 
-    CXCursor root_cursor = clang_getTranslationUnitCursor(tu);
-    clang_visitChildren(root_cursor, visitor, nullptr);
+        // std::cout << "compile command arguments:" << std::endl;
+        // for (const auto& arg : args)
+        // {
+        //     std::cout << "  " << arg << std::endl;
+        // }
+
+        args.push_back("-x");
+        args.push_back("c++");
+        args.push_back("-fms-compatibility");
+        args.push_back("-fms-extensions");
+
+        CXTranslationUnit tu = clang_parseTranslationUnit(
+            index,
+            source_file.c_str(),
+            args.data(), static_cast<int>(args.size()),
+            nullptr, 0,
+            CXTranslationUnit_None
+        );
+        if (tu != nullptr)
+        {
+            CXCursor root_cursor = clang_getTranslationUnitCursor(tu);
+            clang_visitChildren(root_cursor, visitor, nullptr);
+            clang_disposeTranslationUnit(tu);
+        }
+        else
+        {
+            std::cerr << "failed to parse translation unit for file: " << source_file << std::endl;
+        }
+    }
 
     clang_CompileCommands_dispose(compile_commands);
     clang_CompilationDatabase_dispose(comp_db);
-    for (const auto& str : allocated_strings)
-        {
-        clang_disposeString(str);
-    }
-    clang_disposeTranslationUnit(tu);
     clang_disposeIndex(index);
 
     return 0;

@@ -7,6 +7,7 @@
 #include <future>
 #include <atomic>
 #include <mutex>
+#include <filesystem>
 
 #include <clang-c/Index.h>
 #include <clang-c/CXCompilationDatabase.h>
@@ -179,6 +180,12 @@ std::vector<ClassInfo> parseSingleFile(CXIndex index, CXCompileCommand compile_c
             continue;
         }
 
+        if (arg_str == "/showIncludes")
+        {
+            clang_disposeString(arg);
+            continue;
+        }
+
         allocated_strings.push_back(arg_str);
         clang_disposeString(arg);
     }
@@ -192,6 +199,8 @@ std::vector<ClassInfo> parseSingleFile(CXIndex index, CXCompileCommand compile_c
     args.push_back("c++");
     args.push_back("-fms-compatibility");
     args.push_back("-fms-extensions");
+    args.push_back("-w");
+    args.push_back("-Wno-everything");
 
     CXTranslationUnit tu = clang_parseTranslationUnit(
         index,
@@ -243,8 +252,23 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    std::filesystem::path json_path(argv[1]);
+    if (!std::filesystem::exists(json_path))
+    {
+        std::cerr << "compilation database file does not exist: " << argv[1] << std::endl;
+        return 1;
+    }
+    if (std::filesystem::is_directory(json_path))
+    {
+        json_path /= "compile_commands.json";
+    }
+
+    std::string json_dir = json_path.parent_path().string();
+
+    std::cout << "loading compilation database from: " << json_dir << std::endl;
+
     CXCompilationDatabase_Error error;
-    CXCompilationDatabase comp_db = clang_CompilationDatabase_fromDirectory(argv[1], &error);
+    CXCompilationDatabase comp_db = clang_CompilationDatabase_fromDirectory(json_dir.c_str(), &error);
     if (error != CXCompilationDatabase_NoError)
     {
         std::cerr << "failed to load compilation database: " << error << std::endl;
@@ -277,16 +301,18 @@ int main(int argc, char* argv[])
         std::string source_file = clang_getCString(source_file_cxstr);
         clang_disposeString(source_file_cxstr);
 
-        futures.push_back(std::async(std::launch::async, [compile_command, source_file, &files_processed, &cerr_mutex, num_commands]
+        std::string absolute_source_file = std::filesystem::absolute(source_file).string();
+
+        futures.push_back(std::async(std::launch::async, [compile_command, absolute_source_file, &files_processed, &cerr_mutex, num_commands]
         {
             CXIndex index = clang_createIndex(0, 0);
-            std::vector<ClassInfo> classes = parseSingleFile(index, compile_command, source_file);
+            std::vector<ClassInfo> classes = parseSingleFile(index, compile_command, absolute_source_file);
             clang_disposeIndex(index);
 
             unsigned int processed = ++files_processed;
             {
                 std::lock_guard lock(cerr_mutex);
-                std::cerr << std::format("[{}/{}] processed file: {}", processed, num_commands, source_file) << std::endl;
+                std::cerr << std::format("[{}/{}] processed file: {}", processed, num_commands, absolute_source_file) << std::endl;
             }
 
             return classes;

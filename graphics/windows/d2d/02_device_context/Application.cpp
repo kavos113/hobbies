@@ -242,7 +242,7 @@ Application::~Application()
 
 int Application::createWindow(int x, int y, int width, int height)
 {
-    HWND m_hwnd = CreateWindowEx(
+    m_hwnd = CreateWindowEx(
         0,
         className,
         L"Hello, World!",
@@ -281,7 +281,7 @@ LRESULT Application::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
     if (uMsg == WM_NCCREATE)
     {
-        CREATESTRUCT *pCreate = reinterpret_cast<CREATESTRUCT *>(lParam);
+        auto *pCreate = reinterpret_cast<CREATESTRUCT *>(lParam);
         app = reinterpret_cast<Application *>(pCreate->lpCreateParams);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(app));
 

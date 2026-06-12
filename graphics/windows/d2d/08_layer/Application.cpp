@@ -255,7 +255,7 @@ Application::~Application()
 
 int Application::createWindow(int x, int y, int width, int height)
 {
-    HWND m_hwnd = CreateWindowEx(
+    m_hwnd = CreateWindowEx(
         0,
         className,
         L"Hello, World!",

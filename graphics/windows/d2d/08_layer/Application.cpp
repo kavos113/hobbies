@@ -139,6 +139,16 @@ void Application::initD2D()
         MessageBox(nullptr, L"Failed to create D2D solid color brush", L"Error", MB_OK | MB_ICONERROR);
         return;
     }
+
+    hr = m_d2dContext->CreateSolidColorBrush(
+        D2D1::ColorF(D2D1::ColorF::Green),
+        &m_greenBrush
+    );
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to create D2D solid color brush", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
 }
 
 void Application::createSurfaceBitmap()
@@ -178,9 +188,32 @@ void Application::onPaint()
     m_d2dContext->BeginDraw();
     m_d2dContext->Clear(D2D1::ColorF(D2D1::ColorF::SkyBlue));
 
+    m_d2dContext->FillRectangle(D2D1::RectF(50, 100, 250, 300), m_whiteBrush.Get());
+    m_d2dContext->FillRectangle(D2D1::RectF(75, 175, 225, 225), m_greenBrush.Get());
+    m_d2dContext->FillEllipse(D2D1::Ellipse(D2D1::Point2F(150, 200), 50, 50), m_redBrush.Get());
+
+    m_d2dContext->PushLayer(
+        D2D1::LayerParameters(
+            D2D1::InfiniteRect(),
+            nullptr, // No geometric mask
+            D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
+            D2D1::IdentityMatrix(),
+            0.5f // 50% opacity
+        ),
+        nullptr // No layer parameters
+    );
+    m_d2dContext->FillRectangle(D2D1::RectF(300, 100, 500, 300), m_whiteBrush.Get());
+    m_d2dContext->FillRectangle(D2D1::RectF(325, 175, 475, 225), m_greenBrush.Get());
+    m_d2dContext->FillEllipse(D2D1::Ellipse(D2D1::Point2F(400, 200), 50, 50), m_redBrush.Get());
+    m_d2dContext->PopLayer();
+
     m_whiteBrush->SetOpacity(0.5f);
-    m_d2dContext->FillRectangle(D2D1::RectF(100, 100, 500, 500), m_whiteBrush.Get());
-    m_d2dContext->FillEllipse(D2D1::Ellipse(D2D1::Point2F(400, 400), 50, 100), m_redBrush.Get());
+    m_d2dContext->FillRectangle(D2D1::RectF(550, 100, 750, 300), m_whiteBrush.Get());
+    m_greenBrush->SetOpacity(0.5f);
+    m_d2dContext->FillRectangle(D2D1::RectF(575, 175, 725, 225), m_greenBrush.Get());
+    m_redBrush->SetOpacity(0.5f);
+    m_d2dContext->FillEllipse(D2D1::Ellipse(D2D1::Point2F(650, 200), 50, 50), m_redBrush.Get());
+
 
     if (FAILED(m_d2dContext->EndDraw()))
     {
@@ -189,6 +222,9 @@ void Application::onPaint()
     }
 
     m_swapChain->Present(1, 0);
+
+    m_whiteBrush->SetOpacity(1.0f);
+    m_redBrush->SetOpacity(1.0f);
 
     EndPaint(m_hwnd, &ps);
 }

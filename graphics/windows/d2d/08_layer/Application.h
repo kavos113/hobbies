@@ -44,6 +44,7 @@ private:
 
     Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> m_whiteBrush;
     Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> m_redBrush;
+    Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> m_greenBrush;
 };
 
 

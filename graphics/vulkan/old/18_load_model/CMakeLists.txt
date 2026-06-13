@@ -27,17 +27,17 @@ if(WIN32)
     target_link_libraries(load_model PRIVATE $ENV{VULKAN_SDK}/Lib/vulkan-1.lib)
 
     add_custom_command(
-            OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
-            COMMAND $ENV{VULKAN_SDK}/Bin/glslc.exe ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv ${CMAKE_CURRENT_BINARY_DIR}/vert.spv
-            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert
+            OUTPUT shaders/vert.spv
+            COMMAND $ENV{VULKAN_SDK}/Bin/glslc.exe shaders/shader.vert -o shaders/vert.spv
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different shaders/vert.spv ${CMAKE_CURRENT_BINARY_DIR}/vert.spv
+            DEPENDS shaders/shader.vert
             COMMENT "Compiling vertex shader"
     )
     add_custom_command(
-            OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
-            COMMAND $ENV{VULKAN_SDK}/Bin/glslc.exe ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv ${CMAKE_CURRENT_BINARY_DIR}/frag.spv
-            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag
+            OUTPUT shaders/frag.spv
+            COMMAND $ENV{VULKAN_SDK}/Bin/glslc.exe shaders/shader.frag -o shaders/frag.spv
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different shaders/frag.spv ${CMAKE_CURRENT_BINARY_DIR}/frag.spv
+            DEPENDS shaders/shader.frag
             COMMENT "Compiling fragment shader"
     )
 elseif(UNIX)
@@ -47,15 +47,15 @@ elseif(UNIX)
     add_custom_command(
             TARGET load_model
             PRE_BUILD
-            COMMAND glslc ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv ${CMAKE_CURRENT_BINARY_DIR}/vert.spv
+            COMMAND glslc shaders/shader.vert -o shaders/vert.spv
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different shaders/vert.spv ${CMAKE_CURRENT_BINARY_DIR}/vert.spv
             COMMENT "Compiling vertex shader"
     )
     add_custom_command(
             TARGET load_model
             PRE_BUILD
-            COMMAND glslc ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv ${CMAKE_CURRENT_BINARY_DIR}/frag.spv
+            COMMAND glslc shaders/shader.frag -o shaders/frag.spv
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different shaders/frag.spv ${CMAKE_CURRENT_BINARY_DIR}/frag.spv
             COMMENT "Compiling fragment shader"
     )
 endif ()
@@ -63,8 +63,8 @@ endif ()
 add_custom_target(
         shaders_load_model ALL
         DEPENDS
-        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv
-        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv
+        shaders/vert.spv
+        shaders/frag.spv
 )
 
 add_dependencies(load_model shaders_load_model)

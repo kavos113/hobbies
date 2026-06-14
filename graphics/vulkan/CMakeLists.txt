@@ -7,4 +7,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(THIRD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
 set(RESOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 
+find_package(glfw3 CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(Vulkan REQUIRED)
+find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+
 #add_subdirectory(old)
+add_subdirectory(01_hello_glfw)

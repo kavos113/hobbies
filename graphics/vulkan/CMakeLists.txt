@@ -14,3 +14,4 @@ find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 
 #add_subdirectory(old)
 add_subdirectory(01_hello_glfw)
+add_subdirectory(02_create_instance)

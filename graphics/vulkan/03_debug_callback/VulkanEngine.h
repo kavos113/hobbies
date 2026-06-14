@@ -3,8 +3,11 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #include <vulkan/vulkan.h>
+
+#include "VulkanDebug.h"
 
 class VulkanEngine
 {
@@ -17,11 +20,10 @@ public:
 private:
     void createInstance();
 
+    std::unique_ptr<VulkanDebug> m_debug;
+
     VkInstance m_instance = VK_NULL_HANDLE;
 
-    const std::vector<std::string> m_validationLayers = {
-        "VK_LAYER_KHRONOS_validation"
-    };
 #ifdef NDEBUG
     const bool m_enableValidationLayers = false;
 #else

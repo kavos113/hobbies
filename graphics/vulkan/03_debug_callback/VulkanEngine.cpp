@@ -5,16 +5,25 @@
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
+#include <ranges>
 
 #include <glfw/glfw3.h>
 
 VulkanEngine::VulkanEngine()
 {
     createInstance();
+
+    if (m_enableValidationLayers)
+    {
+        m_debug = std::make_unique<VulkanDebug>(m_instance);
+    }
 }
 
 VulkanEngine::~VulkanEngine()
 {
+    m_debug->cleanup(m_instance);
+    m_debug.reset();
+
     vkDestroyInstance(m_instance, nullptr);
 }
 
@@ -53,41 +62,28 @@ void VulkanEngine::createInstance()
         }
     }
 
-    uint32_t layerCount;
-    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-    std::vector<VkLayerProperties> availableLayers(layerCount);
-    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+    std::vector<std::string> enabledLayerNames;
+    std::vector<std::string> enabledExtensionNames(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-    for (const std::string& layerName : m_validationLayers)
-    {
-        bool notFound = std::ranges::none_of(availableLayers, [layerName](const VkLayerProperties& layer)
-        {
-            return strcmp(layerName.c_str(), layer.layerName) == 0;
-        });
-        if (notFound)
-        {
-            throw std::runtime_error("Validation layer not found: " + layerName);
-        }
-    }
-
-    std::vector<const char*> enabledLayerNames;
     if (m_enableValidationLayers)
     {
-        enabledLayerNames.reserve(m_validationLayers.size());
-        for (const std::string& layerName : m_validationLayers)
-        {
-            enabledLayerNames.push_back(layerName.c_str());
-            std::cout << "Enabling validation layer: " << layerName << std::endl;
-        }
+        VulkanDebug::addDebugSettings(enabledExtensionNames, enabledLayerNames);
     }
+
+    std::vector<const char*> enabledLayerNamePtrs = enabledLayerNames
+        | std::views::transform([](const std::string& name) { return name.c_str(); })
+        | std::ranges::to<std::vector>();
+    std::vector<const char*> enabledExtensionNamePtrs = enabledExtensionNames
+        | std::views::transform([](const std::string& name) { return name.c_str(); })
+        | std::ranges::to<std::vector>();
 
     VkInstanceCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo = &appInfo,
-        .enabledLayerCount = static_cast<uint32_t>(enabledLayerNames.size()),
-        .ppEnabledLayerNames = enabledLayerNames.data(),
-        .enabledExtensionCount = glfwExtensionCount,
-        .ppEnabledExtensionNames = glfwExtensions,
+        .enabledLayerCount = static_cast<uint32_t>(enabledLayerNamePtrs.size()),
+        .ppEnabledLayerNames = enabledLayerNamePtrs.data(),
+        .enabledExtensionCount = static_cast<uint32_t>(enabledExtensionNamePtrs.size()),
+        .ppEnabledExtensionNames = enabledExtensionNamePtrs.data()
     };
 
     VkResult r = vkCreateInstance(&createInfo, nullptr, &m_instance);

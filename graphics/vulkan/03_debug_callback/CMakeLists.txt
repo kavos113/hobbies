@@ -4,14 +4,14 @@ set(EXAMPLE_NAME 03_debug_callback)
 
 project(${EXAMPLE_NAME} LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
-
 add_executable(${EXAMPLE_NAME}
         main.cpp
         App.h
         App.cpp
         VulkanEngine.cpp
         VulkanEngine.h
+        VulkanDebug.cpp
+        VulkanDebug.h
 )
 target_link_libraries(${EXAMPLE_NAME} PRIVATE
         glfw

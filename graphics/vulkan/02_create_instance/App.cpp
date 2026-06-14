@@ -4,6 +4,8 @@ App::App()
     : m_window(nullptr)
 {
     createWindow();
+
+    m_engine = std::make_unique<VulkanEngine>();
 }
 
 App::~App()

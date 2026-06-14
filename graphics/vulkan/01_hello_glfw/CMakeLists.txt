@@ -8,4 +8,7 @@ add_executable(01_hello_glfw
         App.h
         App.cpp
 )
-target_link_libraries(01_hello_glfw PRIVATE glfw glm::glm)
+target_link_libraries(01_hello_glfw PRIVATE
+        glfw
+        Vulkan::Vulkan
+)

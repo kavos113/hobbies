@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <stdexcept>
-#include <vector>
 #include <iostream>
 
 #include <glfw/glfw3.h>
@@ -59,16 +58,34 @@ void VulkanEngine::createInstance()
     std::vector<VkLayerProperties> availableLayers(layerCount);
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-    for (const auto& layer : availableLayers)
+    for (const std::string& layerName : m_validationLayers)
     {
-        std::cout << "Available layer: " << layer.layerName << std::endl;
+        bool notFound = std::ranges::none_of(availableLayers, [layerName](const VkLayerProperties& layer)
+        {
+            return strcmp(layerName.c_str(), layer.layerName) == 0;
+        });
+        if (notFound)
+        {
+            throw std::runtime_error("Validation layer not found: " + layerName);
+        }
+    }
+
+    std::vector<const char*> enabledLayerNames;
+    if (m_enableValidationLayers)
+    {
+        enabledLayerNames.reserve(m_validationLayers.size());
+        for (const std::string& layerName : m_validationLayers)
+        {
+            enabledLayerNames.push_back(layerName.c_str());
+            std::cout << "Enabling validation layer: " << layerName << std::endl;
+        }
     }
 
     VkInstanceCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo = &appInfo,
-        .enabledLayerCount = 0,
-        .ppEnabledLayerNames = nullptr,
+        .enabledLayerCount = static_cast<uint32_t>(enabledLayerNames.size()),
+        .ppEnabledLayerNames = enabledLayerNames.data(),
         .enabledExtensionCount = glfwExtensionCount,
         .ppEnabledExtensionNames = glfwExtensions,
     };

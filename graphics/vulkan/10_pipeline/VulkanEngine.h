@@ -53,6 +53,11 @@ private:
     VkSurfaceFormatKHR m_swapchainImageFormat;
     VkExtent2D m_swapchainExtent;
 
+    VkViewport m_viewport;
+    VkRect2D m_scissor;
+
+    VkPipeline m_graphicsPipeline = VK_NULL_HANDLE;
+
 #ifdef NDEBUG
     const bool m_enableValidationLayers = false;
 #else

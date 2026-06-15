@@ -1,8 +1,6 @@
 #ifndef CREATE_INSTANCE_VULKANENGINE_H
 #define CREATE_INSTANCE_VULKANENGINE_H
 
-#include <vector>
-#include <string>
 #include <memory>
 
 #include <vulkan/vulkan.h>
@@ -19,10 +17,12 @@ public:
 
 private:
     void createInstance();
+    void pickPhysicalDevice();
 
     std::unique_ptr<VulkanDebug> m_debug;
 
     VkInstance m_instance = VK_NULL_HANDLE;
+    VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 
 #ifdef NDEBUG
     const bool m_enableValidationLayers = false;

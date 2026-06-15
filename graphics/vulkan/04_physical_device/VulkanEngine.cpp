@@ -5,9 +5,136 @@
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
+#include <map>
 #include <ranges>
+#include <format>
+#include <vector>
+#include <string>
+#include <sstream>
 
 #include <glfw/glfw3.h>
+
+namespace
+{
+std::vector<std::string> requiredDeviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+
+bool findQueueFamilies(VkPhysicalDevice device)
+{
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+    return std::ranges::any_of(queueFamilies, [](const VkQueueFamilyProperties& queueFamily)
+    {
+        return queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT;
+    });
+}
+
+int rateDeviceSuitability(VkPhysicalDevice device)
+{
+    VkPhysicalDeviceProperties  deviceProperties;
+    VkPhysicalDeviceFeatures deviceFeatures;
+    vkGetPhysicalDeviceProperties(device, &deviceProperties);
+    vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+    int score = 0;
+
+    if (!deviceFeatures.geometryShader)
+    {
+        return 0;
+    }
+
+    if (!findQueueFamilies(device))
+    {
+        return 0;
+    }
+
+    if (deviceProperties.apiVersion < VK_API_VERSION_1_3)
+    {
+        score -= 10000;
+    }
+
+    if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+    {
+        score += 1000;
+    }
+
+    if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+    {
+        score += 100;
+    }
+
+    return score;
+}
+
+void printDeviceInfo(VkPhysicalDevice device)
+{
+    VkPhysicalDeviceProperties deviceProperties;
+    vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+    std::cout << "------------------------------------" << std::endl;
+    std::cout << "Device Name: " << deviceProperties.deviceName << std::endl;
+    std::cout << "Device Type: " << deviceProperties.deviceType << std::endl;
+    std::cout << std::format("API Version: {}.{}.{}", VK_VERSION_MAJOR(deviceProperties.apiVersion), VK_VERSION_MINOR(deviceProperties.apiVersion), VK_VERSION_PATCH(deviceProperties.apiVersion)) << std::endl;
+
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+    std::stringstream ss;
+    ss << "Queue Families" << std::endl;
+    for (size_t i = 0; i < queueFamilies.size(); i++)
+    {
+        const auto& queueFamily = queueFamilies[i];
+        ss << "  Queue Family " << i << ": ";
+        ss << "Count: " << queueFamily.queueCount << ", ";
+        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        {
+            ss << "Graphics, ";
+        }
+        if (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)
+        {
+            ss << "Compute, ";
+        }
+        if (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT)
+        {
+            ss << "Transfer, ";
+        }
+        if (queueFamily.queueFlags & VK_QUEUE_SPARSE_BINDING_BIT)
+        {
+            ss << "Sparse Binding, ";
+        }
+        if (queueFamily.queueFlags & VK_QUEUE_PROTECTED_BIT)
+        {
+            ss << "Protected, ";
+        }
+        if (queueFamily.queueFlags & VK_QUEUE_VIDEO_DECODE_BIT_KHR)
+        {
+            ss << "Video Decode, ";
+        }
+        if (queueFamily.queueFlags & VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
+        {
+            ss << "Video Encode, ";
+        }
+        if (queueFamily.queueFlags & VK_QUEUE_OPTICAL_FLOW_BIT_NV)
+        {
+            ss << "Optical Flow, ";
+        }
+        if (queueFamily.queueFlags & VK_QUEUE_DATA_GRAPH_BIT_ARM)
+        {
+            ss << "Data Graph, ";
+        }
+
+        ss << std::endl;
+    }
+
+    std::cout << ss.str();
+}
+}
 
 VulkanEngine::VulkanEngine()
 {
@@ -17,6 +144,8 @@ VulkanEngine::VulkanEngine()
     {
         m_debug = std::make_unique<VulkanDebug>(m_instance);
     }
+
+    pickPhysicalDevice();
 }
 
 VulkanEngine::~VulkanEngine()
@@ -90,5 +219,36 @@ void VulkanEngine::createInstance()
     if (r != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create Vulkan instance");
+    }
+}
+
+void VulkanEngine::pickPhysicalDevice()
+{
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
+    if (deviceCount == 0)
+    {
+        throw std::runtime_error("Failed to find any Vulkan-compatible GPU");
+    }
+
+    std::vector<VkPhysicalDevice> devices(deviceCount);
+    vkEnumeratePhysicalDevices(m_instance, &deviceCount, devices.data());
+
+    std::multimap<int, VkPhysicalDevice> candidates;
+    for (const auto& device : devices)
+    {
+        int score = rateDeviceSuitability(device);
+        candidates.insert({score, device});
+
+        printDeviceInfo(device);
+    }
+
+    if (candidates.rbegin()->first > 0)
+    {
+        m_physicalDevice = candidates.rbegin()->second;
+    }
+    else
+    {
+        throw std::runtime_error("Failed to find a suitable GPU");
     }
 }

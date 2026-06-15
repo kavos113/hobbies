@@ -2,14 +2,14 @@
 
 #include <cstdint>
 
+#include <array>
 #include <algorithm>
 #include <stdexcept>
 #include <map>
 #include <ranges>
 #include <format>
-#include <vector>
-#include <string>
 #include <limits>
+#include <fstream>
 
 #include <vulkan/vulkan_win32.h>
 
@@ -84,6 +84,7 @@ VulkanEngine::VulkanEngine(GLFWwindow* window)
     createSurface(window);
     createSwapchain(window);
     createImageViews();
+    createPipeline();
 }
 
 VulkanEngine::~VulkanEngine()
@@ -338,7 +339,7 @@ VkSurfaceFormatKHR VulkanEngine::chooseSwapSurfaceFormat() const
     return it != availableFormats.end() ? *it : availableFormats[0];
 }
 
-VkPresentModeKHR VulkanEngine::chooseSwapPresentMode()
+VkPresentModeKHR VulkanEngine::chooseSwapPresentMode() const
 {
     uint32_t availablePresentModeCount = 0;
     vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &availablePresentModeCount, nullptr);
@@ -349,7 +350,7 @@ VkPresentModeKHR VulkanEngine::chooseSwapPresentMode()
     return it != availablePresentModes.end() ? *it : VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D VulkanEngine::chooseSwapExtent(GLFWwindow* window)
+VkExtent2D VulkanEngine::chooseSwapExtent(GLFWwindow* window) const
 {
     VkSurfaceCapabilitiesKHR  surfaceCapabilities;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities);
@@ -404,4 +405,52 @@ void VulkanEngine::createImageViews()
 
         m_swapchainImageViews.push_back(imageView);
     }
+}
+
+void VulkanEngine::createPipeline()
+{
+    VkShaderModule module = createShaderModule("shaders/shaders.spv");
+
+    VkPipelineShaderStageCreateInfo vertShaderStageInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .module = module,
+        .pName = "vertMain"
+    };
+    VkPipelineShaderStageCreateInfo fragShaderStageInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .module = module,
+        .pName = "fragMain"
+    };
+
+    std::array shaderStages = {vertShaderStageInfo, fragShaderStageInfo};
+}
+
+VkShaderModule VulkanEngine::createShaderModule(const std::string& filePath) const
+{
+    std::ifstream file(filePath, std::ios::ate | std::ios::binary);
+    if (!file.is_open())
+    {
+        throw std::runtime_error("Failed to open shader file: " + filePath);
+    }
+
+    std::vector<std::byte> code(file.tellg());
+    file.seekg(0, std::ios::beg);
+    file.read(reinterpret_cast<char*>(code.data()), code.size());
+    file.close();
+
+    VkShaderModuleCreateInfo createInfo = {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .codeSize = code.size(),
+        .pCode = reinterpret_cast<const uint32_t*>(code.data())
+    };
+    VkShaderModule shaderModule;
+    VkResult r = vkCreateShaderModule(m_device, &createInfo, nullptr, &shaderModule);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create shader module for file: " + filePath);
+    }
+
+    return shaderModule;
 }

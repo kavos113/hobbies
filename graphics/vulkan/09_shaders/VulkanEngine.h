@@ -2,6 +2,8 @@
 #define CREATE_INSTANCE_VULKANENGINE_H
 
 #include <memory>
+#include <vector>
+#include <string>
 
 #include <vulkan/vulkan.h>
 
@@ -29,10 +31,13 @@ private:
     void createSurface(GLFWwindow* window);
     void createSwapchain(GLFWwindow* window);
     void createImageViews();
+    void createPipeline();
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat() const;
-    VkPresentModeKHR chooseSwapPresentMode();
-    VkExtent2D chooseSwapExtent(GLFWwindow* window);
+    VkPresentModeKHR chooseSwapPresentMode() const;
+    VkExtent2D chooseSwapExtent(GLFWwindow* window) const;
+
+    VkShaderModule createShaderModule(const std::string& filePath) const;
 
     std::unique_ptr<VulkanDebug> m_debug;
 

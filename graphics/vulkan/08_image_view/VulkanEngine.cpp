@@ -83,10 +83,16 @@ VulkanEngine::VulkanEngine(GLFWwindow* window)
     createLogicalDevice();
     createSurface(window);
     createSwapchain(window);
+    createImageViews();
 }
 
 VulkanEngine::~VulkanEngine()
 {
+    for (const auto& imageView : m_swapchainImageViews)
+    {
+        vkDestroyImageView(m_device, imageView, nullptr);
+    }
+
     vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     vkDestroyDevice(m_device, nullptr);
@@ -361,4 +367,41 @@ VkExtent2D VulkanEngine::chooseSwapExtent(GLFWwindow* window)
         .height = std::clamp(static_cast<uint32_t>(height), surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height)
     };
     return actualExtent;
+}
+
+void VulkanEngine::createImageViews()
+{
+    VkImageViewCreateInfo createInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = m_swapchainImageFormat.format,
+        .components = {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY
+        },
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
+
+    m_swapchainImageViews.reserve(m_swapchainImages.size());
+    for (const auto& image : m_swapchainImages)
+    {
+        createInfo.image = image;
+
+        VkImageView imageView;
+        VkResult r = vkCreateImageView(m_device, &createInfo, nullptr, &imageView);
+        if (r != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create image view");
+        }
+
+        m_swapchainImageViews.push_back(imageView);
+    }
 }

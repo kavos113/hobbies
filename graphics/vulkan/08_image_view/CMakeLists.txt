@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-set(EXAMPLE_NAME 08_image_views)
+set(EXAMPLE_NAME 08_image_view)
 
 project(${EXAMPLE_NAME} LANGUAGES CXX)
 

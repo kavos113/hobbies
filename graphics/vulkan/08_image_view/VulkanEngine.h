@@ -28,6 +28,7 @@ private:
     void createLogicalDevice();
     void createSurface(GLFWwindow* window);
     void createSwapchain(GLFWwindow* window);
+    void createImageViews();
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat() const;
     VkPresentModeKHR chooseSwapPresentMode();
@@ -43,6 +44,7 @@ private:
     VkSurfaceKHR m_surface = VK_NULL_HANDLE;
     VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
     std::vector<VkImage> m_swapchainImages;
+    std::vector<VkImageView> m_swapchainImageViews;
     VkSurfaceFormatKHR m_swapchainImageFormat;
     VkExtent2D m_swapchainExtent;
 

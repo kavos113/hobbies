@@ -74,11 +74,13 @@ private:
     VkPipeline m_graphicsPipeline = VK_NULL_HANDLE;
 
     VkCommandPool m_commandPool = VK_NULL_HANDLE;
-    VkCommandBuffer m_commandBuffer = VK_NULL_HANDLE;
+    std::vector<VkCommandBuffer> m_commandBuffers;
+    std::vector<VkSemaphore> m_imageAvailableSemaphores;
+    std::vector<VkSemaphore> m_renderCompleteSemaphores;
+    std::vector<VkFence> m_drawFences;
 
-    VkSemaphore m_imageAvailableSemaphore = VK_NULL_HANDLE;
-    VkSemaphore m_renderCompleteSemaphore = VK_NULL_HANDLE;
-    VkFence m_drawFence = VK_NULL_HANDLE;
+    static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+    uint32_t m_currentFrame = 0;
 
 #ifdef NDEBUG
     const bool m_enableValidationLayers = false;

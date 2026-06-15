@@ -4,13 +4,11 @@
 
 #include <algorithm>
 #include <stdexcept>
-#include <iostream>
 #include <map>
 #include <ranges>
 #include <format>
 #include <vector>
 #include <string>
-#include <sstream>
 
 #include <glfw/glfw3.h>
 
@@ -68,71 +66,6 @@ int rateDeviceSuitability(VkPhysicalDevice device)
     }
 
     return score;
-}
-
-void printDeviceInfo(VkPhysicalDevice device)
-{
-    VkPhysicalDeviceProperties deviceProperties;
-    vkGetPhysicalDeviceProperties(device, &deviceProperties);
-
-    std::cout << "------------------------------------" << std::endl;
-    std::cout << "Device Name: " << deviceProperties.deviceName << std::endl;
-    std::cout << "Device Type: " << deviceProperties.deviceType << std::endl;
-    std::cout << std::format("API Version: {}.{}.{}", VK_VERSION_MAJOR(deviceProperties.apiVersion), VK_VERSION_MINOR(deviceProperties.apiVersion), VK_VERSION_PATCH(deviceProperties.apiVersion)) << std::endl;
-
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-
-    std::stringstream ss;
-    ss << "Queue Families" << std::endl;
-    for (size_t i = 0; i < queueFamilies.size(); i++)
-    {
-        const auto& queueFamily = queueFamilies[i];
-        ss << "  Queue Family " << i << ": ";
-        ss << "Count: " << queueFamily.queueCount << ", ";
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-        {
-            ss << "Graphics, ";
-        }
-        if (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)
-        {
-            ss << "Compute, ";
-        }
-        if (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT)
-        {
-            ss << "Transfer, ";
-        }
-        if (queueFamily.queueFlags & VK_QUEUE_SPARSE_BINDING_BIT)
-        {
-            ss << "Sparse Binding, ";
-        }
-        if (queueFamily.queueFlags & VK_QUEUE_PROTECTED_BIT)
-        {
-            ss << "Protected, ";
-        }
-        if (queueFamily.queueFlags & VK_QUEUE_VIDEO_DECODE_BIT_KHR)
-        {
-            ss << "Video Decode, ";
-        }
-        if (queueFamily.queueFlags & VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
-        {
-            ss << "Video Encode, ";
-        }
-        if (queueFamily.queueFlags & VK_QUEUE_OPTICAL_FLOW_BIT_NV)
-        {
-            ss << "Optical Flow, ";
-        }
-        if (queueFamily.queueFlags & VK_QUEUE_DATA_GRAPH_BIT_ARM)
-        {
-            ss << "Data Graph, ";
-        }
-
-        ss << std::endl;
-    }
-
-    std::cout << ss.str();
 }
 }
 
@@ -239,8 +172,6 @@ void VulkanEngine::pickPhysicalDevice()
     {
         int score = rateDeviceSuitability(device);
         candidates.insert({score, device});
-
-        printDeviceInfo(device);
     }
 
     if (candidates.rbegin()->first > 0)

@@ -9,6 +9,7 @@
 #include <format>
 #include <vector>
 #include <string>
+#include <limits>
 
 #include <vulkan/vulkan_win32.h>
 
@@ -81,10 +82,12 @@ VulkanEngine::VulkanEngine(GLFWwindow* window)
     pickPhysicalDevice();
     createLogicalDevice();
     createSurface(window);
+    createSwapchain(window);
 }
 
 VulkanEngine::~VulkanEngine()
 {
+    vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     vkDestroyDevice(m_device, nullptr);
 
@@ -268,4 +271,94 @@ void VulkanEngine::createSurface(GLFWwindow* window)
     {
         throw std::runtime_error("Failed to create window surface");
     }
+}
+
+void VulkanEngine::createSwapchain(GLFWwindow* window)
+{
+    VkSurfaceCapabilitiesKHR surfaceCapabilities;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities);
+
+    VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat();
+    VkPresentModeKHR presentMode = chooseSwapPresentMode();
+    VkExtent2D extent = chooseSwapExtent(window);
+
+    uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
+    if (surfaceCapabilities.maxImageCount > 0 && imageCount > surfaceCapabilities.maxImageCount)
+    {
+        imageCount = surfaceCapabilities.maxImageCount;
+    }
+
+    VkSwapchainCreateInfoKHR createInfo = {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .surface = m_surface,
+        .minImageCount = imageCount,
+        .imageFormat = surfaceFormat.format,
+        .imageColorSpace = surfaceFormat.colorSpace,
+        .imageExtent = extent,
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .preTransform = surfaceCapabilities.currentTransform,
+        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        .presentMode = presentMode,
+        .clipped = VK_TRUE
+    };
+    VkResult r = vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &m_swapchain);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create swapchain");
+    }
+
+    vkGetSwapchainImagesKHR(m_device, m_swapchain, &imageCount, nullptr);
+    m_swapchainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(m_device, m_swapchain, &imageCount, m_swapchainImages.data());
+
+    m_swapchainImageFormat = surfaceFormat;
+    m_swapchainExtent = extent;
+}
+
+VkSurfaceFormatKHR VulkanEngine::chooseSwapSurfaceFormat() const
+{
+    uint32_t availableFormatCount = 0;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &availableFormatCount, nullptr);
+    std::vector<VkSurfaceFormatKHR> availableFormats(availableFormatCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &availableFormatCount, availableFormats.data());
+
+    auto it = std::ranges::find_if(availableFormats, [](const VkSurfaceFormatKHR& availableFormat)
+    {
+        return availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    });
+
+    return it != availableFormats.end() ? *it : availableFormats[0];
+}
+
+VkPresentModeKHR VulkanEngine::chooseSwapPresentMode()
+{
+    uint32_t availablePresentModeCount = 0;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &availablePresentModeCount, nullptr);
+    std::vector<VkPresentModeKHR> availablePresentModes(availablePresentModeCount);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &availablePresentModeCount, availablePresentModes.data());
+
+    auto it = std::ranges::find(availablePresentModes, VK_PRESENT_MODE_MAILBOX_KHR);
+    return it != availablePresentModes.end() ? *it : VK_PRESENT_MODE_FIFO_KHR;
+}
+
+VkExtent2D VulkanEngine::chooseSwapExtent(GLFWwindow* window)
+{
+    VkSurfaceCapabilitiesKHR  surfaceCapabilities;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities);
+
+    if (surfaceCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+    {
+        return surfaceCapabilities.currentExtent;
+    }
+
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+
+    VkExtent2D actualExtent = {
+        .width = std::clamp(static_cast<uint32_t>(width), surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width),
+        .height = std::clamp(static_cast<uint32_t>(height), surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height)
+    };
+    return actualExtent;
 }

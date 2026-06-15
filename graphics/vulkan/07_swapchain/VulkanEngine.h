@@ -5,6 +5,7 @@
 
 #include <vulkan/vulkan.h>
 
+#define NOMINMAX
 #define VK_USE_PLATFORM_WIN32_KHR
 #define GLFW_INCLUDE_VULKAN
 #include <glfw/glfw3.h>
@@ -26,6 +27,11 @@ private:
     void pickPhysicalDevice();
     void createLogicalDevice();
     void createSurface(GLFWwindow* window);
+    void createSwapchain(GLFWwindow* window);
+
+    VkSurfaceFormatKHR chooseSwapSurfaceFormat() const;
+    VkPresentModeKHR chooseSwapPresentMode();
+    VkExtent2D chooseSwapExtent(GLFWwindow* window);
 
     std::unique_ptr<VulkanDebug> m_debug;
 
@@ -35,6 +41,10 @@ private:
     VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 
     VkSurfaceKHR m_surface = VK_NULL_HANDLE;
+    VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
+    std::vector<VkImage> m_swapchainImages;
+    VkSurfaceFormatKHR m_swapchainImageFormat;
+    VkExtent2D m_swapchainExtent;
 
 #ifdef NDEBUG
     const bool m_enableValidationLayers = false;

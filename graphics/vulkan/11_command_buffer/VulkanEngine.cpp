@@ -19,17 +19,26 @@ std::vector<std::string> requiredDeviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-bool findQueueFamilies(VkPhysicalDevice device)
+int findQueueFamilies(VkPhysicalDevice device)
 {
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
     std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
-    return std::ranges::any_of(queueFamilies, [](const VkQueueFamilyProperties& queueFamily)
+    auto graphicsQueueFamilyIt = std::ranges::find_if(queueFamilies, [](const VkQueueFamilyProperties& queueFamily)
     {
         return queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT;
     });
+
+    if (graphicsQueueFamilyIt == queueFamilies.end())
+    {
+        return -1;
+    }
+    else
+    {
+        return static_cast<int>(std::distance(queueFamilies.begin(), graphicsQueueFamilyIt));
+    }
 }
 
 int rateDeviceSuitability(VkPhysicalDevice device)
@@ -46,7 +55,7 @@ int rateDeviceSuitability(VkPhysicalDevice device)
         return 0;
     }
 
-    if (!findQueueFamilies(device))
+    if (findQueueFamilies(device) == -1)
     {
         return 0;
     }
@@ -85,6 +94,8 @@ VulkanEngine::VulkanEngine(GLFWwindow* window)
     createSwapchain(window);
     createImageViews();
     createPipeline();
+    createCommandPool();
+    createCommandBuffer();
 }
 
 VulkanEngine::~VulkanEngine()
@@ -204,26 +215,16 @@ void VulkanEngine::pickPhysicalDevice()
 
 void VulkanEngine::createLogicalDevice()
 {
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, nullptr);
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, queueFamilies.data());
-    auto graphicsQueueFamilyIt = std::ranges::find_if(queueFamilies, [](const VkQueueFamilyProperties& queueFamily)
+    int graphicsQueueFamilyIndex = findQueueFamilies(m_physicalDevice);
+    if (graphicsQueueFamilyIndex == -1)
     {
-        return queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT;
-    });
-
-    if (graphicsQueueFamilyIt == queueFamilies.end())
-    {
-        throw std::runtime_error("Failed to find a graphics queue family");
+        throw std::runtime_error("Failed to find a queue family that supports graphics commands");
     }
-
-    uint32_t graphicsQueueFamilyIndex = static_cast<uint32_t>(std::distance(queueFamilies.begin(), graphicsQueueFamilyIt));
 
     float queuePriority = 1.0f;
     VkDeviceQueueCreateInfo queueCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .queueFamilyIndex = graphicsQueueFamilyIndex,
+        .queueFamilyIndex = static_cast<uint32_t>(graphicsQueueFamilyIndex),
         .queueCount = 1,
         .pQueuePriorities = &queuePriority
     };
@@ -570,4 +571,147 @@ VkShaderModule VulkanEngine::createShaderModule(const std::string& filePath) con
     }
 
     return shaderModule;
+}
+
+void VulkanEngine::createCommandPool()
+{
+    int graphicsQueueFamilyIndex = findQueueFamilies(m_physicalDevice);
+    if (graphicsQueueFamilyIndex == -1)
+    {
+        throw std::runtime_error("Failed to find a queue family that supports graphics commands");
+    }
+
+    VkCommandPoolCreateInfo createInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .queueFamilyIndex = static_cast<uint32_t>(graphicsQueueFamilyIndex)
+    };
+    VkResult r = vkCreateCommandPool(m_device, &createInfo, nullptr, &m_commandPool);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create command pool");
+    }
+}
+
+void VulkanEngine::createCommandBuffer()
+{
+    VkCommandBufferAllocateInfo allocInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = m_commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1
+    };
+    VkResult r = vkAllocateCommandBuffers(m_device, &allocInfo, &m_commandBuffer);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to allocate command buffer");
+    }
+}
+
+void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
+{
+    VkCommandBufferBeginInfo beginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO
+    };
+    VkResult r = vkBeginCommandBuffer(m_commandBuffer, &beginInfo);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to begin recording command buffer");
+    }
+
+    transitionImageLayout(
+        imageIndex,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        0,
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+    );
+
+    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+    VkRenderingAttachmentInfo colorAttachment = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView = m_swapchainImageViews[imageIndex],
+        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .clearValue = clearColor
+    };
+
+    VkRenderingInfo renderingInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea = {
+            .offset = {0, 0},
+            .extent = m_swapchainExtent
+        },
+        .layerCount = 1,
+        .viewMask = 0,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &colorAttachment
+    };
+
+    vkCmdBeginRendering(m_commandBuffer, &renderingInfo);
+
+    vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
+
+    vkCmdSetViewport(m_commandBuffer, 0, 1, &m_viewport);
+    vkCmdSetScissor(m_commandBuffer, 0, 1, &m_scissor);
+
+    vkCmdDraw(m_commandBuffer, 3, 1, 0, 0);
+
+    vkCmdEndRendering(m_commandBuffer);
+
+    transitionImageLayout(
+        imageIndex,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        0,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+    );
+
+    r = vkEndCommandBuffer(m_commandBuffer);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to record command buffer");
+    }
+}
+
+void VulkanEngine::transitionImageLayout(
+    uint32_t imageIndex,
+    VkImageLayout oldLayout,
+    VkImageLayout newLayout,
+    VkAccessFlags2 srcAccessMask,
+    VkAccessFlags2 dstAccessMask,
+    VkPipelineStageFlags2 srcStageMask,
+    VkPipelineStageFlags2 dstStageMask
+) const
+{
+    VkImageMemoryBarrier2 barrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = srcStageMask,
+        .srcAccessMask = srcAccessMask,
+        .dstStageMask = dstStageMask,
+        .dstAccessMask = dstAccessMask,
+        .oldLayout = oldLayout,
+        .newLayout = newLayout,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = m_swapchainImages[imageIndex],
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
+
+    VkDependencyInfo dependencyInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier
+    };
+    vkCmdPipelineBarrier2(m_commandBuffer, &dependencyInfo);
 }

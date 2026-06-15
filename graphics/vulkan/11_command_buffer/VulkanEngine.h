@@ -32,12 +32,25 @@ private:
     void createSwapchain(GLFWwindow* window);
     void createImageViews();
     void createPipeline();
+    void createCommandPool();
+    void createCommandBuffer();
+
+    void recordCommandBuffer(uint32_t imageIndex) const;
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat() const;
     VkPresentModeKHR chooseSwapPresentMode() const;
     VkExtent2D chooseSwapExtent(GLFWwindow* window) const;
 
     VkShaderModule createShaderModule(const std::string& filePath) const;
+    void transitionImageLayout(
+        uint32_t imageIndex,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkAccessFlags2 srcAccessMask,
+        VkAccessFlags2 dstAccessMask,
+        VkPipelineStageFlags2 srcStageMask,
+        VkPipelineStageFlags2 dstStageMask
+    ) const;
 
     std::unique_ptr<VulkanDebug> m_debug;
 
@@ -58,6 +71,9 @@ private:
 
     VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
     VkPipeline m_graphicsPipeline = VK_NULL_HANDLE;
+
+    VkCommandPool m_commandPool = VK_NULL_HANDLE;
+    VkCommandBuffer m_commandBuffer = VK_NULL_HANDLE;
 
 #ifdef NDEBUG
     const bool m_enableValidationLayers = false;

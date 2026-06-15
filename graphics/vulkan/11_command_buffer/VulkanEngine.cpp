@@ -100,6 +100,8 @@ VulkanEngine::VulkanEngine(GLFWwindow* window)
 
 VulkanEngine::~VulkanEngine()
 {
+    vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+
     vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
 

@@ -34,6 +34,7 @@ private:
     void createPipeline();
     void createCommandPool();
     void createCommandBuffer();
+    void createSyncObjects();
 
     void recordCommandBuffer(uint32_t imageIndex) const;
 
@@ -74,6 +75,10 @@ private:
 
     VkCommandPool m_commandPool = VK_NULL_HANDLE;
     VkCommandBuffer m_commandBuffer = VK_NULL_HANDLE;
+
+    VkSemaphore m_imageAvailableSemaphore = VK_NULL_HANDLE;
+    VkSemaphore m_renderCompleteSemaphore = VK_NULL_HANDLE;
+    VkFence m_drawFence = VK_NULL_HANDLE;
 
 #ifdef NDEBUG
     const bool m_enableValidationLayers = false;

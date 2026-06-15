@@ -96,10 +96,17 @@ VulkanEngine::VulkanEngine(GLFWwindow* window)
     createPipeline();
     createCommandPool();
     createCommandBuffer();
+    createSyncObjects();
 }
 
 VulkanEngine::~VulkanEngine()
 {
+    vkDestroySemaphore(m_device, m_renderCompleteSemaphore, nullptr);
+    vkDestroySemaphore(m_device, m_renderCompleteSemaphore, nullptr);
+    vkDestroyFence(m_device, m_drawFence, nullptr);
+
+    vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+
     vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
 
@@ -120,6 +127,64 @@ VulkanEngine::~VulkanEngine()
 
 void VulkanEngine::render()
 {
+    VkResult r = vkWaitForFences(m_device, 1, &m_drawFence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to wait for draw fence");
+    }
+
+    r = vkResetFences(m_device, 1, &m_drawFence);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to reset draw fence");
+    }
+
+    uint32_t imageIndex;
+    r = vkAcquireNextImageKHR(
+        m_device,
+        m_swapchain,
+        std::numeric_limits<uint64_t>::max(),
+        m_imageAvailableSemaphore, // signal
+        VK_NULL_HANDLE,
+        &imageIndex
+    );
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to acquire next image from swapchain");
+    }
+
+    recordCommandBuffer(imageIndex);
+
+    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &m_imageAvailableSemaphore,
+        .pWaitDstStageMask = waitStages,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &m_commandBuffer,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &m_renderCompleteSemaphore
+    };
+    r = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_drawFence);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to submit draw command buffer");
+    }
+
+    VkPresentInfoKHR presentInfo = {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &m_renderCompleteSemaphore,
+        .swapchainCount = 1,
+        .pSwapchains = &m_swapchain,
+        .pImageIndices = &imageIndex
+    };
+    r = vkQueuePresentKHR(m_graphicsQueue, &presentInfo);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to present swapchain image");
+    }
 }
 
 void VulkanEngine::createInstance()
@@ -714,4 +779,31 @@ void VulkanEngine::transitionImageLayout(
         .pImageMemoryBarriers = &barrier
     };
     vkCmdPipelineBarrier2(m_commandBuffer, &dependencyInfo);
+}
+
+void VulkanEngine::createSyncObjects()
+{
+    VkSemaphoreCreateInfo semaphoreInfo = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+    };
+    VkResult r = vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_imageAvailableSemaphore);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create image available semaphore");
+    }
+    r = vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_renderCompleteSemaphore);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create render complete semaphore");
+    }
+
+    VkFenceCreateInfo fenceInfo = {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT
+    };
+    r = vkCreateFence(m_device, &fenceInfo, nullptr, &m_drawFence);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create draw fence");
+    }
 }

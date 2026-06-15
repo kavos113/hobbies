@@ -129,7 +129,7 @@ void VulkanEngine::createInstance()
 
     if (m_enableValidationLayers)
     {
-        VulkanDebug::addDebugSettings(enabledExtensionNames, enabledLayerNames);
+        VulkanDebug::addDebugSettings(enabledLayerNames, enabledExtensionNames);
     }
 
     std::vector<const char*> enabledLayerNamePtrs = enabledLayerNames
@@ -182,4 +182,70 @@ void VulkanEngine::pickPhysicalDevice()
     {
         throw std::runtime_error("Failed to find a suitable GPU");
     }
+}
+
+void VulkanEngine::createLogicalDevice()
+{
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, nullptr);
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, queueFamilies.data());
+    auto graphicsQueueFamilyIt = std::ranges::find_if(queueFamilies, [](const VkQueueFamilyProperties& queueFamily)
+    {
+        return queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT;
+    });
+
+    if (graphicsQueueFamilyIt == queueFamilies.end())
+    {
+        throw std::runtime_error("Failed to find a graphics queue family");
+    }
+
+    uint32_t graphicsQueueFamilyIndex = static_cast<uint32_t>(std::distance(queueFamilies.begin(), graphicsQueueFamilyIt));
+
+    float queuePriority = 1.0f;
+    VkDeviceQueueCreateInfo queueCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .queueFamilyIndex = graphicsQueueFamilyIndex,
+        .queueCount = 1,
+        .pQueuePriorities = &queuePriority
+    };
+
+    VkPhysicalDeviceExtendedDynamicStateFeaturesEXT extendedDynamicStateFeatures = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT,
+        .extendedDynamicState = VK_TRUE
+    };
+    VkPhysicalDeviceVulkan13Features deviceFeatures = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        .pNext = &extendedDynamicStateFeatures,
+        .dynamicRendering = VK_TRUE
+    };
+    VkPhysicalDeviceVulkan11Features device11Features = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+        .pNext = &deviceFeatures,
+        .shaderDrawParameters = VK_TRUE
+    };
+    VkPhysicalDeviceFeatures2 deviceFeatures2 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &device11Features
+    };
+
+    std::vector<const char*> enabledExtensionNamePtrs = requiredDeviceExtensions
+        | std::views::transform([](const std::string& name) { return name.c_str(); })
+        | std::ranges::to<std::vector>();
+
+    VkDeviceCreateInfo createInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = &deviceFeatures2,
+        .queueCreateInfoCount = 1,
+        .pQueueCreateInfos = &queueCreateInfo,
+        .enabledExtensionCount = static_cast<uint32_t>(enabledExtensionNamePtrs.size()),
+        .ppEnabledExtensionNames = enabledExtensionNamePtrs.data()
+    };
+    VkResult r = vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create logical device");
+    }
+
+    vkGetDeviceQueue(m_device, graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
 }

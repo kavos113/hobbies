@@ -56,6 +56,7 @@ private:
     VkViewport m_viewport;
     VkRect2D m_scissor;
 
+    VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
     VkPipeline m_graphicsPipeline = VK_NULL_HANDLE;
 
 #ifdef NDEBUG

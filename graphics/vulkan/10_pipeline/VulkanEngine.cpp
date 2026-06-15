@@ -89,6 +89,9 @@ VulkanEngine::VulkanEngine(GLFWwindow* window)
 
 VulkanEngine::~VulkanEngine()
 {
+    vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
+
     for (const auto& imageView : m_swapchainImageViews)
     {
         vkDestroyImageView(m_device, imageView, nullptr);
@@ -503,8 +506,7 @@ void VulkanEngine::createPipeline()
         .setLayoutCount = 0,
         .pushConstantRangeCount = 0
     };
-    VkPipelineLayout pipelineLayout;
-    VkResult r = vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
+    VkResult r = vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
     if (r != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create pipeline layout");
@@ -528,7 +530,7 @@ void VulkanEngine::createPipeline()
         .pMultisampleState = &multisampling,
         .pColorBlendState = &colorBlending,
         .pDynamicState = &dynamicStateCreateInfo,
-        .layout = pipelineLayout,
+        .layout = m_pipelineLayout,
         .renderPass = VK_NULL_HANDLE, // Using dynamic rendering, so no render pass is used here
         .subpass = 0
     };

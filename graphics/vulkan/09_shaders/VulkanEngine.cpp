@@ -425,6 +425,8 @@ void VulkanEngine::createPipeline()
     };
 
     std::array shaderStages = {vertShaderStageInfo, fragShaderStageInfo};
+
+    vkDestroyShaderModule(m_device, module, nullptr);
 }
 
 VkShaderModule VulkanEngine::createShaderModule(const std::string& filePath) const

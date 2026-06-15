@@ -39,7 +39,7 @@ function(add_slang_shader TARGET)
 
     add_custom_command(
             OUTPUT ${SHADER_OUT_DIR}/shaders.spv
-            COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES} -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name -entry vertMain -entry fragMain -o ${SHADER_OUT_DIR}/shaders.spv
+            COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES} -target spirv -profile spirv_1_3 -emit-spirv-directly -fvk-use-entrypoint-name -entry vertMain -entry fragMain -o ${SHADER_OUT_DIR}/shaders.spv
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             DEPENDS ${SHADER_SOURCES} ${SHADER_OUT_DIR}
             COMMENT "Compiling shaders to SPIR-V: ${SHADER_SOURCES}"

@@ -10,7 +10,7 @@
 #include <vector>
 #include <string>
 
-#include <glfw/glfw3.h>
+#include <vulkan/vulkan_win32.h>
 
 namespace
 {
@@ -69,7 +69,7 @@ int rateDeviceSuitability(VkPhysicalDevice device)
 }
 }
 
-VulkanEngine::VulkanEngine()
+VulkanEngine::VulkanEngine(GLFWwindow* window)
 {
     createInstance();
 
@@ -79,10 +79,15 @@ VulkanEngine::VulkanEngine()
     }
 
     pickPhysicalDevice();
+    createLogicalDevice();
+    createSurface(window);
 }
 
 VulkanEngine::~VulkanEngine()
 {
+    vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+    vkDestroyDevice(m_device, nullptr);
+
     m_debug->cleanup(m_instance);
     m_debug.reset();
 
@@ -129,7 +134,7 @@ void VulkanEngine::createInstance()
 
     if (m_enableValidationLayers)
     {
-        VulkanDebug::addDebugSettings(enabledLayerNames, enabledExtensionNames);
+        VulkanDebug::addDebugSettings(enabledExtensionNames, enabledLayerNames);
     }
 
     std::vector<const char*> enabledLayerNamePtrs = enabledLayerNames
@@ -248,4 +253,19 @@ void VulkanEngine::createLogicalDevice()
     }
 
     vkGetDeviceQueue(m_device, graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
+}
+
+void VulkanEngine::createSurface(GLFWwindow* window)
+{
+    VkWin32SurfaceCreateInfoKHR createInfo = {
+        .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+        .hinstance = GetModuleHandle(nullptr),
+        .hwnd = glfwGetWin32Window(window)
+    };
+
+    VkResult r = vkCreateWin32SurfaceKHR(m_instance, &createInfo, nullptr, &m_surface);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create window surface");
+    }
 }

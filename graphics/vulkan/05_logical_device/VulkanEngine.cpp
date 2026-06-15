@@ -79,10 +79,13 @@ VulkanEngine::VulkanEngine()
     }
 
     pickPhysicalDevice();
+    createLogicalDevice();
 }
 
 VulkanEngine::~VulkanEngine()
 {
+    vkDestroyDevice(m_device, nullptr);
+
     m_debug->cleanup(m_instance);
     m_debug.reset();
 
@@ -129,7 +132,7 @@ void VulkanEngine::createInstance()
 
     if (m_enableValidationLayers)
     {
-        VulkanDebug::addDebugSettings(enabledLayerNames, enabledExtensionNames);
+        VulkanDebug::addDebugSettings(enabledExtensionNames, enabledLayerNames);
     }
 
     std::vector<const char*> enabledLayerNamePtrs = enabledLayerNames

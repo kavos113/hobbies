@@ -80,6 +80,7 @@ int rateDeviceSuitability(VkPhysicalDevice device)
 }
 
 VulkanEngine::VulkanEngine(GLFWwindow* window)
+    : m_window(window)
 {
     createInstance();
 
@@ -90,8 +91,8 @@ VulkanEngine::VulkanEngine(GLFWwindow* window)
 
     pickPhysicalDevice();
     createLogicalDevice();
-    createSurface(window);
-    createSwapchain(window);
+    createSurface();
+    createSwapchain();
     createImageViews();
     createPipeline();
     createCommandPool();
@@ -118,12 +119,7 @@ VulkanEngine::~VulkanEngine()
     vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
 
-    for (const auto& imageView : m_swapchainImageViews)
-    {
-        vkDestroyImageView(m_device, imageView, nullptr);
-    }
-
-    vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+    cleanupSwapchain();
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     vkDestroyDevice(m_device, nullptr);
 
@@ -141,12 +137,6 @@ void VulkanEngine::render()
         throw std::runtime_error("Failed to wait for draw fence");
     }
 
-    r = vkResetFences(m_device, 1, &m_drawFences[m_currentFrame]);
-    if (r != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to reset draw fence");
-    }
-
     uint32_t imageIndex;
     r = vkAcquireNextImageKHR(
         m_device,
@@ -156,9 +146,21 @@ void VulkanEngine::render()
         VK_NULL_HANDLE,
         &imageIndex
     );
+    if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR || isResized)
+    {
+        isResized = false;
+        recreateSwapchain();
+        return;
+    }
     if (r != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to acquire next image from swapchain");
+    }
+
+    r = vkResetFences(m_device, 1, &m_drawFences[m_currentFrame]);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to reset draw fence");
     }
 
     vkResetCommandBuffer(m_commandBuffers[m_currentFrame], 0);
@@ -190,6 +192,11 @@ void VulkanEngine::render()
         .pImageIndices = &imageIndex
     };
     r = vkQueuePresentKHR(m_graphicsQueue, &presentInfo);
+    if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR)
+    {
+        recreateSwapchain();
+        return;
+    }
     if (r != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to present swapchain image");
@@ -346,12 +353,12 @@ void VulkanEngine::createLogicalDevice()
     vkGetDeviceQueue(m_device, graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
 }
 
-void VulkanEngine::createSurface(GLFWwindow* window)
+void VulkanEngine::createSurface()
 {
     VkWin32SurfaceCreateInfoKHR createInfo = {
         .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
         .hinstance = GetModuleHandle(nullptr),
-        .hwnd = glfwGetWin32Window(window)
+        .hwnd = glfwGetWin32Window(m_window)
     };
 
     VkResult r = vkCreateWin32SurfaceKHR(m_instance, &createInfo, nullptr, &m_surface);
@@ -361,14 +368,14 @@ void VulkanEngine::createSurface(GLFWwindow* window)
     }
 }
 
-void VulkanEngine::createSwapchain(GLFWwindow* window)
+void VulkanEngine::createSwapchain()
 {
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities);
 
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat();
     VkPresentModeKHR presentMode = chooseSwapPresentMode();
-    VkExtent2D extent = chooseSwapExtent(window);
+    VkExtent2D extent = chooseSwapExtent(m_window);
 
     uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
     if (surfaceCapabilities.maxImageCount > 0 && imageCount > surfaceCapabilities.maxImageCount)
@@ -832,4 +839,33 @@ void VulkanEngine::createSyncObjects()
             throw std::runtime_error("Failed to create render complete semaphore");
         }
     }
+}
+
+void VulkanEngine::recreateSwapchain()
+{
+    int width, height;
+    glfwGetFramebufferSize(m_window, &width, &height);
+    while (width == 0 || height == 0)
+    {
+        glfwGetFramebufferSize(m_window, &width, &height);
+        glfwWaitEvents();
+    }
+
+    vkDeviceWaitIdle(m_device);
+
+    cleanupSwapchain();
+    createSwapchain();
+    createImageViews();
+}
+
+void VulkanEngine::cleanupSwapchain()
+{
+    for (const auto& imageView : m_swapchainImageViews)
+    {
+        vkDestroyImageView(m_device, imageView, nullptr);
+    }
+    m_swapchainImageViews.clear();
+
+    vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+    m_swapchain = VK_NULL_HANDLE;
 }

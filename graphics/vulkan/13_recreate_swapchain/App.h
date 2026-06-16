@@ -19,6 +19,8 @@ public:
 private:
     void createWindow();
 
+    static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+
     GLFWwindow* m_window;
     std::unique_ptr<VulkanEngine> m_engine;
 };

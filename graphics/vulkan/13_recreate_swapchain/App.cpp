@@ -31,4 +31,12 @@ void App::createWindow()
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     m_window = glfwCreateWindow(800, 600, "Hello GLFW", nullptr, nullptr);
+    glfwSetWindowUserPointer(m_window, this);
+    glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
+}
+
+void App::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+{
+    auto app = static_cast<App*>(glfwGetWindowUserPointer(window));
+    app->m_engine->isResized = true;
 }

@@ -24,12 +24,14 @@ public:
 
     void render();
 
+    bool isResized = false;
+
 private:
     void createInstance();
     void pickPhysicalDevice();
     void createLogicalDevice();
-    void createSurface(GLFWwindow* window);
-    void createSwapchain(GLFWwindow* window);
+    void createSurface();
+    void createSwapchain();
     void createImageViews();
     void createPipeline();
     void createCommandPool();
@@ -37,6 +39,8 @@ private:
     void createSyncObjects();
 
     void recordCommandBuffer(uint32_t imageIndex) const;
+    void recreateSwapchain();
+    void cleanupSwapchain();
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat() const;
     VkPresentModeKHR chooseSwapPresentMode() const;
@@ -54,6 +58,7 @@ private:
     ) const;
 
     std::unique_ptr<VulkanDebug> m_debug;
+    GLFWwindow* m_window = nullptr;
 
     VkInstance m_instance = VK_NULL_HANDLE;
     VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;

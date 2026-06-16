@@ -1,11 +1,13 @@
 #ifndef CREATE_INSTANCE_VULKANENGINE_H
 #define CREATE_INSTANCE_VULKANENGINE_H
 
+#include <array>
 #include <memory>
 #include <vector>
 #include <string>
 
 #include <vulkan/vulkan.h>
+#include <glm/glm.hpp>
 
 #define NOMINMAX
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -27,6 +29,46 @@ public:
     bool isResized = false;
 
 private:
+    struct Vertex
+    {
+        glm::vec2 pos;
+        glm::vec3 color;
+
+        static VkVertexInputBindingDescription getBindingDescription()
+        {
+            return {
+                .binding = 0,
+                .stride = sizeof(Vertex),
+                .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+            };
+        }
+
+        static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+        {
+            return {
+                VkVertexInputAttributeDescription{
+                    .location = 0,
+                    .binding = 0,
+                    .format = VK_FORMAT_R32G32_SFLOAT,
+                    .offset = offsetof(Vertex, pos)
+                },
+                VkVertexInputAttributeDescription{
+                    .location = 1,
+                    .binding = 0,
+                    .format = VK_FORMAT_R32G32B32_SFLOAT,
+                    .offset = offsetof(Vertex, color)
+                }
+            };
+        }
+    };
+
+    const std::vector<Vertex> vertices = {
+        {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    };
+
+private:
     void createInstance();
     void pickPhysicalDevice();
     void createLogicalDevice();
@@ -37,6 +79,8 @@ private:
     void createCommandPool();
     void createCommandBuffer();
     void createSyncObjects();
+
+    void createVertexBuffer();
 
     void recordCommandBuffer(uint32_t imageIndex) const;
     void recreateSwapchain();
@@ -56,6 +100,7 @@ private:
         VkPipelineStageFlags2 srcStageMask,
         VkPipelineStageFlags2 dstStageMask
     ) const;
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
     std::unique_ptr<VulkanDebug> m_debug;
     GLFWwindow* m_window = nullptr;
@@ -86,6 +131,9 @@ private:
 
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
     uint32_t m_currentFrame = 0;
+
+    VkBuffer m_vertexBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory m_vertexBufferMemory = VK_NULL_HANDLE;
 
 #ifdef NDEBUG
     const bool m_enableValidationLayers = false;

@@ -15,6 +15,7 @@ add_executable(${EXAMPLE_NAME}
 )
 target_link_libraries(${EXAMPLE_NAME} PRIVATE
         glfw
+        glm::glm
         Vulkan::Vulkan
 )
 

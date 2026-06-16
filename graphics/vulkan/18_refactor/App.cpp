@@ -11,6 +11,9 @@ App::App()
 
 App::~App()
 {
+    m_engine.reset();
+    m_context.reset();
+
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }

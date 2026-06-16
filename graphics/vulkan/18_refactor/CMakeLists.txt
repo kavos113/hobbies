@@ -14,6 +14,8 @@ add_executable(${EXAMPLE_NAME}
         VulkanDebug.h
         VulkanContext.cpp
         VulkanContext.h
+        Object.cpp
+        Object.h
 )
 target_link_libraries(${EXAMPLE_NAME} PRIVATE
         glfw

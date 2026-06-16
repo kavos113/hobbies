@@ -1,4 +1,10 @@
+minimumReleaseAgeExclude:
+  - esbuild@0.28.1
+  - js-yaml@4.1.2
 overrides:
+  esbuild@>=0.17.0 <0.28.1: ^0.28.1
+  esbuild@>=0.27.3 <0.28.1: ^0.28.1
+  js-yaml@<=4.1.1: ^4.1.2
   lodash@<=4.17.23: '>=4.18.0'
   lodash@>=4.0.0 <=4.17.22: '>=4.17.23'
   lodash@>=4.0.0 <=4.17.23: '>=4.18.0'

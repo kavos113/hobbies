@@ -1,4 +1,13 @@
+minimumReleaseAgeExclude:
+  - apollo-server@3.13.1
+  - apollo-server-core@3.13.1
+  - js-yaml@4.1.2
+  - '@babel/core@7.29.1'
 overrides:
+  '@babel/core@<=7.29.0': ^7.29.1
+  apollo-server-core@<=3.13.0: ^3.13.1
+  apollo-server@>=2.0.0 <=3.13.0: ^3.13.1
   handlebars@>=4.0.0 <4.7.9: '>=4.7.9'
+  js-yaml@<=4.1.1: ^4.1.2
   minimatch@<10.2.1: '>=10.2.1'
   uuid@<14.0.0: '>=14.0.0'

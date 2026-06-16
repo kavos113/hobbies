@@ -8,12 +8,8 @@ foreach ($dir in $packageDirs) {
     Push-Location $dir
 
     try {
-        if (Test-Path "package-lock.json") {
-            npm audit fix --force
-            npm install
-        }
         if (Test-Path "pnpm-lock.yaml") {
-            pnpm audit --fix
+            pnpm audit --fix override
             pnpm up --lockfile-only
         }
     }

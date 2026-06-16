@@ -17,11 +17,12 @@
 #include <glfw/glfw3native.h>
 
 #include "VulkanDebug.h"
+#include "VulkanContext.h"
 
 class VulkanEngine
 {
 public:
-    VulkanEngine(GLFWwindow* window);
+    VulkanEngine(GLFWwindow* window, VulkanContext *context);
     ~VulkanEngine();
 
     void render();
@@ -81,9 +82,6 @@ private:
     };
 
 private:
-    void createInstance();
-    void pickPhysicalDevice();
-    void createLogicalDevice();
     void createSurface();
     void createSwapchain();
     void createImageViews();
@@ -123,12 +121,8 @@ private:
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const;
 
     std::unique_ptr<VulkanDebug> m_debug;
+    VulkanContext *m_context;
     GLFWwindow* m_window = nullptr;
-
-    VkInstance m_instance = VK_NULL_HANDLE;
-    VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
-    VkDevice m_device = VK_NULL_HANDLE;
-    VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 
     VkSurfaceKHR m_surface = VK_NULL_HANDLE;
     VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;

@@ -6,6 +6,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "VulkanContext.h"
 #include "VulkanEngine.h"
 
 class App
@@ -22,6 +23,7 @@ private:
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
     GLFWwindow* m_window;
+    std::unique_ptr<VulkanContext> m_context;
     std::unique_ptr<VulkanEngine> m_engine;
 };
 

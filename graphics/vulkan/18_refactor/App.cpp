@@ -5,7 +5,8 @@ App::App()
 {
     createWindow();
 
-    m_engine = std::make_unique<VulkanEngine>(m_window);
+    m_context = std::make_unique<VulkanContext>();
+    m_engine = std::make_unique<VulkanEngine>(m_window, m_context.get());
 }
 
 App::~App()

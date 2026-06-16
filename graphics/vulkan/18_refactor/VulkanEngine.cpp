@@ -17,11 +17,6 @@ VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context)
     : m_window(window),
     m_context(context)
 {
-    if (m_enableValidationLayers)
-    {
-        m_debug = std::make_unique<VulkanDebug>(m_context->instance());
-    }
-
     createSurface();
     createSwapchain();
     createImageViews();
@@ -73,9 +68,6 @@ VulkanEngine::~VulkanEngine()
 
     cleanupSwapchain();
     vkDestroySurfaceKHR(m_context->instance(), m_surface, nullptr);
-
-    m_debug->cleanup(m_context->instance());
-    m_debug.reset();
 }
 
 void VulkanEngine::render()

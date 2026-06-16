@@ -2,7 +2,6 @@
 #define CREATE_INSTANCE_VULKANENGINE_H
 
 #include <array>
-#include <memory>
 #include <vector>
 #include <string>
 
@@ -16,7 +15,6 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <glfw/glfw3native.h>
 
-#include "VulkanDebug.h"
 #include "VulkanContext.h"
 
 class VulkanEngine
@@ -120,7 +118,6 @@ private:
     std::pair<VkBuffer, VkDeviceMemory> createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) const;
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const;
 
-    std::unique_ptr<VulkanDebug> m_debug;
     VulkanContext *m_context;
     GLFWwindow* m_window = nullptr;
 
@@ -156,12 +153,6 @@ private:
     std::vector<VkBuffer> m_uniformBuffers;
     std::vector<VkDeviceMemory> m_uniformBuffersMemory;
     std::vector<void *> m_uniformBuffersMapped;
-
-#ifdef NDEBUG
-    const bool m_enableValidationLayers = false;
-#else
-    const bool m_enableValidationLayers = true;
-#endif
 };
 
 

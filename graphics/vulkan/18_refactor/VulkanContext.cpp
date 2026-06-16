@@ -81,6 +81,12 @@ int rateDeviceSuitability(VkPhysicalDevice device)
 VulkanContext::VulkanContext()
 {
     createInstance();
+
+    if (m_enableValidationLayers)
+    {
+        m_debug = std::make_unique<VulkanDebug>(m_instance);
+    }
+
     pickPhysicalDevice();
     createLogicalDevice();
 }
@@ -88,6 +94,10 @@ VulkanContext::VulkanContext()
 VulkanContext::~VulkanContext()
 {
     vkDestroyDevice(m_device, nullptr);
+
+    m_debug->cleanup(m_instance);
+    m_debug.reset();
+
     vkDestroyInstance(m_instance, nullptr);
 }
 
@@ -130,10 +140,10 @@ void VulkanContext::createInstance()
     std::vector<std::string> enabledLayerNames;
     std::vector<std::string> enabledExtensionNames(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-    // if (m_enableValidationLayers)
-    // {
-    //     VulkanDebug::addDebugSettings(enabledExtensionNames, enabledLayerNames);
-    // }
+    if (m_enableValidationLayers)
+    {
+        VulkanDebug::addDebugSettings(enabledExtensionNames, enabledLayerNames);
+    }
 
     std::vector<const char*> enabledLayerNamePtrs = enabledLayerNames
         | std::views::transform([](const std::string& name) { return name.c_str(); })
@@ -189,7 +199,7 @@ void VulkanContext::pickPhysicalDevice()
 
 void VulkanContext::createLogicalDevice()
 {
-    int graphicsQueueFamilyIndex = findQueueFamilies(m_physicalDevice);
+    int graphicsQueueFamilyIndex = _findQueueFamilies(m_physicalDevice);
     if (graphicsQueueFamilyIndex == -1)
     {
         throw std::runtime_error("Failed to find a queue family that supports graphics commands");

@@ -89,10 +89,15 @@ VulkanContext::VulkanContext()
 
     pickPhysicalDevice();
     createLogicalDevice();
+    createDescriptorPool();
+    createCommandPool();
 }
 
 VulkanContext::~VulkanContext()
 {
+    vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
+    vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+
     vkDestroyDevice(m_device, nullptr);
 
     m_debug->cleanup(m_instance);
@@ -252,4 +257,43 @@ void VulkanContext::createLogicalDevice()
     }
 
     vkGetDeviceQueue(m_device, graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
+}
+
+void VulkanContext::createCommandPool()
+{
+    int graphicsQueueFamilyIndex = _findQueueFamilies(m_physicalDevice);
+    if (graphicsQueueFamilyIndex == -1)
+    {
+        throw std::runtime_error("Failed to find a queue family that supports graphics commands");
+    }
+
+    VkCommandPoolCreateInfo createInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = static_cast<uint32_t>(graphicsQueueFamilyIndex)
+    };
+    VkResult r = vkCreateCommandPool(m_device, &createInfo, nullptr, &m_commandPool);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create command pool");
+    }
+}
+
+void VulkanContext::createDescriptorPool()
+{
+    VkDescriptorPoolSize poolSize = {
+        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT)
+    };
+    VkDescriptorPoolCreateInfo poolInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT),
+        .poolSizeCount = 1,
+        .pPoolSizes = &poolSize
+    };
+    VkResult r = vkCreateDescriptorPool(m_device, &poolInfo, nullptr, &m_descriptorPool);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create descriptor pool");
+    }
 }

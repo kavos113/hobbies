@@ -22,8 +22,6 @@ VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context)
     createImageViews();
     createDescriptorSetLayout();
     createPipeline();
-    createCommandPool();
-    createDescriptorPool();
 
     createVertexBuffer();
     createIndexBuffer();
@@ -59,9 +57,6 @@ VulkanEngine::~VulkanEngine()
     }
 
     vkDestroyDescriptorSetLayout(m_context->device(), m_descriptorSetLayout, nullptr);
-
-    vkDestroyDescriptorPool(m_context->device(), m_descriptorPool, nullptr);
-    vkDestroyCommandPool(m_context->device(), m_commandPool, nullptr);
 
     vkDestroyPipeline(m_context->device(), m_graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_context->device(), m_pipelineLayout, nullptr);
@@ -457,31 +452,11 @@ VkShaderModule VulkanEngine::createShaderModule(const std::string& filePath) con
     return shaderModule;
 }
 
-void VulkanEngine::createCommandPool()
-{
-    int graphicsQueueFamilyIndex = m_context->findQueueFamilies();
-    if (graphicsQueueFamilyIndex == -1)
-    {
-        throw std::runtime_error("Failed to find a queue family that supports graphics commands");
-    }
-
-    VkCommandPoolCreateInfo createInfo = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = static_cast<uint32_t>(graphicsQueueFamilyIndex)
-    };
-    VkResult r = vkCreateCommandPool(m_context->device(), &createInfo, nullptr, &m_commandPool);
-    if (r != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create command pool");
-    }
-}
-
 void VulkanEngine::createCommandBuffer()
 {
     VkCommandBufferAllocateInfo allocInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .commandPool = m_commandPool,
+        .commandPool = m_context->commandPool(),
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = MAX_FRAMES_IN_FLIGHT
     };
@@ -675,31 +650,12 @@ void VulkanEngine::createDescriptorSetLayout()
     }
 }
 
-void VulkanEngine::createDescriptorPool()
-{
-    VkDescriptorPoolSize poolSize = {
-        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT)
-    };
-    VkDescriptorPoolCreateInfo poolInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT),
-        .poolSizeCount = 1,
-        .pPoolSizes = &poolSize
-    };
-    VkResult r = vkCreateDescriptorPool(m_context->device(), &poolInfo, nullptr, &m_descriptorPool);
-    if (r != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create descriptor pool");
-    }
-}
-
 void VulkanEngine::createDescriptorSets()
 {
     std::vector layouts(MAX_FRAMES_IN_FLIGHT, m_descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = m_descriptorPool,
+        .descriptorPool = m_context->descriptorPool(),
         .descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT),
         .pSetLayouts = layouts.data()
     };
@@ -932,7 +888,7 @@ void VulkanEngine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSi
 {
     VkCommandBufferAllocateInfo allocInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .commandPool = m_commandPool,
+        .commandPool = m_context->commandPool(),
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1
     };
@@ -962,5 +918,5 @@ void VulkanEngine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSi
     vkQueueSubmit(m_context->graphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
     vkQueueWaitIdle(m_context->graphicsQueue());
 
-    vkFreeCommandBuffers(m_context->device(), m_commandPool, 1, &commandBuffer);
+    vkFreeCommandBuffers(m_context->device(), m_context->commandPool(), 1, &commandBuffer);
 }

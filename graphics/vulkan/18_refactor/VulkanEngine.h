@@ -84,11 +84,9 @@ private:
     void createSwapchain();
     void createImageViews();
     void createPipeline();
-    void createCommandPool();
     void createCommandBuffer();
     void createSyncObjects();
     void createDescriptorSetLayout();
-    void createDescriptorPool();
     void createDescriptorSets();
 
     void createVertexBuffer();
@@ -134,10 +132,8 @@ private:
     VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
     VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
     VkPipeline m_graphicsPipeline = VK_NULL_HANDLE;
-    VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> m_descriptorSets;
 
-    VkCommandPool m_commandPool = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> m_commandBuffers;
     std::vector<VkSemaphore> m_imageAvailableSemaphores;
     std::vector<VkSemaphore> m_renderCompleteSemaphores;

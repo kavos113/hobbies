@@ -35,10 +35,22 @@ public:
         return m_graphicsQueue;
     }
 
+    VkDescriptorPool descriptorPool() const
+    {
+        return m_descriptorPool;
+    }
+
+    VkCommandPool commandPool() const
+    {
+        return m_commandPool;
+    }
+
 private:
     void createInstance();
     void pickPhysicalDevice();
     void createLogicalDevice();
+    void createCommandPool();
+    void createDescriptorPool();
 
     std::unique_ptr<VulkanDebug> m_debug;
 
@@ -47,6 +59,10 @@ private:
     VkDevice m_device = VK_NULL_HANDLE;
     VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 
+    VkCommandPool m_commandPool = VK_NULL_HANDLE;
+    VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
+
+    static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
 #ifdef NDEBUG
     const bool m_enableValidationLayers = false;

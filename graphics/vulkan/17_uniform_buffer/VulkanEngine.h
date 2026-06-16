@@ -73,6 +73,13 @@ private:
         2, 3, 0
     };
 
+    struct UniformBufferObject
+    {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
+    };
+
 private:
     void createInstance();
     void pickPhysicalDevice();
@@ -84,13 +91,18 @@ private:
     void createCommandPool();
     void createCommandBuffer();
     void createSyncObjects();
+    void createDescriptorSetLayout();
+    void createDescriptorPool();
+    void createDescriptorSets();
 
     void createVertexBuffer();
     void createIndexBuffer();
+    void createUniformBuffers();
 
     void recordCommandBuffer(uint32_t imageIndex) const;
     void recreateSwapchain();
     void cleanupSwapchain();
+    void updateUniformBuffer(uint32_t currentImage) const;
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat() const;
     VkPresentModeKHR chooseSwapPresentMode() const;
@@ -128,8 +140,11 @@ private:
     VkViewport m_viewport;
     VkRect2D m_scissor;
 
+    VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
     VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
     VkPipeline m_graphicsPipeline = VK_NULL_HANDLE;
+    VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
+    std::vector<VkDescriptorSet> m_descriptorSets;
 
     VkCommandPool m_commandPool = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> m_commandBuffers;
@@ -144,6 +159,9 @@ private:
     VkDeviceMemory m_vertexBufferMemory = VK_NULL_HANDLE;
     VkBuffer m_indexBuffer = VK_NULL_HANDLE;
     VkDeviceMemory m_indexBufferMemory = VK_NULL_HANDLE;
+    std::vector<VkBuffer> m_uniformBuffers;
+    std::vector<VkDeviceMemory> m_uniformBuffersMemory;
+    std::vector<void *> m_uniformBuffersMapped;
 
 #ifdef NDEBUG
     const bool m_enableValidationLayers = false;

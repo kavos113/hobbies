@@ -101,6 +101,8 @@ private:
         VkPipelineStageFlags2 dstStageMask
     ) const;
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+    std::pair<VkBuffer, VkDeviceMemory> createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) const;
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const;
 
     std::unique_ptr<VulkanDebug> m_debug;
     GLFWwindow* m_window = nullptr;

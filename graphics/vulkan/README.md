@@ -33,3 +33,4 @@ TODO
 | 16     | index_buffer       | 15   | create an index buffer, and draw a rectangle          |
 | 17     | uniform_buffer     | 16   | create a uniform buffer (data: transform matrix)      |
 | 18     | refactor           | 17   | split device/instance and more as VulkanContext class |
+| 19     | texture            | 18   | load texture                                          | 

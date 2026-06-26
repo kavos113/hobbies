@@ -86,6 +86,7 @@ private:
     void createUniformBuffers();
     void createTextureImage();
     void createTextureImageView();
+    void createTextureSampler();
 
     void updateUniformBuffer(uint32_t currentImage, float windowWidth, float windowHeight) const;
 
@@ -116,8 +117,10 @@ private:
     std::vector<VkDeviceMemory> m_uniformBuffersMemory;
     std::vector<void *> m_uniformBuffersMapped;
 
-    VkImage m_textureImage;
-    VkDeviceMemory m_textureImageMemory;
+    VkImage m_textureImage = VK_NULL_HANDLE;
+    VkDeviceMemory m_textureImageMemory = VK_NULL_HANDLE;
+    VkImageView m_textureImageView = VK_NULL_HANDLE;
+    VkSampler m_textureSampler = VK_NULL_HANDLE;
 
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 };

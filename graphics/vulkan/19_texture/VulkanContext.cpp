@@ -283,11 +283,14 @@ void VulkanContext::createLogicalDevice()
     VkPhysicalDeviceVulkan11Features device11Features = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
         .pNext = &deviceFeatures,
-        .shaderDrawParameters = VK_TRUE
+        .shaderDrawParameters = VK_TRUE,
     };
     VkPhysicalDeviceFeatures2 deviceFeatures2 = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &device11Features
+        .pNext = &device11Features,
+        .features = {
+            .samplerAnisotropy = VK_TRUE
+        }
     };
 
     std::vector<const char*> enabledExtensionNamePtrs = requiredDeviceExtensions

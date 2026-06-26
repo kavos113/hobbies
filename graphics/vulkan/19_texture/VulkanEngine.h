@@ -34,8 +34,6 @@ private:
     void createPipeline();
     void createCommandBuffer();
     void createSyncObjects();
-    void createDescriptorSetLayout();
-    void createDescriptorSets();
 
     void recordCommandBuffer(uint32_t imageIndex) const;
     void recreateSwapchain();
@@ -61,10 +59,8 @@ private:
     VkViewport m_viewport;
     VkRect2D m_scissor;
 
-    VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
     VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
     VkPipeline m_graphicsPipeline = VK_NULL_HANDLE;
-    std::vector<VkDescriptorSet> m_descriptorSets;
 
     std::vector<VkCommandBuffer> m_commandBuffers;
     std::vector<VkSemaphore> m_imageAvailableSemaphores;

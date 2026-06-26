@@ -31,6 +31,11 @@ Object::~Object()
     vkFreeMemory(m_context->device(), m_vertexBufferMemory, nullptr);
     vkDestroyBuffer(m_context->device(), m_indexBuffer, nullptr);
     vkFreeMemory(m_context->device(), m_indexBufferMemory, nullptr);
+
+    vkDestroyImage(m_context->device(), m_textureImage, nullptr);
+    vkFreeMemory(m_context->device(), m_textureImageMemory, nullptr);
+
+    vkDestroyDescriptorSetLayout(m_context->device(), m_descriptorSetLayout, nullptr);
 }
 
 void Object::beforeRender(uint32_t currentImage, float windowWidth, float windowHeight) const
@@ -38,8 +43,19 @@ void Object::beforeRender(uint32_t currentImage, float windowWidth, float window
     updateUniformBuffer(currentImage, windowWidth, windowHeight);
 }
 
-void Object::render(VkCommandBuffer commandBuffer) const
+void Object::render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t imageIndex) const
 {
+    vkCmdBindDescriptorSets(
+        commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        pipelineLayout,
+        0,
+        1,
+        &m_descriptorSets[imageIndex],
+        0,
+        nullptr
+    );
+
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_vertexBuffer, offsets);
     vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer, 0, VK_INDEX_TYPE_UINT16);
@@ -138,7 +154,7 @@ void Object::createUniformBuffers()
 void Object::createTextureImage()
 {
     int width, height, channels;
-    stbi_uc *pixels = stbi_load("resources/texture.jpg", &width, &height, &channels, STBI_rgb_alpha);
+    stbi_uc *pixels = stbi_load("resources/square.png", &width, &height, &channels, STBI_rgb_alpha);
     if (!pixels)
     {
         throw std::runtime_error("Failed to load texture image");
@@ -275,6 +291,86 @@ void Object::createTextureSampler()
     if (r != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create texture sampler");
+    }
+}
+
+void Object::createDescriptorSetLayout()
+{
+    std::array bindings = {
+        VkDescriptorSetLayoutBinding{
+            .binding = 0,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
+        },
+        VkDescriptorSetLayoutBinding{
+            .binding = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        }
+    };
+    VkDescriptorSetLayoutCreateInfo layoutInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = bindings.size(),
+        .pBindings = bindings.data()
+    };
+    VkResult r = vkCreateDescriptorSetLayout(m_context->device(), &layoutInfo, nullptr, &m_descriptorSetLayout);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create descriptor set layout");
+    }
+}
+
+void Object::createDescriptorSets()
+{
+    std::vector layouts(MAX_FRAMES_IN_FLIGHT, m_descriptorSetLayout);
+    VkDescriptorSetAllocateInfo allocInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = m_context->descriptorPool(),
+        .descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT),
+        .pSetLayouts = layouts.data()
+    };
+    m_descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+    VkResult r = vkAllocateDescriptorSets(m_context->device(), &allocInfo, m_descriptorSets.data());
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to allocate descriptor sets");
+    }
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorBufferInfo bufferInfo = {
+            .buffer = m_uniformBuffers[i],
+            .offset = 0,
+            .range = sizeof(UniformBufferObject)
+        };
+        VkDescriptorImageInfo imageInfo = {
+            .sampler = m_textureSampler,
+            .imageView = m_textureImageView,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
+        std::array descriptorWrite = {
+            VkWriteDescriptorSet{
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = m_descriptorSets[i],
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .pBufferInfo = &bufferInfo
+            },
+            VkWriteDescriptorSet{
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = m_descriptorSets[i],
+                .dstBinding = 1,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .pImageInfo = &imageInfo
+            }
+        };
+        vkUpdateDescriptorSets(m_context->device(), descriptorWrite.size(), descriptorWrite.data(), 0, nullptr);
     }
 }
 

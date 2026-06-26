@@ -20,11 +20,10 @@ VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context)
     createSurface();
     createSwapchain();
     createImageViews();
-    createDescriptorSetLayout();
-    createPipeline();
 
     m_object = std::make_unique<Object>(m_context);
-    createDescriptorSets();
+
+    createPipeline();
 
     createCommandBuffer();
     createSyncObjects();
@@ -45,8 +44,6 @@ VulkanEngine::~VulkanEngine()
     {
         vkDestroySemaphore(m_context->device(), m_renderCompleteSemaphores[i], nullptr);
     }
-
-    vkDestroyDescriptorSetLayout(m_context->device(), m_descriptorSetLayout, nullptr);
 
     vkDestroyPipeline(m_context->device(), m_graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_context->device(), m_pipelineLayout, nullptr);
@@ -305,7 +302,7 @@ void VulkanEngine::createPipeline()
     };
 
     VkVertexInputBindingDescription bindingDescription = Object::Vertex::getBindingDescription();
-    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = Object::Vertex::getAttributeDescriptions();
+    std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = Object::Vertex::getAttributeDescriptions();
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,
@@ -370,10 +367,11 @@ void VulkanEngine::createPipeline()
         .pAttachments = &colorBlendAttachment
     };
 
+    VkDescriptorSetLayout descriptorSetLayout = m_object->descriptorSetLayout();
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = 1,
-        .pSetLayouts = &m_descriptorSetLayout,
+        .pSetLayouts = &descriptorSetLayout,
         .pushConstantRangeCount = 0
     };
     VkResult r = vkCreatePipelineLayout(m_context->device(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
@@ -508,21 +506,10 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
 
-    vkCmdBindDescriptorSets(
-        commandBuffer,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        m_pipelineLayout,
-        0,
-        1,
-        &m_descriptorSets[m_currentFrame],
-        0,
-        nullptr
-    );
-
     vkCmdSetViewport(commandBuffer, 0, 1, &m_viewport);
     vkCmdSetScissor(commandBuffer, 0, 1, &m_scissor);
 
-    m_object->render(commandBuffer);
+    m_object->render(commandBuffer, m_pipelineLayout, m_currentFrame);
 
     vkCmdEndRendering(commandBuffer);
 
@@ -578,58 +565,6 @@ void VulkanEngine::createSyncObjects()
         {
             throw std::runtime_error("Failed to create render complete semaphore");
         }
-    }
-}
-
-void VulkanEngine::createDescriptorSetLayout()
-{
-    VkDescriptorSetLayoutBinding uboLayoutBinding = {
-        .binding = 0,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = 1,
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
-    };
-    VkDescriptorSetLayoutCreateInfo layoutInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = 1,
-        .pBindings = &uboLayoutBinding
-    };
-    VkResult r = vkCreateDescriptorSetLayout(m_context->device(), &layoutInfo, nullptr, &m_descriptorSetLayout);
-    if (r != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create descriptor set layout");
-    }
-}
-
-void VulkanEngine::createDescriptorSets()
-{
-    std::vector layouts(MAX_FRAMES_IN_FLIGHT, m_descriptorSetLayout);
-    VkDescriptorSetAllocateInfo allocInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = m_context->descriptorPool(),
-        .descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT),
-        .pSetLayouts = layouts.data()
-    };
-    m_descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-    VkResult r = vkAllocateDescriptorSets(m_context->device(), &allocInfo, m_descriptorSets.data());
-    if (r != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to allocate descriptor sets");
-    }
-
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorBufferInfo bufferInfo = m_object->uniformBufferInfo(i);
-        VkWriteDescriptorSet descriptorWrite = {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = m_descriptorSets[i],
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .pBufferInfo = &bufferInfo
-        };
-        vkUpdateDescriptorSets(m_context->device(), 1, &descriptorWrite, 0, nullptr);
     }
 }
 

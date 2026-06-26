@@ -17,21 +17,18 @@ public:
     ~Object();
 
     void beforeRender(uint32_t currentImage, float windowWidth, float windowHeight) const;
-    void render(VkCommandBuffer commandBuffer) const;
+    void render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t imageIndex) const;
 
-    VkDescriptorBufferInfo uniformBufferInfo(uint32_t currentImage) const
+    VkDescriptorSetLayout descriptorSetLayout() const
     {
-        return {
-            .buffer = m_uniformBuffers[currentImage],
-            .offset = 0,
-            .range = sizeof(UniformBufferObject)
-        };
+        return m_descriptorSetLayout;
     }
 
     struct Vertex
     {
         glm::vec2 pos;
         glm::vec3 color;
+        glm::vec2 uv;
 
         static VkVertexInputBindingDescription getBindingDescription()
         {
@@ -42,7 +39,7 @@ public:
             };
         }
 
-        static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+        static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions()
         {
             return {
                 VkVertexInputAttributeDescription{
@@ -56,17 +53,23 @@ public:
                     .binding = 0,
                     .format = VK_FORMAT_R32G32B32_SFLOAT,
                     .offset = offsetof(Vertex, color)
-                }
+                },
+                VkVertexInputAttributeDescription{
+                    .location = 2,
+                    .binding = 0,
+                    .format = VK_FORMAT_R32G32_SFLOAT,
+                    .offset = offsetof(Vertex, uv)
+                },
             };
         }
     };
 
 private:
     const std::vector<Vertex> vertices = {
-        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
     };
     const std::vector<uint16_t> indices = {
         0, 1, 2,
@@ -84,9 +87,13 @@ private:
     void createVertexBuffer();
     void createIndexBuffer();
     void createUniformBuffers();
+
     void createTextureImage();
     void createTextureImageView();
     void createTextureSampler();
+
+    void createDescriptorSetLayout();
+    void createDescriptorSets();
 
     void updateUniformBuffer(uint32_t currentImage, float windowWidth, float windowHeight) const;
 
@@ -108,6 +115,9 @@ private:
     ) const;
 
     VulkanContext *m_context;
+
+    VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
+    std::vector<VkDescriptorSet> m_descriptorSets;
 
     VkBuffer m_vertexBuffer = VK_NULL_HANDLE;
     VkDeviceMemory m_vertexBufferMemory = VK_NULL_HANDLE;

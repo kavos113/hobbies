@@ -84,13 +84,27 @@ private:
     void createVertexBuffer();
     void createIndexBuffer();
     void createUniformBuffers();
-    void createTextureImages();
+    void createTextureImage();
+    void createTextureImageView();
 
     void updateUniformBuffer(uint32_t currentImage, float windowWidth, float windowHeight) const;
 
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
     std::pair<VkBuffer, VkDeviceMemory> createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) const;
-    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const;
+
+    void copyBuffer(
+        VkCommandBuffer commandBuffer,
+        VkBuffer srcBuffer,
+        VkBuffer dstBuffer,
+        VkDeviceSize size
+    ) const;
+    void copyBufferToImage(
+        VkCommandBuffer commandBuffer,
+        VkBuffer buffer,
+        VkImage image,
+        uint32_t width,
+        uint32_t height
+    ) const;
 
     VulkanContext *m_context;
 
@@ -101,6 +115,7 @@ private:
     std::vector<VkBuffer> m_uniformBuffers;
     std::vector<VkDeviceMemory> m_uniformBuffersMemory;
     std::vector<void *> m_uniformBuffersMapped;
+
     VkImage m_textureImage;
     VkDeviceMemory m_textureImageMemory;
 

@@ -46,15 +46,6 @@ private:
     VkExtent2D chooseSwapExtent(GLFWwindow* window) const;
 
     VkShaderModule createShaderModule(const std::string& filePath) const;
-    void transitionImageLayout(
-        uint32_t imageIndex,
-        VkImageLayout oldLayout,
-        VkImageLayout newLayout,
-        VkAccessFlags2 srcAccessMask,
-        VkAccessFlags2 dstAccessMask,
-        VkPipelineStageFlags2 srcStageMask,
-        VkPipelineStageFlags2 dstStageMask
-    ) const;
 
     VulkanContext *m_context;
     std::unique_ptr<Object> m_object;

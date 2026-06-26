@@ -7,10 +7,13 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include "VulkanHelper.h"
+
 Object::Object(VulkanContext* context)
     : m_context(context)
 {
-    createTextureImages();
+    createTextureImage();
+    createTextureImageView();
     createVertexBuffer();
     createIndexBuffer();
     createUniformBuffers();
@@ -63,7 +66,9 @@ void Object::createVertexBuffer()
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     );
-    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+    VkCommandBuffer commandBuffer = m_context->beginSingleTimeCommands();
+    copyBuffer(commandBuffer, stagingBuffer, vertexBuffer, bufferSize);
+    m_context->endSingleTimeCommands(commandBuffer);
 
     m_vertexBuffer = vertexBuffer;
     m_vertexBufferMemory = vertexBufferMemory;
@@ -92,7 +97,9 @@ void Object::createIndexBuffer()
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     );
-    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+    VkCommandBuffer commandBuffer = m_context->beginSingleTimeCommands();
+    copyBuffer(commandBuffer, stagingBuffer, indexBuffer, bufferSize);
+    m_context->endSingleTimeCommands(commandBuffer);
 
     m_indexBuffer = indexBuffer;
     m_indexBufferMemory = indexBufferMemory;
@@ -127,7 +134,7 @@ void Object::createUniformBuffers()
     }
 }
 
-void Object::createTextureImages()
+void Object::createTextureImage()
 {
     int width, height, channels;
     stbi_uc *pixels = stbi_load("resources/texture.jpg", &width, &height, &channels, STBI_rgb_alpha);
@@ -186,6 +193,30 @@ void Object::createTextureImages()
     }
 
     vkBindImageMemory(m_context->device(), m_textureImage, m_textureImageMemory, 0);
+
+    VkCommandBuffer commandBuffer = m_context->beginSingleTimeCommands();
+    transitionImageLayout(
+        commandBuffer,
+        m_textureImage,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_ACCESS_2_MEMORY_WRITE_BIT,
+        VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+        VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_2_TRANSFER_BIT
+    );
+    copyBufferToImage(commandBuffer, stagingBuffer, m_textureImage, width, height);
+    transitionImageLayout(
+        commandBuffer,
+        m_textureImage,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+        VK_ACCESS_2_SHADER_READ_BIT,
+        VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT
+    );
+    m_context->endSingleTimeCommands(commandBuffer);
 }
 
 void Object::updateUniformBuffer(uint32_t currentImage, float windowWidth, float windowHeight) const
@@ -273,39 +304,52 @@ std::pair<VkBuffer, VkDeviceMemory> Object::createBuffer(
     return {buffer, bufferMemory};
 }
 
-void Object::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const
+void Object::copyBuffer(
+    VkCommandBuffer commandBuffer,
+    VkBuffer srcBuffer,
+    VkBuffer dstBuffer,
+    VkDeviceSize size
+) const
 {
-    VkCommandBufferAllocateInfo allocInfo = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .commandPool = m_context->commandPool(),
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1
-    };
-    VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(m_context->device(), &allocInfo, &commandBuffer);
-
-    VkCommandBufferBeginInfo beginInfo = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
-    };
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
     VkBufferCopy copyRegion = {
         .srcOffset = 0,
         .dstOffset = 0,
         .size = size
     };
     vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+}
 
-    vkEndCommandBuffer(commandBuffer);
-
-    VkSubmitInfo submitInfo = {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &commandBuffer
+void Object::copyBufferToImage(
+    VkCommandBuffer commandBuffer,
+    VkBuffer buffer,
+    VkImage image,
+    uint32_t width,
+    uint32_t height
+) const
+{
+    VkBufferImageCopy region = {
+        .bufferOffset = 0,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .mipLevel = 0,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        },
+        .imageOffset = {0, 0, 0},
+        .imageExtent = {
+            .width = width,
+            .height = height,
+            .depth = 1
+        }
     };
-    vkQueueSubmit(m_context->graphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(m_context->graphicsQueue());
-
-    vkFreeCommandBuffers(m_context->device(), m_context->commandPool(), 1, &commandBuffer);
+    vkCmdCopyBufferToImage(
+        commandBuffer,
+        buffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1,
+        &region
+    );
 }

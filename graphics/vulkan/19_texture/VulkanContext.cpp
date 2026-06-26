@@ -111,6 +111,58 @@ int VulkanContext::findQueueFamilies() const
     return _findQueueFamilies(m_physicalDevice);
 }
 
+VkCommandBuffer VulkanContext::beginSingleTimeCommands() const
+{
+    VkCommandBufferAllocateInfo allocInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = m_commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1
+    };
+    VkCommandBuffer commandBuffer;
+    VkResult r = vkAllocateCommandBuffers(m_device, &allocInfo, &commandBuffer);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to allocate command buffer");
+    }
+
+    VkCommandBufferBeginInfo beginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+    };
+    r = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to begin command buffer");
+    }
+
+    return commandBuffer;
+}
+
+void VulkanContext::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
+{
+    VkResult r = vkEndCommandBuffer(commandBuffer);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to end command buffer");
+    }
+
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &commandBuffer
+    };
+    r = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to submit command buffer");
+    }
+
+    vkQueueWaitIdle(m_graphicsQueue);
+
+    vkFreeCommandBuffers(m_device, m_commandPool, 1, &commandBuffer);
+}
+
 void VulkanContext::createInstance()
 {
     VkApplicationInfo appInfo = {

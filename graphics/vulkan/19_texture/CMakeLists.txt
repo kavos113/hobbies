@@ -22,6 +22,9 @@ target_link_libraries(${EXAMPLE_NAME} PRIVATE
         glm::glm
         Vulkan::Vulkan
 )
+target_include_directories(${EXAMPLE_NAME} PRIVATE
+        ${THIRD_PARTY_DIR}
+)
 
 find_program(SLANGC_EXECUTABLE NAMES slangc REQUIRED)
 
@@ -59,3 +62,13 @@ add_slang_shader(${EXAMPLE_NAME}_shaders
         shader.slang
 )
 add_dependencies(${EXAMPLE_NAME} ${EXAMPLE_NAME}_shaders)
+
+set(RESOURCE_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/resources")
+add_custom_command(
+        OUTPUT ${RESOURCE_OUT_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${RESOURCE_DIR} ${RESOURCE_OUT_DIR}
+        COMMENT "Copying resources to output directory: ${RESOURCE_OUT_DIR}"
+        VERBATIM
+)
+add_custom_target(${EXAMPLE_NAME}_resources DEPENDS ${RESOURCE_OUT_DIR})
+add_dependencies(${EXAMPLE_NAME} ${EXAMPLE_NAME}_resources)

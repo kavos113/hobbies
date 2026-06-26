@@ -4,10 +4,13 @@
 #include <stdexcept>
 
 #include <glm/gtc/matrix_transform.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 Object::Object(VulkanContext* context)
     : m_context(context)
 {
+    createTextureImages();
     createVertexBuffer();
     createIndexBuffer();
     createUniformBuffers();
@@ -122,6 +125,67 @@ void Object::createUniformBuffers()
             throw std::runtime_error("Failed to map uniform buffer memory");
         }
     }
+}
+
+void Object::createTextureImages()
+{
+    int width, height, channels;
+    stbi_uc *pixels = stbi_load("resources/texture.jpg", &width, &height, &channels, STBI_rgb_alpha);
+    if (!pixels)
+    {
+        throw std::runtime_error("Failed to load texture image");
+    }
+
+    VkDeviceSize bufSize = width * height * 4;
+    auto [stagingBuffer, stagingBufferMemory] = createBuffer(
+        bufSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+    );
+
+    void *data;
+    vkMapMemory(m_context->device(), stagingBufferMemory, 0, bufSize, 0, &data);
+    memcpy(data, pixels, bufSize);
+    vkUnmapMemory(m_context->device(), stagingBufferMemory);
+
+    stbi_image_free(pixels);
+
+    VkImageCreateInfo imageInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = VK_FORMAT_R8G8B8A8_SRGB,
+        .extent = {
+            .width = static_cast<uint32_t>(width),
+            .height = static_cast<uint32_t>(height),
+            .depth = 1
+        },
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
+    VkResult r = vkCreateImage(m_context->device(), &imageInfo, nullptr, &m_textureImage);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create texture image");
+    }
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(m_context->device(), m_textureImage, &memRequirements);
+    VkMemoryAllocateInfo allocInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = memRequirements.size,
+        .memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+    };
+    r = vkAllocateMemory(m_context->device(), &allocInfo, nullptr, &m_textureImageMemory);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to allocate texture image memory");
+    }
+
+    vkBindImageMemory(m_context->device(), m_textureImage, m_textureImageMemory, 0);
 }
 
 void Object::updateUniformBuffer(uint32_t currentImage, float windowWidth, float windowHeight) const

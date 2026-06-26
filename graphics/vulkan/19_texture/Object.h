@@ -84,6 +84,7 @@ private:
     void createVertexBuffer();
     void createIndexBuffer();
     void createUniformBuffers();
+    void createTextureImages();
 
     void updateUniformBuffer(uint32_t currentImage, float windowWidth, float windowHeight) const;
 
@@ -100,6 +101,8 @@ private:
     std::vector<VkBuffer> m_uniformBuffers;
     std::vector<VkDeviceMemory> m_uniformBuffersMemory;
     std::vector<void *> m_uniformBuffersMapped;
+    VkImage m_textureImage;
+    VkDeviceMemory m_textureImageMemory;
 
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 };

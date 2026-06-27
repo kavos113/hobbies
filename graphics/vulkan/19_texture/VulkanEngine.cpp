@@ -471,7 +471,7 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
 
     transitionImageLayout(
         commandBuffer,
-        m_swapchainImages[m_currentFrame],
+        m_swapchainImages[imageIndex],
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         0,
@@ -515,7 +515,7 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
 
     transitionImageLayout(
         commandBuffer,
-        m_swapchainImages[m_currentFrame],
+        m_swapchainImages[imageIndex],
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,

@@ -37,6 +37,8 @@ Object::~Object()
 
     vkDestroyImage(m_context->device(), m_textureImage, nullptr);
     vkFreeMemory(m_context->device(), m_textureImageMemory, nullptr);
+    vkDestroyImageView(m_context->device(), m_textureImageView, nullptr);
+    vkDestroySampler(m_context->device(), m_textureSampler, nullptr);
 
     vkDestroyDescriptorSetLayout(m_context->device(), m_descriptorSetLayout, nullptr);
 }
@@ -237,6 +239,9 @@ void Object::createTextureImage()
         VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT
     );
     m_context->endSingleTimeCommands(commandBuffer);
+
+    vkDestroyBuffer(m_context->device(), stagingBuffer, nullptr);
+    vkFreeMemory(m_context->device(), stagingBufferMemory, nullptr);
 }
 
 void Object::createTextureImageView()

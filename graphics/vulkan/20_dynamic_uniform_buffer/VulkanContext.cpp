@@ -111,6 +111,58 @@ int VulkanContext::findQueueFamilies() const
     return _findQueueFamilies(m_physicalDevice);
 }
 
+VkCommandBuffer VulkanContext::beginSingleTimeCommands() const
+{
+    VkCommandBufferAllocateInfo allocInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = m_commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1
+    };
+    VkCommandBuffer commandBuffer;
+    VkResult r = vkAllocateCommandBuffers(m_device, &allocInfo, &commandBuffer);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to allocate command buffer");
+    }
+
+    VkCommandBufferBeginInfo beginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+    };
+    r = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to begin command buffer");
+    }
+
+    return commandBuffer;
+}
+
+void VulkanContext::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
+{
+    VkResult r = vkEndCommandBuffer(commandBuffer);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to end command buffer");
+    }
+
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &commandBuffer
+    };
+    r = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to submit command buffer");
+    }
+
+    vkQueueWaitIdle(m_graphicsQueue);
+
+    vkFreeCommandBuffers(m_device, m_commandPool, 1, &commandBuffer);
+}
+
 void VulkanContext::createInstance()
 {
     VkApplicationInfo appInfo = {
@@ -231,11 +283,14 @@ void VulkanContext::createLogicalDevice()
     VkPhysicalDeviceVulkan11Features device11Features = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
         .pNext = &deviceFeatures,
-        .shaderDrawParameters = VK_TRUE
+        .shaderDrawParameters = VK_TRUE,
     };
     VkPhysicalDeviceFeatures2 deviceFeatures2 = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &device11Features
+        .pNext = &device11Features,
+        .features = {
+            .samplerAnisotropy = VK_TRUE
+        }
     };
 
     std::vector<const char*> enabledExtensionNamePtrs = requiredDeviceExtensions
@@ -281,15 +336,21 @@ void VulkanContext::createCommandPool()
 
 void VulkanContext::createDescriptorPool()
 {
-    VkDescriptorPoolSize poolSize = {
-        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT)
+    std::array poolSizes = {
+        VkDescriptorPoolSize{
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = MAX_FRAMES_IN_FLIGHT
+        },
+        VkDescriptorPoolSize{
+            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = MAX_FRAMES_IN_FLIGHT
+        }
     };
     VkDescriptorPoolCreateInfo poolInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT),
-        .poolSizeCount = 1,
-        .pPoolSizes = &poolSize
+        .poolSizeCount = poolSizes.size(),
+        .pPoolSizes = poolSizes.data()
     };
     VkResult r = vkCreateDescriptorPool(m_device, &poolInfo, nullptr, &m_descriptorPool);
     if (r != VK_SUCCESS)

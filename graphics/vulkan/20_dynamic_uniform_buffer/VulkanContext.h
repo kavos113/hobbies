@@ -15,6 +15,9 @@ public:
 
     int findQueueFamilies() const;
 
+    VkCommandBuffer beginSingleTimeCommands() const;
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer) const;
+
     VkInstance instance() const
     {
         return m_instance;

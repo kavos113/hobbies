@@ -60,7 +60,7 @@ void Object::createVertexBuffer()
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     );
-    copyBuffer(TODO, stagingBuffer, vertexBuffer, bufferSize);
+    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
 
     m_vertexBuffer = vertexBuffer;
     m_vertexBufferMemory = vertexBufferMemory;
@@ -89,7 +89,7 @@ void Object::createIndexBuffer()
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     );
-    copyBuffer(TODO, stagingBuffer, indexBuffer, bufferSize);
+    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
     m_indexBuffer = indexBuffer;
     m_indexBufferMemory = indexBufferMemory;
@@ -209,7 +209,7 @@ std::pair<VkBuffer, VkDeviceMemory> Object::createBuffer(
     return {buffer, bufferMemory};
 }
 
-void Object::copyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const
+void Object::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const
 {
     VkCommandBufferAllocateInfo allocInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,

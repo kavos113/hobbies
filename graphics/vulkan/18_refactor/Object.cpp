@@ -26,9 +26,9 @@ Object::~Object()
     vkFreeMemory(m_context->device(), m_indexBufferMemory, nullptr);
 }
 
-void Object::beforeRender(uint32_t currentImage, float windowWidth, float windowHeight) const
+void Object::beforeRender(uint32_t currentFrame, float windowWidth, float windowHeight) const
 {
-    updateUniformBuffer(currentImage, windowWidth, windowHeight);
+    updateUniformBuffer(currentFrame, windowWidth, windowHeight);
 }
 
 void Object::render(VkCommandBuffer commandBuffer) const
@@ -124,7 +124,7 @@ void Object::createUniformBuffers()
     }
 }
 
-void Object::updateUniformBuffer(uint32_t currentImage, float windowWidth, float windowHeight) const
+void Object::updateUniformBuffer(uint32_t currentFrame, float windowWidth, float windowHeight) const
 {
     using namespace std::chrono;
 
@@ -151,7 +151,7 @@ void Object::updateUniformBuffer(uint32_t currentImage, float windowWidth, float
     );
     ubo.proj[1][1] *= -1; // Invert Y coordinate for Vulkan
 
-    memcpy(m_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+    memcpy(m_uniformBuffersMapped[currentFrame], &ubo, sizeof(ubo));
 }
 
 uint32_t Object::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const

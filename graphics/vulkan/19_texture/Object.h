@@ -16,7 +16,7 @@ public:
     Object(VulkanContext *context);
     ~Object();
 
-    void beforeRender(uint32_t currentImage, float windowWidth, float windowHeight) const;
+    void beforeRender(uint32_t currentFrame, float windowWidth, float windowHeight) const;
     void render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t imageIndex) const;
 
     VkDescriptorSetLayout descriptorSetLayout() const
@@ -95,7 +95,7 @@ private:
     void createDescriptorSetLayout();
     void createDescriptorSets();
 
-    void updateUniformBuffer(uint32_t currentImage, float windowWidth, float windowHeight) const;
+    void updateUniformBuffer(uint32_t currentFrame, float windowWidth, float windowHeight) const;
 
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
     std::pair<VkBuffer, VkDeviceMemory> createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) const;

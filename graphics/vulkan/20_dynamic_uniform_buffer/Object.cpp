@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <stdexcept>
+#include <iostream>
 
 #include <glm/gtc/matrix_transform.hpp>
 #define STB_IMAGE_IMPLEMENTATION
@@ -9,9 +10,23 @@
 
 #include "VulkanHelper.h"
 
+namespace
+{
+size_t alignmentSize(size_t size, size_t alignment)
+{
+    return (size + alignment - 1) & ~(alignment - 1);
+}
+}
+
 Object::Object(VulkanContext* context)
     : m_context(context)
 {
+    VkPhysicalDeviceProperties props;
+    vkGetPhysicalDeviceProperties(m_context->physicalDevice(), &props);
+    minUniformBufferOffsetAlignment = props.limits.minUniformBufferOffsetAlignment;
+
+    std::cout << "minUniformBufferOffsetAlignment: " << minUniformBufferOffsetAlignment << std::endl;
+
     createTextureImage();
     createTextureImageView();
     createTextureSampler();
@@ -27,8 +42,9 @@ Object::~Object()
 {
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkDestroyBuffer(m_context->device(), m_uniformBuffers[i], nullptr);
-        vkFreeMemory(m_context->device(), m_uniformBuffersMemory[i], nullptr);
+         vkUnmapMemory(m_context->device(), m_uniformBuffersMemory[i]);
+         vkDestroyBuffer(m_context->device(), m_uniformBuffers[i], nullptr);
+         vkFreeMemory(m_context->device(), m_uniformBuffersMemory[i], nullptr);
     }
     vkDestroyBuffer(m_context->device(), m_vertexBuffer, nullptr);
     vkFreeMemory(m_context->device(), m_vertexBufferMemory, nullptr);
@@ -43,23 +59,47 @@ Object::~Object()
     vkDestroyDescriptorSetLayout(m_context->device(), m_descriptorSetLayout, nullptr);
 }
 
-void Object::beforeRender(uint32_t currentImage, float windowWidth, float windowHeight) const
+void Object::beforeRender(uint32_t currentFrame, float windowWidth, float windowHeight) const
 {
-    updateUniformBuffer(currentImage, windowWidth, windowHeight);
+    updateUniformBuffer(currentFrame, windowWidth, windowHeight);
 }
 
 void Object::render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t imageIndex) const
 {
-    vkCmdBindDescriptorSets(
-        commandBuffer,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipelineLayout,
-        0,
-        1,
-        &m_descriptorSets[imageIndex],
-        0,
-        nullptr
-    );
+    using namespace std::chrono;
+
+    static time_point<steady_clock> startTime = high_resolution_clock::now();
+    time_point<steady_clock> currentTime = high_resolution_clock::now();
+    bool time = duration_cast<seconds>(currentTime - startTime).count() % 2 == 0;
+
+    if (time)
+    {
+        uint32_t offset = alignmentSize(sizeof(UniformBufferObject), minUniformBufferOffsetAlignment);
+        vkCmdBindDescriptorSets(
+            commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineLayout,
+            0,
+            1,
+            &m_descriptorSets[imageIndex],
+            1,
+            &offset
+        );
+    }
+    else
+    {
+        uint32_t offset = 0;
+        vkCmdBindDescriptorSets(
+            commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineLayout,
+            0,
+            1,
+            &m_descriptorSets[imageIndex],
+            1,
+            &offset
+        );
+    }
 
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_vertexBuffer, offsets);
@@ -132,7 +172,7 @@ void Object::createIndexBuffer()
 
 void Object::createUniformBuffers()
 {
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+    VkDeviceSize bufferSize = alignmentSize(sizeof(UniformBufferObject), minUniformBufferOffsetAlignment) * 2;
 
     m_uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
     m_uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
@@ -307,7 +347,7 @@ void Object::createDescriptorSetLayout()
     std::array bindings = {
         VkDescriptorSetLayoutBinding{
             .binding = 0,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
             .descriptorCount = 1,
             .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
         },
@@ -365,7 +405,7 @@ void Object::createDescriptorSets()
                 .dstBinding = 0,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
                 .pBufferInfo = &bufferInfo
             },
             VkWriteDescriptorSet{
@@ -382,7 +422,7 @@ void Object::createDescriptorSets()
     }
 }
 
-void Object::updateUniformBuffer(uint32_t currentImage, float windowWidth, float windowHeight) const
+void Object::updateUniformBuffer(uint32_t currentFrame, float windowWidth, float windowHeight) const
 {
     using namespace std::chrono;
 
@@ -390,26 +430,50 @@ void Object::updateUniformBuffer(uint32_t currentImage, float windowWidth, float
     time_point<steady_clock> currentTime = high_resolution_clock::now();
     float time = duration<float>(currentTime - startTime).count();
 
-    UniformBufferObject ubo = {};
-    ubo.model = glm::rotate(
+    std::array<UniformBufferObject, 2> ubo;
+    ubo[0].model = glm::rotate(
         glm::mat4(1.0f),
         time * glm::radians(90.0f),
         glm::vec3(0.0f, 0.0f, 1.0f)
     );
-    ubo.view = glm::lookAt(
+    ubo[0].view = glm::lookAt(
         glm::vec3(2.0f, 2.0f, 2.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(0.0f, 0.0f, 1.0f)
     );
-    ubo.proj = glm::perspective(
+    ubo[0].proj = glm::perspective(
         glm::radians(45.0f),
         windowWidth / windowHeight,
         0.1f,
         10.0f
     );
-    ubo.proj[1][1] *= -1; // Invert Y coordinate for Vulkan
+    ubo[0].proj[1][1] *= -1; // Invert Y coordinate for Vulkan
 
-    memcpy(m_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+    ubo[1].model = glm::rotate(
+        glm::mat4(1.0f),
+        time * glm::radians(90.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
+    ubo[1].view = glm::lookAt(
+        glm::vec3(2.0f, 2.0f, 2.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+    ubo[1].proj = glm::perspective(
+        glm::radians(45.0f),
+        windowWidth / windowHeight,
+        0.1f,
+        10.0f
+    );
+    ubo[1].proj[1][1] *= -1; // Invert Y coordinate for Vulkan
+
+    auto data = static_cast<char*>(m_uniformBuffersMapped[currentFrame]);
+    memcpy(data, &ubo[0], sizeof(UniformBufferObject));
+    memcpy(
+        data + alignmentSize(sizeof(UniformBufferObject), minUniformBufferOffsetAlignment),
+        &ubo[1],
+        sizeof(UniformBufferObject)
+    );
 }
 
 uint32_t Object::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const

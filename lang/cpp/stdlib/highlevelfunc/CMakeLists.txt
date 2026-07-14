@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-set(SAMPLE_NAME base)
+set(SAMPLE_NAME highlevelfunc)
 
 project(${SAMPLE_NAME})
 

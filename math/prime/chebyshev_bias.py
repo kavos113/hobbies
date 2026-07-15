@@ -1,60 +1,49 @@
 import matplotlib.pyplot as plt
 import sys
 import gen_prime
+import numpy as np
 
-def ton(n):
+def ton(mod, n):
     x = [i * 100 for i in range(1, n + 1)]
     
-    mod1 = [0 for _ in range(0, n)]
-    mod3 = [0 for _ in range(0, n)]
+    mods = np.zeros((mod - 1, n), dtype=np.int64)
     primes = gen_prime.generate_primes(n * 100)
     for p in primes:
-        if p % 4 == 1:
-            mod1[p // 100] += 1
-        elif p % 4 == 3:
-            mod3[p // 100] += 1
+        mods[(p % mod) - 1, p // 100] += 1
 
-    y1 = [0 for _ in range(0, n)]
-    y2 = [0 for _ in range(0, n)]
-    y3 = [0 for _ in range(0, n)]
-    y1[0] = mod1[0]
-    y2[0] = mod3[0]
-    y3[0] = (y1[0] + y2[0]) / 2
-    for i in range(1, n):
-        y1[i] = y1[i - 1] + mod1[i]
-        y2[i] = y2[i - 1] + mod3[i]
-        y3[i] = (y1[i] + y2[i]) / 2
+    # 意味あるところだけ抜く
+    _y = mods.cumsum(axis=1)
+    y = _y[_y.max(axis=1) > 10]
+    ave = y.mean(axis=0)
+
+    print(y[:, :100])
+    print(ave[:100])
     
-    plt.plot(x, y1, label='1 mod 4')
-    plt.plot(x, y2, label='3 mod 4')
+    for i in range(0, y.shape[0]):
+        plt.plot(x, y[i], label=f"{i + 1} mod {mod}")
     plt.xlabel('Number')
     plt.ylabel('Count')
-    plt.title('number of primes (mod 4)')
+    plt.title(f'number of primes (mod {mod})')
     plt.legend()
-    plt.savefig("out/mod4.png")
+    plt.savefig(f"out/mod{mod}.png")
     plt.close()
 
-    y1_ = [0 for _ in range(0, n)]
-    y2_ = [0 for _ in range(0, n)]
-    for i in range(0, n):
-        y1_[i] = y1[i] - y3[i]
-        y2_[i] = y2[i] - y3[i]
-        if y1_[i] == y2_[i]:
-            print(f"same: {i * 100}")
+    y_ = y - np.tile(ave, (y.shape[0], 1))
 
-    plt.plot(x, y1_, label='1 mod 4')
-    plt.plot(x, y2_, label='3 mod 4')
+    for i in range(0, y_.shape[0]):
+        plt.plot(x, y_[i], label=f"{i + 1} mod {mod}")
     plt.xlabel('Number')
     plt.ylabel('Difference')
-    plt.title('number of primes (mod 4) | difference from average')
+    plt.title(f'number of primes (mod {mod}) | difference from average')
     plt.legend()
-    plt.savefig("out/mod4_diff.png")
+    plt.savefig(f"out/mod{mod}_diff.png")
     plt.close()
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python chebyshev_bias.py <n>")
+    if len(sys.argv) != 3:
+        print("Usage: python chebyshev_bias.py <mod> <n/100>")
         sys.exit(1)
 
-    n = int(sys.argv[1])
-    ton(n)
+    mod = int(sys.argv[1])
+    n = int(sys.argv[2])
+    ton(mod, n)

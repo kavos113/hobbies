@@ -1,50 +1,55 @@
 import matplotlib.pyplot as plt
 import sys
-
-def is_prime(n):
-    """Check if a number is prime."""
-    if n <= 1:
-        return False
-    if n <= 3:
-        return True
-    if n % 2 == 0 or n % 3 == 0:
-        return False
-    i = 5
-    while i * i <= n:
-        if n % i == 0 or n % (i + 2) == 0:
-            return False
-        i += 6
-    return True
-
-def check(n):
-    """Run the Chebyshev bias check for numbers up to n."""
-    count_1_mod_4 = 0
-    count_3_mod_4 = 0
-
-    for i in range(1, n + 1):
-        if is_prime(i):
-            if i % 4 == 1:
-                count_1_mod_4 += 1
-            elif i % 4 == 3:
-                count_3_mod_4 += 1
-
-    return count_1_mod_4, count_3_mod_4
+import gen_prime
 
 def ton(n):
     x = [i * 100 for i in range(1, n + 1)]
-    y1 = []
-    y2 = []
-    for i in x:
-        c1, c2 = check(i)
-        y1.append(c1)
-        y2.append(c2)
-    plt.plot(x, y1, label='Primes ≡ 1 (mod 4)')
-    plt.plot(x, y2, label='Primes ≡ 3 (mod 4)')
+    
+    mod1 = [0 for _ in range(0, n)]
+    mod3 = [0 for _ in range(0, n)]
+    primes = gen_prime.generate_primes(n * 100)
+    for p in primes:
+        if p % 4 == 1:
+            mod1[p // 100] += 1
+        elif p % 4 == 3:
+            mod3[p // 100] += 1
+
+    y1 = [0 for _ in range(0, n)]
+    y2 = [0 for _ in range(0, n)]
+    y3 = [0 for _ in range(0, n)]
+    y1[0] = mod1[0]
+    y2[0] = mod3[0]
+    y3[0] = (y1[0] + y2[0]) / 2
+    for i in range(1, n):
+        y1[i] = y1[i - 1] + mod1[i]
+        y2[i] = y2[i - 1] + mod3[i]
+        y3[i] = (y1[i] + y2[i]) / 2
+    
+    plt.plot(x, y1, label='1 mod 4')
+    plt.plot(x, y2, label='3 mod 4')
     plt.xlabel('Number')
     plt.ylabel('Count')
-    plt.title('Chebyshev Bias')
+    plt.title('number of primes (mod 4)')
     plt.legend()
-    plt.show()
+    plt.savefig("out/mod4.png")
+    plt.close()
+
+    y1_ = [0 for _ in range(0, n)]
+    y2_ = [0 for _ in range(0, n)]
+    for i in range(0, n):
+        y1_[i] = y1[i] - y3[i]
+        y2_[i] = y2[i] - y3[i]
+        if y1_[i] == y2_[i]:
+            print(f"same: {i * 100}")
+
+    plt.plot(x, y1_, label='1 mod 4')
+    plt.plot(x, y2_, label='3 mod 4')
+    plt.xlabel('Number')
+    plt.ylabel('Difference')
+    plt.title('number of primes (mod 4) | difference from average')
+    plt.legend()
+    plt.savefig("out/mod4_diff.png")
+    plt.close()
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

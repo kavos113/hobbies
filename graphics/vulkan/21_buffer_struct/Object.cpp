@@ -8,6 +8,7 @@
 #include <stb_image.h>
 
 #include "VulkanHelper.h"
+#include "VulkanBuffer.h"
 
 Object::Object(VulkanContext* context)
     : m_context(context)

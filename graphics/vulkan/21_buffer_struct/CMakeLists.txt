@@ -15,6 +15,7 @@ add_executable(${EXAMPLE_NAME}
         VulkanContext.cpp
         VulkanContext.h
         VulkanHelper.h
+        VulkanBuffer.h
         Object.cpp
         Object.h
 )

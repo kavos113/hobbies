@@ -52,6 +52,13 @@ inline const std::vector<SDFEntry> ENTRIES = {
         .push = {
             .data1 = {250.0f, 200.0f, 150.0f, 100.0f}
         }
+    },
+    SDFEntry{
+        .shaderFile = "shaders/ellipse.slang",
+        .title = "ellipse",
+        .push = {
+            .data1 = {400.0f, 300.0f, 200.0f, 100.0f}
+        }
     }
 };
 

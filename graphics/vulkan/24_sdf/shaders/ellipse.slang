@@ -4,16 +4,16 @@ import "1_color";
 /*
 Push Constant Layout:
 
-data1: center (2) | radius
+data1: center (2) | radius (2)
 
 */
 
-float sdf(float2 pos)
+float sdf(float2 p)
 {
     float2 c = push.data1.xy;
-    float r = push.data1.z;
+    float2 r = push.data1.zw;
 
-    return distance(pos, c) - r;
+    return (length((pos - c) / r) - 1.0) * length(r);
 }
 
 [shader("fragment")]

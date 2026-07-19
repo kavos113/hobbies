@@ -6,6 +6,7 @@ required vcpkg packages:
 - glm
 - vulkan memory allocator
 - tinyobjloader
+- shader-slang
 
 other: 
 - vulkan sdk

@@ -23,6 +23,7 @@ target_link_libraries(${EXAMPLE_NAME} PRIVATE
         glfw
         glm::glm
         Vulkan::Vulkan
+        tinyobjloader::tinyobjloader
 )
 target_include_directories(${EXAMPLE_NAME} PRIVATE
         ${THIRD_PARTY_DIR}

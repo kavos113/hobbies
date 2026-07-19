@@ -11,6 +11,8 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+find_package(tinyobjloader CONFIG REQUIRED)
+find_package(slang CONFIG REQUIRED)
 
 #add_subdirectory(old)
 add_subdirectory(01_hello_glfw)

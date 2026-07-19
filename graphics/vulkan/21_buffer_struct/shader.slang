@@ -1,6 +1,6 @@
 struct VertexInput
 {
-    float3 position;
+    float2 position;
     float3 color;
     float2 uv;
 };
@@ -24,7 +24,7 @@ struct VertexOutput
 VertexOutput vertMain(VertexInput input)
 {
     VertexOutput output;
-    output.sv_position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.position, 1.0))));
+    output.sv_position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.position, 0.0, 1.0))));
     output.color = input.color;
     output.texCoord = input.uv;
 

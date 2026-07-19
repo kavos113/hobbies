@@ -65,6 +65,12 @@ struct VulkanMappedBuffer
         }
 
         vkBindBufferMemory(context->device(), buffer, memory, 0);
+
+        r = vkMapMemory(context->device(), memory, 0, size, 0, &mappedData);
+        if (r != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to map buffer");
+        }
     }
 
     void destroy(const VulkanContext *context)

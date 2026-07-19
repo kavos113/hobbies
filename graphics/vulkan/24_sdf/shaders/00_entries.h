@@ -27,12 +27,14 @@ struct PushConstant
 struct SDFEntry
 {
     std::string shaderFile;
+    std::string title;
     PushConstant push;
 };
 
 inline const std::vector<SDFEntry> ENTRIES = {
     SDFEntry{
         .shaderFile = "shaders/0_base.slang",
+        .title = "base rectangle",
         .push = {}
     }
 };

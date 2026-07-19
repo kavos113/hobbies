@@ -2,6 +2,7 @@
 #define HELLO_GLFW_APP_H
 
 #include <memory>
+#include <string>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -18,7 +19,7 @@ public:
     void run();
 
 private:
-    void createWindow();
+    void createWindow(const std::string& title);
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 

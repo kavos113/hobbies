@@ -1,9 +1,11 @@
 #include "App.h"
 
+#include "shaders/00_entries.h"
+
 App::App(size_t entryIndex)
     : m_window(nullptr)
 {
-    createWindow();
+    createWindow(ENTRIES[entryIndex].title);
 
     m_context = std::make_unique<VulkanContext>();
     m_engine = std::make_unique<VulkanEngine>(m_window, m_context.get(), entryIndex);
@@ -27,14 +29,14 @@ void App::run()
     }
 }
 
-void App::createWindow()
+void App::createWindow(const std::string& title)
 {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    m_window = glfwCreateWindow(800, 600, "Hello GLFW", nullptr, nullptr);
+    m_window = glfwCreateWindow(800, 600, title.c_str(), nullptr, nullptr);
     glfwSetWindowUserPointer(m_window, this);
     glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
 }

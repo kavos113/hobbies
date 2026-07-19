@@ -14,13 +14,17 @@ def ton(mod, n):
     # 意味あるところだけ抜く
     _y = mods.cumsum(axis=1)
     y = _y[_y.max(axis=1) > 10]
+    nums = np.where(_y.max(axis=1) > 10)[0]
     ave = y.mean(axis=0)
 
-    print(y[:, :100])
-    print(ave[:100])
+    # print(y[:, :100])
+    # print(ave[:100])
+
+    rows = y.shape[0]
+    cols = y.shape[1]
     
-    for i in range(0, y.shape[0]):
-        plt.plot(x, y[i], label=f"{i + 1} mod {mod}")
+    for i in range(0, rows):
+        plt.plot(x, y[i], label=f"{nums[i] + 1} mod {mod}")
     plt.xlabel('Number')
     plt.ylabel('Count')
     plt.title(f'number of primes (mod {mod})')
@@ -28,10 +32,21 @@ def ton(mod, n):
     plt.savefig(f"out/mod{mod}.png")
     plt.close()
 
-    y_ = y - np.tile(ave, (y.shape[0], 1))
+    for i in range(rows):
+        for j in range(rows):
+            if i == j:
+                continue
+
+            order = y[i] < y[j]
+            inv = cols - np.sum(order)
+
+            if (inv / cols) <= 0.005:
+                print(f"almost {nums[i] + 1} < {nums[j] + 1}: p {(inv / cols)}")
+
+    y_ = y - np.tile(ave, (rows, 1))
 
     for i in range(0, y_.shape[0]):
-        plt.plot(x, y_[i], label=f"{i + 1} mod {mod}")
+        plt.plot(x, y_[i], label=f"{nums[i] + 1} mod {mod}")
     plt.xlabel('Number')
     plt.ylabel('Difference')
     plt.title(f'number of primes (mod {mod}) | difference from average')

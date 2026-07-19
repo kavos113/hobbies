@@ -302,7 +302,7 @@ void VulkanEngine::createPipeline()
     };
 
     VkVertexInputBindingDescription bindingDescription = Object::Vertex::getBindingDescription();
-    std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = Object::Vertex::getAttributeDescriptions();
+    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = Object::Vertex::getAttributeDescriptions();
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,
@@ -367,11 +367,10 @@ void VulkanEngine::createPipeline()
         .pAttachments = &colorBlendAttachment
     };
 
-    VkDescriptorSetLayout descriptorSetLayout = m_object->descriptorSetLayout();
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 1,
-        .pSetLayouts = &descriptorSetLayout,
+        .setLayoutCount = 0,
+        .pSetLayouts = nullptr,
         .pushConstantRangeCount = 0
     };
     VkResult r = vkCreatePipelineLayout(m_context->device(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout);

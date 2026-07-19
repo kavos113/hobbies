@@ -59,6 +59,16 @@ inline const std::vector<SDFEntry> ENTRIES = {
         .push = {
             .data1 = {400.0f, 300.0f, 200.0f, 100.0f}
         }
+    },
+    SDFEntry{
+        .shaderFile = "shaders/roundedrect.slang",
+        .title = "rounded rectangle",
+
+        // actual rectangle (left, top, right, bottom) = (100, 100, 400, 300)
+        .push = {
+            .data1 = {250.0f, 200.0f, 150.0f, 100.0f},
+            .data2 = {40.0f, 20.0f, 0.0f, 0.0f}
+        }
     }
 };
 

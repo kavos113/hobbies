@@ -16,11 +16,12 @@
 
 #include "VulkanContext.h"
 #include "Object.h"
+#include "ShaderCompiler.h"
 
 class VulkanEngine
 {
 public:
-    VulkanEngine(GLFWwindow* window, VulkanContext *context);
+    VulkanEngine(GLFWwindow* window, VulkanContext *context, const std::string& fsPath);
     ~VulkanEngine();
 
     void render();
@@ -31,7 +32,7 @@ private:
     void createSurface();
     void createSwapchain();
     void createImageViews();
-    void createPipeline();
+    void createPipeline(const std::string& fsPath);
     void createCommandBuffer();
     void createSyncObjects();
 
@@ -47,6 +48,7 @@ private:
 
     VulkanContext *m_context;
     std::unique_ptr<Object> m_object;
+    std::unique_ptr<ShaderCompiler> m_shaderCompiler;
     GLFWwindow* m_window = nullptr;
 
     VkSurfaceKHR m_surface = VK_NULL_HANDLE;
@@ -68,6 +70,7 @@ private:
     std::vector<VkFence> m_drawFences;
 
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+    const std::string VERTEX_SHADER = "vertex.slang";
     uint32_t m_currentFrame = 0;
 };
 

@@ -9,11 +9,11 @@
 #include <slang.h>
 #include <slang-com-ptr.h>
 
-class Shader
+class ShaderCompiler
 {
 public:
-    Shader();
-    ~Shader();
+    ShaderCompiler();
+    ~ShaderCompiler();
 
     std::vector<std::byte> compile(const std::string& filePath) const;
 

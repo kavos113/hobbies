@@ -18,8 +18,8 @@ add_executable(${EXAMPLE_NAME}
         VulkanBuffer.h
         Object.cpp
         Object.h
-        Shader.cpp
-        Shader.h
+        ShaderCompiler.cpp
+        ShaderCompiler.h
 )
 target_link_libraries(${EXAMPLE_NAME} PRIVATE
         glfw
@@ -30,3 +30,6 @@ target_link_libraries(${EXAMPLE_NAME} PRIVATE
 target_include_directories(${EXAMPLE_NAME} PRIVATE
         ${THIRD_PARTY_DIR}
 )
+
+file(COPY vertex.slang DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

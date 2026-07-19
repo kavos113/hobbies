@@ -1,4 +1,4 @@
-#include "Shader.h"
+#include "ShaderCompiler.h"
 
 #include <stdexcept>
 #include <iostream>
@@ -23,7 +23,7 @@ void checkResult(SlangResult result, const Slang::ComPtr<slang::IBlob>& diagnost
 }
 }
 
-Shader::Shader()
+ShaderCompiler::ShaderCompiler()
 {
     SlangResult r = slang::createGlobalSession(m_globalSession.writeRef());
     if (SLANG_FAILED(r))
@@ -43,9 +43,9 @@ Shader::Shader()
     m_globalSession->createSession(session, m_session.writeRef());
 }
 
-Shader::~Shader() = default;
+ShaderCompiler::~ShaderCompiler() = default;
 
-std::vector<std::byte> Shader::compile(const std::string& filePath) const
+std::vector<std::byte> ShaderCompiler::compile(const std::string& filePath) const
 {
     Slang::ComPtr<slang::IBlob> diagnosticBlob;
 

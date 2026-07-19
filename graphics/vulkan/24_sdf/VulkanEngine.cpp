@@ -13,7 +13,7 @@
 
 #include "VulkanHelper.h"
 
-VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context)
+VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context, const std::string& fsPath)
     : m_window(window),
     m_context(context)
 {
@@ -22,8 +22,9 @@ VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context)
     createImageViews();
 
     m_object = std::make_unique<Object>(m_context);
+    m_shaderCompiler = std::make_unique<ShaderCompiler>();
 
-    createPipeline();
+    createPipeline(fsPath);
 
     createCommandBuffer();
     createSyncObjects();
@@ -272,21 +273,22 @@ void VulkanEngine::createImageViews()
     }
 }
 
-void VulkanEngine::createPipeline()
+void VulkanEngine::createPipeline(const std::string& fsPath)
 {
-    VkShaderModule module = createShaderModule("shaders/shaders.spv");
+    VkShaderModule vsModule = createShaderModule(VERTEX_SHADER);
+    VkShaderModule fsModule = createShaderModule(fsPath);
 
     VkPipelineShaderStageCreateInfo vertShaderStageInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        .module = module,
-        .pName = "vertMain"
+        .module = vsModule,
+        .pName = "main"
     };
     VkPipelineShaderStageCreateInfo fragShaderStageInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .module = module,
-        .pName = "fragMain"
+        .module = fsModule,
+        .pName = "main"
     };
 
     std::array shaderStages = {vertShaderStageInfo, fragShaderStageInfo};
@@ -408,21 +410,13 @@ void VulkanEngine::createPipeline()
         throw std::runtime_error("Failed to create graphics pipeline");
     }
 
-    vkDestroyShaderModule(m_context->device(), module, nullptr);
+    vkDestroyShaderModule(m_context->device(), vsModule, nullptr);
+    vkDestroyShaderModule(m_context->device(), fsModule, nullptr);
 }
 
 VkShaderModule VulkanEngine::createShaderModule(const std::string& filePath) const
 {
-    std::ifstream file(filePath, std::ios::ate | std::ios::binary);
-    if (!file.is_open())
-    {
-        throw std::runtime_error("Failed to open shader file: " + filePath);
-    }
-
-    std::vector<std::byte> code(file.tellg());
-    file.seekg(0, std::ios::beg);
-    file.read(reinterpret_cast<char*>(code.data()), code.size());
-    file.close();
+    auto code = m_shaderCompiler->compile(filePath);
 
     VkShaderModuleCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,

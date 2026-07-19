@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-set(EXAMPLE_NAME 21_depth)
+set(EXAMPLE_NAME 21_buffer_struct)
 
 project(${EXAMPLE_NAME} LANGUAGES CXX)
 

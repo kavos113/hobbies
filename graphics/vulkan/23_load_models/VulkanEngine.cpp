@@ -304,7 +304,7 @@ void VulkanEngine::createPipeline()
     };
 
     VkVertexInputBindingDescription bindingDescription = Object::Vertex::getBindingDescription();
-    std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = Object::Vertex::getAttributeDescriptions();
+    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = Object::Vertex::getAttributeDescriptions();
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,

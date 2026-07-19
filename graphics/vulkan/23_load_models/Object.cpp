@@ -2,10 +2,16 @@
 
 #include <chrono>
 #include <stdexcept>
+#include <string>
+#include <map>
+#include <filesystem>
+#include <iostream>
 
 #include <glm/gtc/matrix_transform.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 
 #include "VulkanHelper.h"
 #include "VulkanBuffer.h"
@@ -13,8 +19,24 @@
 Object::Object(VulkanContext* context)
     : m_context(context)
 {
+    namespace fs = std::filesystem;
+
+    if (!fs::exists(fs::path(TEXTURE_PATH)))
+    {
+        std::cerr << "[ERROR] File not found: " << TEXTURE_PATH << std::endl;
+        exit(1);
+    }
+
     createTextureImage();
     createTextureSampler();
+
+    if (!fs::exists(fs::path(MODEL_PATH)))
+    {
+        std::cerr << "[ERROR] File not found: " << MODEL_PATH << std::endl;
+        exit(1);
+    }
+
+    loadModel();
     createVertexBuffer();
     createIndexBuffer();
     createUniformBuffers();
@@ -136,7 +158,7 @@ void Object::createUniformBuffers()
 void Object::createTextureImage()
 {
     int width, height, channels;
-    stbi_uc *pixels = stbi_load("resources/square.png", &width, &height, &channels, STBI_rgb_alpha);
+    stbi_uc *pixels = stbi_load(TEXTURE_PATH.c_str(), &width, &height, &channels, STBI_rgb_alpha);
     if (!pixels)
     {
         throw std::runtime_error("Failed to load texture image");
@@ -221,6 +243,48 @@ void Object::createTextureSampler()
     if (r != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create texture sampler");
+    }
+}
+
+void Object::loadModel()
+{
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    bool result = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str());
+    if (!result)
+    {
+        throw std::runtime_error(warn + err);
+    }
+
+    std::map<Vertex, uint16_t> uniqueVertices;
+
+    for (const auto& shape : shapes)
+    {
+        for (const auto& index : shape.mesh.indices)
+        {
+            Vertex vertex{
+                .pos = {
+                    attrib.vertices[3 * index.vertex_index + 0],
+                    attrib.vertices[3 * index.vertex_index + 1],
+                    attrib.vertices[3 * index.vertex_index + 2],
+                },
+                .uv = {
+                    attrib.texcoords[2 * index.texcoord_index + 0],
+                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
+                }
+            };
+
+            if (!uniqueVertices.contains(vertex))
+            {
+                uniqueVertices[vertex] = vertices.size();
+                vertices.push_back(vertex);
+            }
+
+            indices.push_back(uniqueVertices[vertex]);
+        }
     }
 }
 

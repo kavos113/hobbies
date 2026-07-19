@@ -28,7 +28,6 @@ public:
     struct Vertex
     {
         glm::vec3 pos;
-        glm::vec3 color;
         glm::vec2 uv;
 
         static VkVertexInputBindingDescription getBindingDescription()
@@ -40,7 +39,7 @@ public:
             };
         }
 
-        static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions()
+        static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
         {
             return {
                 VkVertexInputAttributeDescription{
@@ -52,36 +51,23 @@ public:
                 VkVertexInputAttributeDescription{
                     .location = 1,
                     .binding = 0,
-                    .format = VK_FORMAT_R32G32B32_SFLOAT,
-                    .offset = offsetof(Vertex, color)
-                },
-                VkVertexInputAttributeDescription{
-                    .location = 2,
-                    .binding = 0,
                     .format = VK_FORMAT_R32G32_SFLOAT,
                     .offset = offsetof(Vertex, uv)
                 },
             };
         }
+
+        bool operator<(const Vertex& other) const
+        {
+            return pos.x < other.pos.x ||
+                   (pos.x == other.pos.x && pos.y < other.pos.y) ||
+                   (pos.x == other.pos.x && pos.y == other.pos.y && pos.z < other.pos.z) ||
+                   (pos.x == other.pos.x && pos.y == other.pos.y && pos.z == other.pos.z && uv.x < other.uv.x) ||
+                   (pos.x == other.pos.x && pos.y == other.pos.y && pos.z == other.pos.z && uv.x == other.uv.x && uv.y < other.uv.y);
+        }
     };
 
 private:
-    const std::vector<Vertex> vertices = {
-        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-
-    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-    };
-    const std::vector<uint16_t> indices = {
-        0, 1, 2,  2, 3, 0,
-        4, 5, 6,  6, 7, 4
-    };
-
     struct UniformBufferObject
     {
         glm::mat4 model;
@@ -96,6 +82,7 @@ private:
 
     void createTextureImage();
     void createTextureSampler();
+    void loadModel();
 
     void createDescriptorSetLayout();
     void createDescriptorSets();
@@ -111,10 +98,15 @@ private:
     VulkanBuffer m_indexBuffer;
     std::vector<VulkanMappedBuffer<void>> m_uniformBuffers;
 
+    std::vector<Vertex> vertices;
+    std::vector<uint16_t> indices;
+
     VulkanImage m_textureImage;
     VkSampler m_textureSampler = VK_NULL_HANDLE;
 
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+    const std::string TEXTURE_PATH = "resources/models/textures/utility_box_02_diff_1k.jpg";
+    const std::string MODEL_PATH = "resources/models/utility_box.obj";
 };
 
 

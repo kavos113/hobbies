@@ -5,6 +5,7 @@ required vcpkg packages:
 - glfw3
 - glm
 - vulkan memory allocator
+- tinyobjloader
 
 other: 
 - vulkan sdk

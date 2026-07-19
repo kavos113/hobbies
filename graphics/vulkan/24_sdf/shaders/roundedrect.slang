@@ -13,12 +13,13 @@ float sdf(float2 pos)
 {
     float2 c = push.data1.xy;
     float2 v = push.data1.zw;
-    float r = push.data2.x;
+    float2 r = push.data2.xx;
 
     float2 s = abs(pos - c) - v;
-    float2 sr = s + float2(r, r);
+    float2 t = s / r;
+    float2 sr = t + 1.0;
 
-    return lerp(max(s.x, s.y), length(sr) - r, step(0.0, min(sr.x, sr.y)));
+    return lerp(max(t.x, t.y), length(sr) - 1.0, step(0.0, min(sr.x, sr.y))) * length(r);
 }
 
 [shader("fragment")]

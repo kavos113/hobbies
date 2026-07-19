@@ -54,3 +54,5 @@ add_slang_shader(${EXAMPLE_NAME}_shaders
         shader.slang
 )
 add_dependencies(${EXAMPLE_NAME} ${EXAMPLE_NAME}_shaders)
+
+set_target_properties(${EXAMPLE_NAME}_shaders PROPERTIES FOLDER shaders)

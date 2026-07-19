@@ -73,3 +73,6 @@ add_custom_command(
 )
 add_custom_target(${EXAMPLE_NAME}_resources DEPENDS ${RESOURCE_OUT_DIR})
 add_dependencies(${EXAMPLE_NAME} ${EXAMPLE_NAME}_resources)
+
+set_target_properties(${EXAMPLE_NAME}_resources PROPERTIES FOLDER resources)
+set_target_properties(${EXAMPLE_NAME}_shaders PROPERTIES FOLDER shaders)

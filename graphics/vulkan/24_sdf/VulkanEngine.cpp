@@ -12,8 +12,9 @@
 #include <vulkan/vulkan_win32.h>
 
 #include "VulkanHelper.h"
+#include "shaders/00_entries.h"
 
-VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context, const std::string& fsPath)
+VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context, size_t entryIndex)
     : m_window(window),
     m_context(context)
 {
@@ -21,10 +22,10 @@ VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context, const std
     createSwapchain();
     createImageViews();
 
-    m_object = std::make_unique<Object>(m_context);
+    m_object = std::make_unique<Object>(m_context, entryIndex);
     m_shaderCompiler = std::make_unique<ShaderCompiler>();
 
-    createPipeline(fsPath);
+    createPipeline(entryIndex);
 
     createCommandBuffer();
     createSyncObjects();
@@ -273,10 +274,10 @@ void VulkanEngine::createImageViews()
     }
 }
 
-void VulkanEngine::createPipeline(const std::string& fsPath)
+void VulkanEngine::createPipeline(size_t entryIndex)
 {
     VkShaderModule vsModule = createShaderModule(VERTEX_SHADER);
-    VkShaderModule fsModule = createShaderModule(fsPath);
+    VkShaderModule fsModule = createShaderModule(ENTRIES[entryIndex].shaderFile);
 
     VkPipelineShaderStageCreateInfo vertShaderStageInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -369,11 +370,13 @@ void VulkanEngine::createPipeline(const std::string& fsPath)
         .pAttachments = &colorBlendAttachment
     };
 
+    VkPushConstantRange pushConstantRange = PushConstant::pushConstantRange();
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = 0,
         .pSetLayouts = nullptr,
-        .pushConstantRangeCount = 0
+        .pushConstantRangeCount = 1,
+        .pPushConstantRanges = &pushConstantRange
     };
     VkResult r = vkCreatePipelineLayout(m_context->device(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
     if (r != VK_SUCCESS)

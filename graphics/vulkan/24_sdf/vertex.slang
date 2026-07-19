@@ -12,6 +12,16 @@ public struct VertexOutput
     public float3 color;
 };
 
+public struct PushConstant
+{
+    public float4 data1;
+    public float4 data2;
+    public float4 data3;
+    public float4 data4;
+};
+[[vk::push_constant]]
+public ConstantBuffer<PushConstant> push;
+
 [shader("vertex")]
 VertexOutput vertMain(VertexInput input)
 {

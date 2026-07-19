@@ -1,12 +1,12 @@
 #include "App.h"
 
-App::App(const std::string& fsPath)
+App::App(size_t entryIndex)
     : m_window(nullptr)
 {
     createWindow();
 
     m_context = std::make_unique<VulkanContext>();
-    m_engine = std::make_unique<VulkanEngine>(m_window, m_context.get(), fsPath);
+    m_engine = std::make_unique<VulkanEngine>(m_window, m_context.get(), entryIndex);
 }
 
 App::~App()

@@ -14,7 +14,7 @@
 class Object
 {
 public:
-    Object(VulkanContext *context);
+    Object(VulkanContext *context, size_t entryIndex);
     ~Object();
 
     void beforeRender(uint32_t currentFrame, float windowWidth, float windowHeight) const;
@@ -72,6 +72,8 @@ private:
 
     VulkanBuffer m_vertexBuffer;
     VulkanBuffer m_indexBuffer;
+
+    size_t ENTRY_INDEX;
 };
 
 

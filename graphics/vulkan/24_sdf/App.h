@@ -12,7 +12,7 @@
 class App
 {
 public:
-    App(const std::string& fsPath);
+    App(size_t entryIndex);
     ~App();
 
     void run();

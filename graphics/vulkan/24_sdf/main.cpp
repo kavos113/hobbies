@@ -3,10 +3,11 @@
 #include <string>
 
 #include "App.h"
+#include "shaders/00_entries.h"
 
-void usage()
+static void usage()
 {
-    std::cout << "usage: ./sdf <fragment shader path>" << std::endl;
+    std::cout << "usage: ./sdf <entry index (by 0)>" << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -17,16 +18,21 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    int index = std::stoi(argv[1]);
+    if (index < 0 || index >= ENTRIES.size())
+    {
+        std::cerr << "unknown index: " << index << std::endl;
+    }
+
     namespace fs = std::filesystem;
 
-    std::string fsFile(argv[1]);
-    if (!fs::exists(fsFile))
+    if (!fs::exists(ENTRIES[index].shaderFile))
     {
-        std::cerr << "File not found: " << fsFile << std::endl;
+        std::cerr << "File not found: " << ENTRIES[index].shaderFile << std::endl;
         return 1;
     }
 
-    App app(fsFile);
+    App app(index);
 
     app.run();
 

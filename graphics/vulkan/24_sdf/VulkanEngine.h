@@ -21,7 +21,7 @@
 class VulkanEngine
 {
 public:
-    VulkanEngine(GLFWwindow* window, VulkanContext *context, const std::string& fsPath);
+    VulkanEngine(GLFWwindow* window, VulkanContext *context, size_t entryIndex);
     ~VulkanEngine();
 
     void render();
@@ -32,7 +32,7 @@ private:
     void createSurface();
     void createSwapchain();
     void createImageViews();
-    void createPipeline(const std::string& fsPath);
+    void createPipeline(size_t entryIndex);
     void createCommandBuffer();
     void createSyncObjects();
 

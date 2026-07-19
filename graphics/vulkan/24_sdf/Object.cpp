@@ -9,9 +9,10 @@
 
 #include "VulkanHelper.h"
 #include "VulkanBuffer.h"
+#include "shaders/00_entries.h"
 
-Object::Object(VulkanContext* context)
-    : m_context(context)
+Object::Object(VulkanContext* context, size_t entryIndex)
+    : m_context(context), ENTRY_INDEX(entryIndex)
 {
     createVertexBuffer();
     createIndexBuffer();
@@ -32,6 +33,16 @@ void Object::render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayo
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_vertexBuffer.buffer, offsets);
     vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT16);
+
+    PushConstant push = ENTRIES[ENTRY_INDEX].push;
+    vkCmdPushConstants(
+        commandBuffer,
+        pipelineLayout,
+        VK_SHADER_STAGE_ALL,
+        0,
+        sizeof(PushConstant),
+        &push
+    );
 
     vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 }

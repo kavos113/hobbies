@@ -20,6 +20,7 @@ add_executable(${EXAMPLE_NAME}
         Object.h
         ShaderCompiler.cpp
         ShaderCompiler.h
+        shaders/00_entries.h
 )
 target_link_libraries(${EXAMPLE_NAME} PRIVATE
         glfw

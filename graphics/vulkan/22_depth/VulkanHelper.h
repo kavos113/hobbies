@@ -6,6 +6,7 @@
 inline void transitionImageLayout(
     VkCommandBuffer commandBuffer,
     VkImage image,
+    VkImageAspectFlags aspectFlag,
     VkImageLayout oldLayout,
     VkImageLayout newLayout,
     VkAccessFlags2 srcAccessMask,
@@ -26,7 +27,7 @@ inline void transitionImageLayout(
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = image,
         .subresourceRange = {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .aspectMask = aspectFlag,
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,

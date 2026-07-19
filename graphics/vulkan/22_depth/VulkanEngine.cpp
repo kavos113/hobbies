@@ -19,7 +19,8 @@ VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context)
 {
     createSurface();
     createSwapchain();
-    createImageViews();
+    createSwapchainImageViews();
+    createDepthResources();
 
     m_object = std::make_unique<Object>(m_context);
 
@@ -48,6 +49,7 @@ VulkanEngine::~VulkanEngine()
     vkDestroyPipeline(m_context->device(), m_graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_context->device(), m_pipelineLayout, nullptr);
 
+    m_depthImage.destroy(m_context);
     cleanupSwapchain();
     vkDestroySurfaceKHR(m_context->instance(), m_surface, nullptr);
 }
@@ -235,7 +237,7 @@ VkExtent2D VulkanEngine::chooseSwapExtent(GLFWwindow* window) const
     return actualExtent;
 }
 
-void VulkanEngine::createImageViews()
+void VulkanEngine::createSwapchainImageViews()
 {
     VkImageViewCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -380,10 +382,21 @@ void VulkanEngine::createPipeline()
         throw std::runtime_error("Failed to create pipeline layout");
     }
 
+    VkPipelineDepthStencilStateCreateInfo depthStencil = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE
+    };
+
     VkPipelineRenderingCreateInfo renderingCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .colorAttachmentCount = 1,
-        .pColorAttachmentFormats = &m_swapchainImageFormat.format
+        .pColorAttachmentFormats = &m_swapchainImageFormat.format,
+        .depthAttachmentFormat = m_depthFormat
     };
 
     VkGraphicsPipelineCreateInfo pipelineInfo = {
@@ -396,6 +409,7 @@ void VulkanEngine::createPipeline()
         .pViewportState = &viewportState,
         .pRasterizationState = &rasterizer,
         .pMultisampleState = &multisampling,
+        .pDepthStencilState = &depthStencil,
         .pColorBlendState = &colorBlending,
         .pDynamicState = &dynamicStateCreateInfo,
         .layout = m_pipelineLayout,
@@ -472,6 +486,7 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
     transitionImageLayout(
         commandBuffer,
         m_swapchainImages[imageIndex],
+        VK_IMAGE_ASPECT_COLOR_BIT,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         0,
@@ -479,8 +494,21 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
     );
+    transitionImageLayout(
+        commandBuffer,
+        m_depthImage.image,
+        VK_IMAGE_ASPECT_DEPTH_BIT,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT
+    );
 
-    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+    VkClearValue clearColor = {
+        .color = {{0.0f, 0.0f, 0.0f, 1.0f}}
+    };
     VkRenderingAttachmentInfo colorAttachment = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
         .imageView = m_swapchainImageViews[imageIndex],
@@ -488,6 +516,17 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .clearValue = clearColor
+    };
+    VkClearValue clearDepth = {
+        .depthStencil = {1.0f, 0}
+    };
+    VkRenderingAttachmentInfo depthAttachment = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView = m_depthImage.imageView,
+        .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .clearValue = clearDepth
     };
 
     VkRenderingInfo renderingInfo = {
@@ -499,7 +538,8 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
         .layerCount = 1,
         .viewMask = 0,
         .colorAttachmentCount = 1,
-        .pColorAttachments = &colorAttachment
+        .pColorAttachments = &colorAttachment,
+        .pDepthAttachment = &depthAttachment
     };
 
     vkCmdBeginRendering(commandBuffer, &renderingInfo);
@@ -516,6 +556,7 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
     transitionImageLayout(
         commandBuffer,
         m_swapchainImages[imageIndex],
+        VK_IMAGE_ASPECT_COLOR_BIT,
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -580,9 +621,11 @@ void VulkanEngine::recreateSwapchain()
 
     vkDeviceWaitIdle(m_context->device());
 
+    m_depthImage.destroy(m_context);
     cleanupSwapchain();
     createSwapchain();
-    createImageViews();
+    createSwapchainImageViews();
+    createDepthResources();
 }
 
 void VulkanEngine::cleanupSwapchain()
@@ -595,4 +638,47 @@ void VulkanEngine::cleanupSwapchain()
 
     vkDestroySwapchainKHR(m_context->device(), m_swapchain, nullptr);
     m_swapchain = VK_NULL_HANDLE;
+}
+
+void VulkanEngine::createDepthResources()
+{
+    VkFormat depthFormat = findSupportedFormat(
+        {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+    );
+    m_depthFormat = depthFormat;
+
+    m_depthImage.create(
+        m_context,
+        m_swapchainExtent.width, m_swapchainExtent.height,
+        depthFormat,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        VK_IMAGE_ASPECT_DEPTH_BIT
+    );
+}
+
+VkFormat VulkanEngine::findSupportedFormat(
+    const std::vector<VkFormat>& candidates,
+    VkImageTiling tiling,
+    VkFormatFeatureFlags features
+) const
+{
+    for (const auto format : candidates)
+    {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(m_context->physicalDevice(), format, &props);
+
+        if (
+            (tiling == VK_IMAGE_TILING_LINEAR && props.linearTilingFeatures & features) ||
+            (tiling == VK_IMAGE_TILING_OPTIMAL && props.optimalTilingFeatures & features)
+        )
+        {
+            return format;
+        }
+    }
+
+    throw std::runtime_error("failed to find supported format");
 }

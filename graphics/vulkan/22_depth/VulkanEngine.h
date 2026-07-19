@@ -15,6 +15,7 @@
 #include <glfw/glfw3native.h>
 
 #include "VulkanContext.h"
+#include "VulkanBuffer.h"
 #include "Object.h"
 
 class VulkanEngine
@@ -30,10 +31,11 @@ public:
 private:
     void createSurface();
     void createSwapchain();
-    void createImageViews();
+    void createSwapchainImageViews();
     void createPipeline();
     void createCommandBuffer();
     void createSyncObjects();
+    void createDepthResources();
 
     void recordCommandBuffer(uint32_t imageIndex) const;
     void recreateSwapchain();
@@ -42,6 +44,7 @@ private:
     VkSurfaceFormatKHR chooseSwapSurfaceFormat() const;
     VkPresentModeKHR chooseSwapPresentMode() const;
     VkExtent2D chooseSwapExtent(GLFWwindow* window) const;
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) const;
 
     VkShaderModule createShaderModule(const std::string& filePath) const;
 
@@ -55,6 +58,9 @@ private:
     std::vector<VkImageView> m_swapchainImageViews;
     VkSurfaceFormatKHR m_swapchainImageFormat;
     VkExtent2D m_swapchainExtent;
+
+    VulkanImage m_depthImage;
+    VkFormat m_depthFormat;
 
     VkViewport m_viewport;
     VkRect2D m_scissor;

@@ -37,3 +37,5 @@ TODO
 | 18     | refactor               | 17   | split device/instance and more as VulkanContext class | 1875  |
 | 19     | texture                | 18   | load texture                                          | 2192  |
 | 20     | dynamic_uniform_buffer | 19   | use UNIFORM_BUFFER_DYNAMIC in matrix uniform buffer   | 2257  |
+| 21     | buffer_struct          | 19   | create VulkanBuffer struct (part of refactor)         | 2388  |
+| 22     | depth                  | 21   | add depth stencil buffer                              | 2489  |

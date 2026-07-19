@@ -36,6 +36,13 @@ inline const std::vector<SDFEntry> ENTRIES = {
         .shaderFile = "shaders/0_base.slang",
         .title = "base rectangle",
         .push = {}
+    },
+    SDFEntry{
+        .shaderFile = "shaders/circle.slang",
+        .title = "circle",
+        .push = {
+            .data1 = {400.0f, 300.0f, 100.0f, 0.0f}
+        }
     }
 };
 

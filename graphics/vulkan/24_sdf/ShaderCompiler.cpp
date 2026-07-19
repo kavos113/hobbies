@@ -92,5 +92,7 @@ std::vector<std::byte> ShaderCompiler::compile(const std::string& filePath) cons
     std::vector<std::byte> out(code->getBufferSize());
     memcpy(out.data(), code->getBufferPointer(), code->getBufferSize());
 
+    std::cout << "Shader Compiled Successfully." << std::endl;
+
     return out;
 }

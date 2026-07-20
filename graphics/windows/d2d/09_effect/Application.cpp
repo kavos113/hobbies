@@ -2,6 +2,8 @@
 
 #include <array>
 
+#include <d2d1effects.h>
+
 void Application::initD2D()
 {
     HRESULT hr = D2D1CreateFactory(
@@ -195,6 +197,13 @@ void Application::createResources()
         MessageBox(nullptr, L"Failed to create D2D stroke style", L"Error", MB_OK | MB_ICONERROR);
         return;
     }
+
+    hr = m_d2dContext->CreateEffect(CLSID_D2D1Shadow, &m_shadowEffect);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr, L"Failed to create effect", L"Error", MB_OK | MB_ICONERROR);
+        return;
+    }
 }
 
 void Application::onPaint()
@@ -202,40 +211,29 @@ void Application::onPaint()
     PAINTSTRUCT ps;
     BeginPaint(m_hwnd, &ps);
 
+    Microsoft::WRL::ComPtr<ID2D1Image> target;
+    m_d2dContext->GetTarget(&target);
+
+    Microsoft::WRL::ComPtr<ID2D1CommandList> shape;
+    m_d2dContext->CreateCommandList(&shape);
+    m_d2dContext->SetTarget(shape.Get());
+
+    m_d2dContext->BeginDraw();
+    m_d2dContext->FillRectangle(D2D1::RectF(100, 100, 300, 300), m_brush.Get());
+    m_d2dContext->EndDraw();
+
+    shape->Close();
+    m_d2dContext->SetTarget(target.Get());
+
+    m_shadowEffect->SetInput(0, shape.Get());
+    m_shadowEffect->SetValue(D2D1_SHADOW_PROP_BLUR_STANDARD_DEVIATION, 5.0f);
+    m_shadowEffect->SetValue(D2D1_SHADOW_PROP_COLOR, D2D1::Vector4F(1.0f, 0.0f, 0.0f, 1.0f));
+
     m_d2dContext->BeginDraw();
     m_d2dContext->Clear(D2D1::ColorF(D2D1::ColorF::SkyBlue));
-
-    m_d2dContext->FillRectangle(D2D1::RectF(100, 100, 300, 300), m_brush.Get());
-    m_d2dContext->FillEllipse(D2D1::Ellipse(D2D1::Point2F(400, 200), 50, 50), m_brush.Get());
-    m_d2dContext->FillRoundedRectangle(
-        D2D1::RoundedRect(D2D1::RectF(500, 100, 700, 300), 40, 20),
-        m_brush.Get()
-    );
-    m_d2dContext->DrawLine(
-        D2D1::Point2F(100, 400),
-        D2D1::Point2F(300, 600),
-        m_brush.Get(),
-        15.0f,
-        m_strokeStyle.Get()
-    );
-    m_d2dContext->DrawRectangle(
-        D2D1::RectF(400, 400, 600, 600),
-        m_greenBrush.Get(),
-        10.0f,
-        m_strokeStyle.Get()
-    );
-    m_d2dContext->DrawEllipse(
-        D2D1::Ellipse(D2D1::Point2F(700, 500), 50, 50),
-        m_greenBrush.Get(),
-        3.0f,
-        m_strokeStyle.Get()
-    );
-
-    if (FAILED(m_d2dContext->EndDraw()))
-    {
-        m_d2dContext.Reset();
-        m_brush.Reset();
-    }
+    m_d2dContext->DrawImage(m_shadowEffect.Get());
+    // m_d2dContext->FillRectangle(D2D1::RectF(100, 100, 300, 300), m_brush.Get());
+    m_d2dContext->EndDraw();
 
     m_swapChain->Present(1, 0);
 

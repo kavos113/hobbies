@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-set(EXAMPLE_NAME 08_layer)
+set(EXAMPLE_NAME 06_radial_pattern)
 project(d2d_${EXAMPLE_NAME})
 
 set(CMAKE_CXX_STANDARD 20)

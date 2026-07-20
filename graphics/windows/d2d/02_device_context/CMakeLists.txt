@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.28)
-project(d2d_02_device_context)
+
+set(EXAMPLE_NAME 02_device_context)
+project(d2d_${EXAMPLE_NAME})
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(d2d_02_device_context
+add_executable(d2d_${EXAMPLE_NAME}
         main.cpp
         Application.cpp
 )
-target_link_libraries(d2d_02_device_context PRIVATE d2d1 d3d11 dxgi)
+target_link_libraries(d2d_${EXAMPLE_NAME} PRIVATE d2d1 d3d11 dxgi)
+
+set_target_properties(d2d_${EXAMPLE_NAME} PROPERTIES FOLDER d2d)

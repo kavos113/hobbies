@@ -13,7 +13,7 @@ float sdf(float2 pos)
 {
     float2 c = push.data1.xy;
     float2 v = push.data1.zw;
-    float2 r = push.data2.xx;
+    float2 r = push.data2.xy;
 
     float2 s = abs(pos - c) - v;
     float2 t = s / r;

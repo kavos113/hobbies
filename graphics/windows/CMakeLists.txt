@@ -24,6 +24,7 @@ add_subdirectory(d2d/05_linear_pattern)
 add_subdirectory(d2d/06_radical_pattern)
 add_subdirectory(d2d/07_offscreen_rendering)
 add_subdirectory(d2d/08_layer)
+add_subdirectory(d2d/09_effect)
 
 add_subdirectory(d3d/01_hello_world)
 add_subdirectory(d3d/02_debug_layer)

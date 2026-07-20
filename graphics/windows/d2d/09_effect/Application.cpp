@@ -232,7 +232,7 @@ void Application::onPaint()
     m_d2dContext->BeginDraw();
     m_d2dContext->Clear(D2D1::ColorF(D2D1::ColorF::SkyBlue));
     m_d2dContext->DrawImage(m_shadowEffect.Get());
-    // m_d2dContext->FillRectangle(D2D1::RectF(100, 100, 300, 300), m_brush.Get());
+    m_d2dContext->FillRectangle(D2D1::RectF(100, 100, 300, 300), m_brush.Get());
     m_d2dContext->EndDraw();
 
     m_swapChain->Present(1, 0);

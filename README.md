@@ -2,6 +2,7 @@
 雑多プログラム群
 
 - `ai`: AIエージェントで適当につくったものたち
+- `apps`: 人間の手で適当につくったものたち
 - `gpu`: GPGPUプログラミング
 - `graphics`: directx, vulkanなど
 - `lang`: 言語ごと

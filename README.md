@@ -10,3 +10,5 @@
 - `math`: 数学?
 - `reverse`: リバースエンジニアリングの勉強
 - `scripts`: 再利用可能なスクリプト
+
+![Language Stats](./scripts/cloc/stats.svg)

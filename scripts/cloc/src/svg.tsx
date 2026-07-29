@@ -79,8 +79,6 @@ const LangStats = ({
         flexDirection: "column",
         width: `${width}px`,
         padding: "20px",
-        border: "1px solid #e1e4e8",
-        borderRadius: "6px",
         backgroundColor: "#fefefe",
       }}
     >

@@ -77,7 +77,7 @@
   },
   {
     "name": "Markdown",
-    "line": 961
+    "line": 962
   },
   {
     "name": "Batch File",
@@ -100,12 +100,12 @@
     "line": 1954
   },
   {
-    "name": "TypeScript",
-    "line": 2914
-  },
-  {
     "name": "HLSL",
     "line": 3078
+  },
+  {
+    "name": "TypeScript",
+    "line": 3165
   },
   {
     "name": "CMake",

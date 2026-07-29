@@ -1,0 +1,20 @@
+{
+  "Dockerfile": [
+    {
+      "name": "Dockerfile",
+      "include": []
+    }
+  ],
+  "CMakeLists.txt": [
+    {
+      "name": "CMake",
+      "include": []
+    }
+  ],
+  "Makefile": [
+    {
+      "name": "Makefile",
+      "include": []
+    }
+  ]
+}

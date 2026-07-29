@@ -1,0 +1,130 @@
+[
+  {
+    "name": "Dockerfile",
+    "line": 16
+  },
+  {
+    "name": "Plant UML",
+    "line": 18
+  },
+  {
+    "name": "QML",
+    "line": 20
+  },
+  {
+    "name": "Ruby",
+    "line": 51
+  },
+  {
+    "name": "Protocol Buffers",
+    "line": 63
+  },
+  {
+    "name": "XAML",
+    "line": 118
+  },
+  {
+    "name": "Makefile",
+    "line": 194
+  },
+  {
+    "name": "Shell",
+    "line": 215
+  },
+  {
+    "name": "Vue",
+    "line": 294
+  },
+  {
+    "name": "PowerShell",
+    "line": 382
+  },
+  {
+    "name": "Assembly",
+    "line": 435
+  },
+  {
+    "name": "JavaScript",
+    "line": 477
+  },
+  {
+    "name": "Scala",
+    "line": 528
+  },
+  {
+    "name": "Resource Script",
+    "line": 614
+  },
+  {
+    "name": "Slang",
+    "line": 663
+  },
+  {
+    "name": "CUDA",
+    "line": 876
+  },
+  {
+    "name": "Haskell",
+    "line": 880
+  },
+  {
+    "name": "HTML",
+    "line": 923
+  },
+  {
+    "name": "GLSL",
+    "line": 943
+  },
+  {
+    "name": "Markdown",
+    "line": 961
+  },
+  {
+    "name": "Batch File",
+    "line": 1090
+  },
+  {
+    "name": "CSS",
+    "line": 1167
+  },
+  {
+    "name": "Python",
+    "line": 1417
+  },
+  {
+    "name": "Rust",
+    "line": 1525
+  },
+  {
+    "name": "Go",
+    "line": 1734
+  },
+  {
+    "name": "TypeScript",
+    "line": 2914
+  },
+  {
+    "name": "HLSL",
+    "line": 3078
+  },
+  {
+    "name": "CMake",
+    "line": 4095
+  },
+  {
+    "name": "Java",
+    "line": 6593
+  },
+  {
+    "name": "Kotlin",
+    "line": 6668
+  },
+  {
+    "name": "C",
+    "line": 9298
+  },
+  {
+    "name": "C++",
+    "line": 207983
+  }
+]

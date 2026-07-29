@@ -1,0 +1,336 @@
+{
+  ".cpp": [
+    {
+      "name": "C++",
+      "include": []
+    }
+  ],
+  ".c": [
+    {
+      "name": "C",
+      "include": []
+    }
+  ],
+  ".h": [
+    {
+      "name": "C++",
+      "include": ["class ", "struct ", "namespace ", "template ", "using "]
+    },
+    {
+      "name": "C",
+      "include": []
+    }
+  ],
+  ".hpp": [
+    {
+      "name": "C++",
+      "include": []
+    }
+  ],
+  ".hxx": [
+    {
+      "name": "C++",
+      "include": []
+    }
+  ],
+  ".cc": [
+    {
+      "name": "C++",
+      "include": []
+    }
+  ],
+  ".cxx": [
+    {
+      "name": "C++",
+      "include": []
+    }
+  ],
+  ".hh": [
+    {
+      "name": "C++",
+      "include": []
+    }
+  ],
+  ".bat": [
+    {
+      "name": "Batch File",
+      "include": []
+    }
+  ],
+  ".asm": [
+    {
+      "name": "Assembly",
+      "include": []
+    }
+  ],
+  ".s": [
+    {
+      "name": "Assembly",
+      "include": []
+    }
+  ],
+  ".js": [
+    {
+      "name": "JavaScript",
+      "include": []
+    }
+  ],
+  ".cjs": [
+    {
+      "name": "JavaScript",
+      "include": []
+    }
+  ],
+  ".mjs": [
+    {
+      "name": "JavaScript",
+      "include": []
+    }
+  ],
+  ".jsx": [
+    {
+      "name": "JavaScript",
+      "include": []
+    }
+  ],
+  ".ts": [
+    {
+      "name": "TypeScript",
+      "include": []
+    }
+  ],
+  ".mts": [
+    {
+      "name": "TypeScript",
+      "include": []
+    }
+  ],
+  ".cts": [
+    {
+      "name": "TypeScript",
+      "include": []
+    }
+  ],
+  ".tsx": [
+    {
+      "name": "TypeScript",
+      "include": []
+    }
+  ],
+  ".cmake": [
+    {
+      "name": "CMake",
+      "include": []
+    }
+  ],
+  ".cu": [
+    {
+      "name": "CUDA",
+      "include": []
+    }
+  ],
+  ".cs": [
+    {
+      "name": "C#",
+      "include": []
+    }
+  ],
+  ".css": [
+    {
+      "name": "CSS",
+      "include": []
+    }
+  ],
+  ".go": [
+    {
+      "name": "Go",
+      "include": []
+    }
+  ],
+  ".hlsl": [
+    {
+      "name": "HLSL",
+      "include": []
+    }
+  ],
+  ".hlsli": [
+    {
+      "name": "HLSL",
+      "include": []
+    }
+  ],
+  ".hs": [
+    {
+      "name": "Haskell",
+      "include": []
+    }
+  ],
+  ".html": [
+    {
+      "name": "HTML",
+      "include": []
+    }
+  ],
+  ".java": [
+    {
+      "name": "Java",
+      "include": []
+    }
+  ],
+  ".kt": [
+    {
+      "name": "Kotlin",
+      "include": []
+    }
+  ],
+  ".kts": [
+    {
+      "name": "Kotlin",
+      "include": []
+    }
+  ],
+  ".lua": [
+    {
+      "name": "Lua",
+      "include": []
+    }
+  ],
+  ".make": [
+    {
+      "name": "Makefile",
+      "include": []
+    }
+  ],
+  ".mk": [
+    {
+      "name": "Makefile",
+      "include": []
+    }
+  ],
+  ".php": [
+    {
+      "name": "PHP",
+      "include": []
+    }
+  ],
+  ".markdown": [
+    {
+      "name": "Markdown",
+      "include": []
+    }
+  ],
+  ".md": [
+    {
+      "name": "Markdown",
+      "include": []
+    }
+  ],
+  ".proto": [
+    {
+      "name": "Protocol Buffers",
+      "include": []
+    }
+  ],
+  ".ps1": [
+    {
+      "name": "PowerShell",
+      "include": []
+    }
+  ],
+  ".pu": [
+    {
+      "name": "Plant UML",
+      "include": []
+    }
+  ],
+  ".py": [
+    {
+      "name": "Python",
+      "include": []
+    }
+  ],
+  ".qml": [
+    {
+      "name": "QML",
+      "include": []
+    }
+  ],
+  ".r": [
+    {
+      "name": "R",
+      "include": []
+    }
+  ],
+  ".rb": [
+    {
+      "name": "Ruby",
+      "include": []
+    }
+  ],
+  ".rs": [
+    {
+      "name": "Rust",
+      "include": []
+    }
+  ],
+  ".rc": [
+    {
+      "name": "Resource Script",
+      "include": []
+    }
+  ],
+  ".scala": [
+    {
+      "name": "Scala",
+      "include": []
+    }
+  ],
+  ".sbt": [
+    {
+      "name": "Scala",
+      "include": []
+    }
+  ],
+  ".sh": [
+    {
+      "name": "Shell",
+      "include": []
+    }
+  ],
+  ".slang": [
+    {
+      "name": "Slang",
+      "include": []
+    }
+  ],
+  ".vert": [
+    {
+      "name": "GLSL",
+      "include": []
+    }
+  ],
+  ".frag": [
+    {
+      "name": "GLSL",
+      "include": []
+    }
+  ],
+  ".glsl": [
+    {
+      "name": "GLSL",
+      "include": []
+    }
+  ],
+  ".vue": [
+    {
+      "name": "Vue",
+      "include": []
+    }
+  ],
+  ".xaml": [
+    {
+      "name": "XAML",
+      "include": []
+    }
+  ]
+}

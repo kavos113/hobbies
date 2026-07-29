@@ -1,6 +1,7 @@
 minimumReleaseAgeExclude:
   - vite@8.0.16
 overrides:
+  postcss@<=8.5.17: '>=8.5.18'
   vite@<=6.4.1: '>=6.4.2'
   vite@>=6.0.0 <=6.4.1: '>=6.4.2'
   vite@>=8.0.0 <=8.0.15: ^8.0.16

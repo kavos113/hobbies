@@ -3298,7 +3298,7 @@ packages:
       rolldown: '*'
       rollup: '*'
       unloader: '*'
-      vite: '>=7.3.2'
+      vite: ^7.3.5
       webpack: '*'
     peerDependenciesMeta:
       '@farmfe/core':

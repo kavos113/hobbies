@@ -332,5 +332,143 @@
       "name": "XAML",
       "include": []
     }
+  ],
+  ".astro": [
+    {
+      "name": "Astro",
+      "include": []
+    }
+  ],
+  ".dart": [
+    {
+      "name": "Dart",
+      "include": []
+    }
+  ],
+  ".f90": [
+    {
+      "name": "Fortran",
+      "include": []
+    }
+  ],
+  ".f95": [
+    {
+      "name": "Fortran",
+      "include": []
+    }
+  ],
+  ".f03": [
+    {
+      "name": "Fortran",
+      "include": []
+    }
+  ],
+  "fs": [
+    {
+      "name": "F#",
+      "include": []
+    }
+  ],
+  "graphql": [
+    {
+      "name": "GraphQL",
+      "include": []
+    }
+  ],
+  ".groovy": [
+    {
+      "name": "Groovy",
+      "include": []
+    }
+  ],
+  ".hcl": [
+    {
+      "name": "HCL",
+      "include": []
+    }
+  ],
+  ".tf": [
+    {
+      "name": "HCL",
+      "include": []
+    }
+  ],
+  ".jinja": [
+    {
+      "name": "Jinja",
+      "include": []
+    }
+  ],
+  ".j2": [
+    {
+      "name": "Jinja",
+      "include": []
+    }
+  ],
+  ".jl": [
+    {
+      "name": "Julia",
+      "include": []
+    }
+  ],
+  ".ipynb": [
+    {
+      "name": "Jupyter Notebook",
+      "include": []
+    }
+  ],
+  ".matlab": [
+    {
+      "name": "MATLAB",
+      "include": []
+    }
+  ],
+  "ll": [
+    {
+      "name": "LLVM",
+      "include": []
+    }
+  ],
+  ".mdx": [
+    {
+      "name": "MDX",
+      "include": []
+    }
+  ],
+  ".tex": [
+    {
+      "name": "TeX",
+      "include": []
+    }
+  ],
+  ".zig": [
+    {
+      "name": "Zig",
+      "include": []
+    }
+  ],
+  ".sql": [
+    {
+      "name": "SQL",
+      "include": []
+    }
+  ],
+  ".scss": [
+    {
+      "name": "SCSS",
+      "include": []
+    }
+  ],
+  ".svelte": [
+    {
+      "name": "Svelte",
+      "include": []
+    }
+  ],
+  ".swift": [
+    {
+      "name": "Swift",
+      "include": []
+    }
   ]
 }

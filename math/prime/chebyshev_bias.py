@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
 import sys
-import gen_prime
+import prime_lib
 import numpy as np
 
 def ton(mod, n):
     x = [i * 100 for i in range(1, n + 1)]
     
     mods = np.zeros((mod - 1, n), dtype=np.int64)
-    primes = gen_prime.generate_primes(n * 100)
+    primes = prime_lib.generate_primes(n * 100)
     for p in primes:
         mods[(p % mod) - 1, p // 100] += 1
 

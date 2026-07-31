@@ -13,7 +13,7 @@ type LineInfo = {
 };
 
 const loadLineInfo = async (): Promise<LineInfo[]> => {
-  const data = await readFile("./lang.json", "utf-8");
+  const data = await readFile(process.argv[2], "utf-8");
   const info: LineInfo[] = JSON.parse(data);
 
   return info;
@@ -46,5 +46,5 @@ export const loadLanguageInfo = async (): Promise<
 };
 
 loadLanguageInfo().then((info) => {
-  generateStats(info, "./stats.svg");
+  generateStats(info, process.argv[3]);
 });

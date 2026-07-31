@@ -110,11 +110,6 @@ func listFiles(dir string) ([]string, error) {
 		return nil, err
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
 	rawFiles := bytes.Split(out, []byte{0})
 	files := make([]string, 0, len(rawFiles))
 	for _, f := range rawFiles {
@@ -124,7 +119,7 @@ func listFiles(dir string) ([]string, error) {
 		path := string(f)
 
 		osRelPath := filepath.FromSlash(path)
-		absPath, err := filepath.Abs(filepath.Join(cwd, dir, osRelPath))
+		absPath, err := filepath.Abs(filepath.Join(dir, osRelPath))
 		if err != nil {
 			continue
 		}

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "node ./esbuild.mjs",
     "generate": "pnpm build && pnpm run-go && pnpm run-ts",
     "run-go": "go run . ../../ lang.json",
     "run-ts": "node ./dist/main.js"
@@ -16,6 +16,7 @@
   "devDependencies": {
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.17",
+    "esbuild": "^0.28.1",
     "typescript": "^7.0.2"
   },
   "dependencies": {

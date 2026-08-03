@@ -50,4 +50,6 @@ foreach (_target
             gRPC::grpc++_reflection
             protobuf::libprotobuf
     )
+
+    set_target_properties(${target_name} PROPERTIES FOLDER grpc)
 endforeach ()

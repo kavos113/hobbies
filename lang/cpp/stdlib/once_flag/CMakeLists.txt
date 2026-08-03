@@ -4,3 +4,4 @@ project(stdlib_once_flag)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(stdlib_once_flag main.cpp)
+set_target_properties(stdlib_ PROPERTIES FOLDER stdlib)

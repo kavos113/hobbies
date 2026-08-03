@@ -4,3 +4,4 @@ project(stdlib_new_smart_ptr)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(stdlib_new_smart_ptr main.cpp)
+set_target_properties(stdlib_ PROPERTIES FOLDER stdlib)

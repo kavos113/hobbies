@@ -10,3 +10,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(stdlib_${SAMPLE_NAME}
     main.cpp
 )
+set_target_properties(stdlib_ PROPERTIES FOLDER stdlib)

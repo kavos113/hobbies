@@ -37,7 +37,7 @@
   },
   {
     "name": "PowerShell",
-    "line": 382
+    "line": 422
   },
   {
     "name": "Assembly",
@@ -45,7 +45,7 @@
   },
   {
     "name": "JavaScript",
-    "line": 477
+    "line": 485
   },
   {
     "name": "Scala",
@@ -97,11 +97,11 @@
   },
   {
     "name": "Go",
-    "line": 1954
+    "line": 2082
   },
   {
     "name": "HLSL",
-    "line": 3078
+    "line": 3127
   },
   {
     "name": "TypeScript",
@@ -109,7 +109,7 @@
   },
   {
     "name": "CMake",
-    "line": 4095
+    "line": 4292
   },
   {
     "name": "Java",
@@ -125,6 +125,6 @@
   },
   {
     "name": "C++",
-    "line": 207983
+    "line": 210572
   }
 ]

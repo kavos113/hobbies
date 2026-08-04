@@ -61,6 +61,7 @@ add_subdirectory(d3d/32_dxr_init)
 add_subdirectory(d3d/33_dxr_instance)
 add_subdirectory(d3d/34_dxr_model)
 add_subdirectory(d3d/35_descriptor_management)
+add_subdirectory(d3d/36_refactor2)
 
 add_subdirectory(dwrite/01_list_system_fonts)
 add_subdirectory(dwrite/02_dwrite_hello)

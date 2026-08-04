@@ -5,18 +5,10 @@
 #include <array>
 #include <iostream>
 
-D3DEngine::D3DEngine(HWND hwnd)
+D3DEngine::D3DEngine(HWND hwnd, D3DContext *context)
+    : m_context(context)
 {
-#ifdef DEBUG
-    m_debug = std::make_unique<Debug>();
-    Debug::enableDebugLayer();
-#endif
-
-    createDXGIFactory();
-    createDevice();
-    m_debug->setupCallback(m_device);
-
-    m_descHeapManager = std::make_unique<DescriptorHeapManager>(m_device);
+    m_descHeapManager = std::make_unique<DescriptorHeapManager>(m_context->device());
 
     createCommandResources();
     createSwapChain(hwnd);
@@ -26,8 +18,8 @@ D3DEngine::D3DEngine(HWND hwnd)
     GetClientRect(hwnd, &rc);
 
     m_model = std::make_unique<Model>(
-        m_device,
-        m_allocator,
+        m_context->device(),
+        m_context->allocator(),
         rc,
         m_descHeapManager.get()
     );
@@ -81,12 +73,6 @@ void D3DEngine::cleanup()
     {
         allocator.Reset();
     }
-
-    m_debug->cleanup(m_device);
-    m_debug.reset();
-
-    m_device.Reset();
-    m_dxgiFactory.Reset();
 }
 
 void D3DEngine::render()
@@ -98,140 +84,11 @@ void D3DEngine::render()
     endFrame(frameIndex);
 }
 
-void D3DEngine::createDXGIFactory()
-{
-    HRESULT hr = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&m_dxgiFactory));
-    if (FAILED(hr))
-    {
-        std::cerr << "Failed to create DXGI Factory." << std::endl;
-        return;
-    }
-}
-
-void D3DEngine::getAdapter(IDXGIAdapter1 **adapter) const
-{
-    Microsoft::WRL::ComPtr<IDXGIAdapter1> localAdapter;
-
-    for (
-        UINT i = 0;
-        m_dxgiFactory->EnumAdapterByGpuPreference(
-            i,
-            DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
-            IID_PPV_ARGS(&localAdapter)
-        ) != DXGI_ERROR_NOT_FOUND;
-        ++i
-    )
-    {
-        DXGI_ADAPTER_DESC1 desc;
-        HRESULT hr = localAdapter->GetDesc1(&desc);
-        if (FAILED(hr))
-        {
-            std::cerr << "Failed to get adapter description." << std::endl;
-            continue;
-        }
-
-        if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-        {
-            continue;
-        }
-
-        break;
-    }
-
-    if (!localAdapter)
-    {
-        UINT adapterIndex = 0;
-        SIZE_T memorySize = 0;
-
-        for (
-            UINT i = 0;
-            m_dxgiFactory->EnumAdapters1(i, &localAdapter) != DXGI_ERROR_NOT_FOUND;
-            ++i
-        )
-        {
-
-            DXGI_ADAPTER_DESC1 desc;
-            HRESULT hr = localAdapter->GetDesc1(&desc);
-            if (FAILED(hr))
-            {
-                std::cerr << "Failed to get adapter description." << std::endl;
-                continue;
-            }
-
-            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-            {
-                continue;
-            }
-
-            if (desc.DedicatedVideoMemory > memorySize)
-            {
-                memorySize = desc.DedicatedVideoMemory;
-                adapterIndex = i;
-            }
-        }
-
-        HRESULT hr = m_dxgiFactory->EnumAdapterByGpuPreference(
-            adapterIndex,
-            DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
-            IID_PPV_ARGS(&localAdapter)
-        );
-        if (FAILED(hr) && hr != DXGI_ERROR_NOT_FOUND)
-        {
-            std::cerr << "Failed to enumerate adapter by GPU preference." << std::endl;
-            return;
-        }
-    }
-
-    *adapter = localAdapter.Detach();
-}
-
-void D3DEngine::createDevice()
-{
-    Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter;
-    getAdapter(&adapter);
-
-    std::array featureLevels = {
-        D3D_FEATURE_LEVEL_12_1,
-        D3D_FEATURE_LEVEL_12_0,
-        D3D_FEATURE_LEVEL_11_1,
-        D3D_FEATURE_LEVEL_11_0
-    };
-
-    for (const auto& level : featureLevels)
-    {
-        HRESULT hr = D3D12CreateDevice(
-            adapter.Get(),
-            level,
-            IID_PPV_ARGS(&m_device)
-        );
-        if (SUCCEEDED(hr))
-        {
-            D3D12MA::ALLOCATOR_DESC allocatorDesc = {};
-            allocatorDesc.Flags = D3D12MA_RECOMMENDED_ALLOCATOR_FLAGS;
-            allocatorDesc.pDevice = m_device.Get();
-            allocatorDesc.pAdapter = adapter.Get();
-            hr = D3D12MA::CreateAllocator(&allocatorDesc, &m_allocator);
-            if (FAILED(hr))
-            {
-                std::cerr << "Failed to create D3D12MA allocator." << std::endl;
-                return;
-            }
-
-            return;
-        }
-    }
-
-    if (!m_device)
-    {
-        std::cerr << "Failed to create D3D12 device." << std::endl;
-    }
-}
-
 void D3DEngine::createCommandResources()
 {
     for (UINT i = 0; i < FRAME_COUNT; ++i)
     {
-        HRESULT hr = m_device->CreateCommandAllocator(
+        HRESULT hr = m_context->device()->CreateCommandAllocator(
             D3D12_COMMAND_LIST_TYPE_DIRECT,
             IID_PPV_ARGS(&m_commandAllocators[i])
         );
@@ -242,7 +99,7 @@ void D3DEngine::createCommandResources()
         }
     }
 
-    HRESULT hr = m_device->CreateCommandList(
+    HRESULT hr = m_context->device()->CreateCommandList(
         0,
         D3D12_COMMAND_LIST_TYPE_DIRECT,
         m_commandAllocators[0].Get(),
@@ -261,7 +118,7 @@ void D3DEngine::createCommandResources()
         .Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
         .NodeMask = 0
     };
-    hr = m_device->CreateCommandQueue(
+    hr = m_context->device()->CreateCommandQueue(
         &queueDesc,
         IID_PPV_ARGS(&m_commandQueue)
     );
@@ -290,7 +147,7 @@ void D3DEngine::createSwapChain(HWND hwnd)
         .AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED,
         .Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
     };
-    HRESULT hr = m_dxgiFactory->CreateSwapChainForHwnd(
+    HRESULT hr = m_context->dxgiFactory()->CreateSwapChainForHwnd(
         m_commandQueue.Get(),
         hwnd,
         &swapChainDesc,
@@ -329,8 +186,8 @@ void D3DEngine::createSwapChainResources()
             return;
         }
 
-        rtvHandle.ptr += i * m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-        m_device->CreateRenderTargetView(m_backBuffers[i].Get(), nullptr, rtvHandle);
+        rtvHandle.ptr += i * m_context->device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        m_context->device()->CreateRenderTargetView(m_backBuffers[i].Get(), nullptr, rtvHandle);
     }
 }
 
@@ -346,7 +203,7 @@ void D3DEngine::createFence()
             return;
         }
 
-        HRESULT hr = m_device->CreateFence(
+        HRESULT hr = m_context->device()->CreateFence(
             0,
             D3D12_FENCE_FLAG_NONE,
             IID_PPV_ARGS(&m_fence[i])
@@ -578,7 +435,7 @@ void D3DEngine::createPipelineState()
         }
         return;
     }
-    hr = m_device->CreateRootSignature(
+    hr = m_context->device()->CreateRootSignature(
         0,
         signatureBlob->GetBufferPointer(),
         signatureBlob->GetBufferSize(),
@@ -644,7 +501,7 @@ void D3DEngine::createPipelineState()
         .NodeMask = 0,
         .Flags = D3D12_PIPELINE_STATE_FLAG_NONE
     };
-    hr = m_device->CreateGraphicsPipelineState(
+    hr = m_context->device()->CreateGraphicsPipelineState(
         &graphicsPipelineDesc,
         IID_PPV_ARGS(&m_pipelineState)
     );
@@ -725,7 +582,7 @@ void D3DEngine::createDepthResources(UINT width, UINT height)
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_descHeapManager->dsvHeap()->allocate(FRAME_COUNT);
     for (UINT i = 0; i < FRAME_COUNT; ++i)
     {
-        HRESULT hr = m_allocator->CreateResource(
+        HRESULT hr = m_context->allocator()->CreateResource(
             &allocDesc,
             &resourceDesc,
             D3D12_RESOURCE_STATE_DEPTH_WRITE,
@@ -745,8 +602,8 @@ void D3DEngine::createDepthResources(UINT width, UINT height)
             .ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D,
             .Flags = D3D12_DSV_FLAG_NONE
         };
-        dsvHandle.ptr += i * m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-        m_device->CreateDepthStencilView(
+        dsvHandle.ptr += i * m_context->device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+        m_context->device()->CreateDepthStencilView(
             m_depthBuffers[i]->GetResource(),
             &dsvDesc,
             dsvHandle

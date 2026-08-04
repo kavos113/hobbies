@@ -1,6 +1,9 @@
 #ifndef D3D_01_HELLO_WORLD_D3DENGINE_H
 #define D3D_01_HELLO_WORLD_D3DENGINE_H
 
+#include <array>
+#include <memory>
+
 #ifndef UNICODE
 #define UNICODE
 #endif
@@ -13,17 +16,15 @@
 #include <DirectXMath.h>
 #include <D3D12MemAlloc.h>
 
-#include <array>
-#include <memory>
-
-#include "Debug.h"
+#include "D3DContext.h"
+#include "D3DDebug.h"
+#include "D3DDescriptorHeap.h"
 #include "Model.h"
-#include "DescriptorHeap.h"
 
 class D3DEngine
 {
 public:
-    explicit D3DEngine(HWND hwnd);
+    explicit D3DEngine(HWND hwnd, D3DContext *context);
     ~D3DEngine();
 
     void cleanup();
@@ -31,9 +32,6 @@ public:
     void render();
 
 private:
-    void createDXGIFactory();
-    void getAdapter(IDXGIAdapter1 **adapter) const;
-    void createDevice();
     void createCommandResources();
     void createSwapChain(HWND hwnd);
     void createSwapChainResources();
@@ -63,14 +61,12 @@ private:
     void waitForFence(const Microsoft::WRL::ComPtr<ID3D12CommandQueue>& queue, UINT frameIndex);
     void executeCommand(UINT frameIndex);
 
-    std::unique_ptr<Debug> m_debug;
+    D3DContext *m_context;
     std::unique_ptr<Model> m_model;
     std::unique_ptr<DescriptorHeapManager> m_descHeapManager;
 
     static constexpr UINT FRAME_COUNT = 2;
 
-    Microsoft::WRL::ComPtr<IDXGIFactory7> m_dxgiFactory;
-    Microsoft::WRL::ComPtr<ID3D12Device> m_device;
     std::array<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>, FRAME_COUNT> m_commandAllocators;
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue;
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList;
@@ -89,8 +85,6 @@ private:
 
     D3D12_VIEWPORT m_viewport = {};
     D3D12_RECT m_scissorRect = {};
-
-    Microsoft::WRL::ComPtr<D3D12MA::Allocator> m_allocator;
 };
 
 

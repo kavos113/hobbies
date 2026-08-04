@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-set(EXAMPLE_NAME 35_descriptor_management)
+set(EXAMPLE_NAME 36_refactor2)
 project(d3d_${EXAMPLE_NAME})
 
 set(CMAKE_CXX_STANDARD 20)
@@ -12,6 +12,7 @@ add_executable(d3d_${EXAMPLE_NAME}
         D3DDebug.cpp
         Model.cpp
         D3DDescriptorHeap.cpp
+        D3DContext.cpp
 )
 target_link_libraries(d3d_${EXAMPLE_NAME} PRIVATE d3d12 dxgi d3dcompiler)
 target_compile_definitions(d3d_${EXAMPLE_NAME} PRIVATE DEBUG)

@@ -11,12 +11,10 @@
 #define AlignCBuffer(x) (((x) + 0xff) & ~0xff)
 
 Model::Model(
-    Microsoft::WRL::ComPtr<ID3D12Device> device,
-    Microsoft::WRL::ComPtr<D3D12MA::Allocator> allocator,
     RECT rc,
+    D3DContext *context,
     DescriptorHeapManager *descHeapManager
-) : m_device(std::move(device)),
-    m_allocator(std::move(allocator)),
+) : m_context(context),
     m_descHeapManager(descHeapManager)
 {
     createCopyCommands();
@@ -72,7 +70,7 @@ void Model::executeBarrier(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> com
 
 void Model::createCopyCommands()
 {
-    HRESULT hr = m_device->CreateCommandAllocator(
+    HRESULT hr = m_context->device()->CreateCommandAllocator(
         D3D12_COMMAND_LIST_TYPE_COPY,
         IID_PPV_ARGS(&m_copyCommandAllocator)
     );
@@ -82,7 +80,7 @@ void Model::createCopyCommands()
         return;
     }
 
-    hr = m_device->CreateCommandList(
+    hr = m_context->device()->CreateCommandList(
         0,
         D3D12_COMMAND_LIST_TYPE_COPY,
         m_copyCommandAllocator.Get(),
@@ -101,7 +99,7 @@ void Model::createCopyCommands()
         .Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
         .NodeMask = 0
     };
-    hr = m_device->CreateCommandQueue(
+    hr = m_context->device()->CreateCommandQueue(
         &copyQueueDesc,
         IID_PPV_ARGS(&m_copyCommandQueue)
     );
@@ -119,7 +117,7 @@ void Model::createCopyCommands()
         return;
     }
 
-    hr = m_device->CreateFence(
+    hr = m_context->device()->CreateFence(
         m_copyFenceValue,
         D3D12_FENCE_FLAG_NONE,
         IID_PPV_ARGS(&m_copyFence)
@@ -342,7 +340,7 @@ void Model::createMatrixBuffer(RECT rc)
         .SizeInBytes = AlignCBuffer(sizeof(MatrixBuffer))
     };
 
-    m_device->CreateConstantBufferView(
+    m_context->device()->CreateConstantBufferView(
         &cbvDesc,
         cbvHandle
     );
@@ -400,7 +398,7 @@ void Model::createLightBuffer()
         .BufferLocation = m_lightBuffer->GetResource()->GetGPUVirtualAddress(),
         .SizeInBytes = AlignCBuffer(sizeof(LightBuffer))
     };
-    m_device->CreateConstantBufferView(
+    m_context->device()->CreateConstantBufferView(
         &cbvDesc,
         cbvHandle
     );
@@ -449,7 +447,7 @@ void Model::loadTexture(const std::wstring &path)
         .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
         .Flags = D3D12_RESOURCE_FLAG_NONE
     };
-    hr = m_allocator->CreateResource(
+    hr = m_context->allocator()->CreateResource(
         &allocDesc,
         &resourceDesc,
         D3D12_RESOURCE_STATE_COMMON,
@@ -518,7 +516,7 @@ void Model::loadTexture(const std::wstring &path)
 
     D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = m_descHeapManager->cbvHeap()->allocate(1);
 
-    m_device->CreateShaderResourceView(
+    m_context->device()->CreateShaderResourceView(
         m_texture->GetResource(),
         &srvDesc,
         srvHandle
@@ -551,7 +549,7 @@ void Model::createBuffer(
         .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR, // Dimension = Buffer must be LAYOUT_ROW_MAJOR
         .Flags = D3D12_RESOURCE_FLAG_NONE
     };
-    HRESULT hr = m_allocator->CreateResource(
+    HRESULT hr = m_context->allocator()->CreateResource(
         &allocDesc,
         &resourceDesc,
         initialState,
@@ -576,7 +574,7 @@ void Model::copyTexture(
 
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout = {};
     UINT64 requiredSize = 0;
-    m_device->GetCopyableFootprints(
+    m_context->device()->GetCopyableFootprints(
         &resourceDesc,
         0,
         1,

@@ -11,16 +11,15 @@
 #include <D3D12MemAlloc.h>
 #include <string>
 
-#include "DescriptorHeap.h"
-
+#include "D3DContext.h"
+#include "D3DDescriptorHeap.h"
 
 class Model
 {
 public:
     Model(
-        Microsoft::WRL::ComPtr<ID3D12Device> device,
-        Microsoft::WRL::ComPtr<D3D12MA::Allocator> allocator,
         RECT rc,
+        D3DContext *context,
         DescriptorHeapManager *descHeapManager
     );
     void cleanup();
@@ -124,8 +123,7 @@ private:
         D3D12_RESOURCE_STATES afterState
     );
 
-    Microsoft::WRL::ComPtr<ID3D12Device> m_device;
-    Microsoft::WRL::ComPtr<D3D12MA::Allocator> m_allocator;
+    D3DContext *m_context;
     DescriptorHeapManager *m_descHeapManager;
 
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_copyCommandAllocator;

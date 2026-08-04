@@ -1,13 +1,17 @@
 cmake_minimum_required(VERSION 3.28)
-project(d3d_08_custom_debug)
+
+set(EXAMPLE_NAME 08_custom_debug)
+project(d3d_${EXAMPLE_NAME})
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(d3d_08_custom_debug
+add_executable(d3d_${EXAMPLE_NAME}
         main.cpp
         Application.cpp
         D3DEngine.cpp
         Debug.cpp
 )
-target_link_libraries(d3d_08_custom_debug PRIVATE d3d12 dxgi d3dcompiler)
-target_compile_definitions(d3d_08_custom_debug PRIVATE DEBUG)
+target_link_libraries(d3d_${EXAMPLE_NAME} PRIVATE d3d12 dxgi d3dcompiler)
+target_compile_definitions(d3d_${EXAMPLE_NAME} PRIVATE DEBUG)
+
+set_target_properties(d3d_${EXAMPLE_NAME} PROPERTIES FOLDER d3d)

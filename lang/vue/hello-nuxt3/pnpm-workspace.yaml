@@ -9,6 +9,7 @@ minimumReleaseAgeExclude:
 overrides:
   '@babel/core@<=7.29.0': ^7.29.1
   brace-expansion@<=5.0.7: '>=5.0.8'
+  brace-expansion@>=4.0.0 <5.0.9: '>=5.0.9'
   devalue@>=5.6.3 <=5.8.0: '>=5.8.1'
   esbuild@>=0.17.0 <0.28.1: ^0.28.1
   esbuild@>=0.27.3 <0.28.1: ^0.28.1
@@ -19,6 +20,7 @@ overrides:
   minimatch@>=10.0.0 <10.2.3: '>=10.2.3'
   minimatch@>=5.0.0 <5.1.8: '>=5.1.8'
   minimatch@>=9.0.0 <9.0.7: '>=9.0.7'
+  nanoid@<3.3.17: '>=3.3.17'
   nuxt@>=4.0.0-alpha.1 <4.4.7: ^4.4.7
   serialize-javascript@<=7.0.2: '>=7.0.3'
   svgo@=4.0.0: '>=4.0.1'

@@ -89,6 +89,8 @@ add_subdirectory(winsock/window)
 add_subdirectory(xaudio2/hello)
 add_subdirectory(xaudio2/3d)
 
+add_subdirectory(xinput/01_hello)
+
 if (ENABLE_OLD)
     add_subdirectory(d2d/z_old/direct2d_1)
     add_subdirectory(d2d/z_old/direct2d_image)

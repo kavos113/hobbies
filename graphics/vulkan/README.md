@@ -41,3 +41,6 @@ TODO
 | 20     | dynamic_uniform_buffer | 19   | use UNIFORM_BUFFER_DYNAMIC in matrix uniform buffer   | 2257  |
 | 21     | buffer_struct          | 19   | create VulkanBuffer struct (part of refactor)         | 2388  |
 | 22     | depth                  | 21   | add depth stencil buffer                              | 2489  |
+| 23     | load_models            | 22   | load .obj model                                       | 2543  |
+| 24     | sdf                    | 21   | draw 2D primitive shapes using SDF shader             | 2436  |
+| 25     | mipmap                 | 23   | generate mipmaps                                      | 2661  |

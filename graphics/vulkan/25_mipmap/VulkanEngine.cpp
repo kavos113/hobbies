@@ -651,7 +651,7 @@ void VulkanEngine::createDepthResources()
 
     m_depthImage.create(
         m_context,
-        m_swapchainExtent.width, m_swapchainExtent.height,
+        m_swapchainExtent.width, m_swapchainExtent.height, 1,
         depthFormat,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,

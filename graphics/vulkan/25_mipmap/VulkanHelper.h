@@ -12,7 +12,8 @@ inline void transitionImageLayout(
     VkAccessFlags2 srcAccessMask,
     VkAccessFlags2 dstAccessMask,
     VkPipelineStageFlags2 srcStageMask,
-    VkPipelineStageFlags2 dstStageMask
+    VkPipelineStageFlags2 dstStageMask,
+    uint32_t mipLevels = 1
 )
 {
     VkImageMemoryBarrier2 barrier = {
@@ -29,7 +30,7 @@ inline void transitionImageLayout(
         .subresourceRange = {
             .aspectMask = aspectFlag,
             .baseMipLevel = 0,
-            .levelCount = 1,
+            .levelCount = mipLevels,
             .baseArrayLayer = 0,
             .layerCount = 1
         }

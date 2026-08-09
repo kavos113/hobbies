@@ -103,6 +103,7 @@ private:
 
     VulkanImage m_textureImage;
     VkSampler m_textureSampler = VK_NULL_HANDLE;
+    uint32_t m_mipLevels = 0;
 
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
     const std::string TEXTURE_PATH = "resources/models/textures/utility_box_02_diff_1k.jpg";

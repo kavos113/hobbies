@@ -259,6 +259,7 @@ struct VulkanImage
         const VulkanContext *context,
         uint32_t w,
         uint32_t h,
+        uint32_t miplevels,
         VkFormat format,
         VkImageTiling tiling,
         VkImageUsageFlags usage,
@@ -278,7 +279,7 @@ struct VulkanImage
                 .height = height,
                 .depth = 1
             },
-            .mipLevels = 1,
+            .mipLevels = miplevels,
             .arrayLayers = 1,
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .tiling = tiling,
@@ -321,7 +322,7 @@ struct VulkanImage
             .subresourceRange = {
                 .aspectMask = imageAspect,
                 .baseMipLevel = 0,
-                .levelCount = 1,
+                .levelCount = miplevels,
                 .baseArrayLayer = 0,
                 .layerCount = 1
             }

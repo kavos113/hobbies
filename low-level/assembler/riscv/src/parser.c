@@ -52,7 +52,17 @@ char *register_name[32] = {
 };
 
 InstInfo instructions[1] = {
-  {"add", 3, M_ADD, FM_R}
+  {"add",    3, M_ADD,    FM_R},
+  {"addi",   4, M_ADDI,   FM_I},
+  {"and",    3, M_AND,    FM_R},
+  {"andi",   4, M_ANDI,   FM_I},
+  {"auipc",  5, M_AUIPC,  FM_U},
+  {"beq",    3, M_BEQ,    FM_SB},
+  {"bge",    3, M_BGE,    FM_SB},
+  {"bgeu",   4, M_BGEU,   FM_SB},
+  {"blt",    3, M_BLT,    FM_SB},
+  {"bltu",   4, M_BLTU,   FM_SB},
+  {"bne",    3, M_BNE,    FM_SB},
 };
 
 Register parse_register(Token *tok)

@@ -16,6 +16,8 @@ typedef struct Opcode
 
 Opcode opcode_table[1] = {
   {0b0110011, 0b000, 0b0000000, M_ADD},
+  {0b0010011, 0b000, 0b0000000, M_ADDI},
+  {0b0110011, 0b111, 0b0000000, M_AND}
 };
 
 Opcode *find_opcode(InstInfo *info);

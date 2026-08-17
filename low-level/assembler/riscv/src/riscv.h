@@ -52,6 +52,16 @@ typedef enum
 typedef enum 
 {
   M_ADD,
+  M_ADDI,
+  M_AND,
+  M_ANDI,
+  M_AUIPC,
+  M_BEQ,
+  M_BGE,
+  M_BGEU,
+  M_BLT,
+  M_BLTU,
+  M_BNE,
 } Mnemonic;
 
 typedef struct InstInfo

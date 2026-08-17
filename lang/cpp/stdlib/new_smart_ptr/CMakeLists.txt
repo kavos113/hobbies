@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.28)
-project(stdlib_new_smart_ptr)
+
+set(SAMPLE_NAME new_smart_ptr)
+project(stdlib_${SAMPLE_NAME})
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(stdlib_new_smart_ptr main.cpp)
-set_target_properties(stdlib_ PROPERTIES FOLDER stdlib)
+add_executable(stdlib_${SAMPLE_NAME} main.cpp)
+set_target_properties(stdlib_${SAMPLE_NAME} PROPERTIES FOLDER stdlib)

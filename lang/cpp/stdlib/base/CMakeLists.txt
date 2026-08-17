@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28)
 
 set(SAMPLE_NAME base)
 
-project(${SAMPLE_NAME})
+project(stdlib_${SAMPLE_NAME})
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,4 +10,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(stdlib_${SAMPLE_NAME}
     main.cpp
 )
-set_target_properties(stdlib_ PROPERTIES FOLDER stdlib)
+set_target_properties(stdlib_${SAMPLE_NAME} PROPERTIES FOLDER stdlib)

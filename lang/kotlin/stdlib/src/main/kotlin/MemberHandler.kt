@@ -1,3 +1,5 @@
+package memberhandler
+
 class SomeClass {
     var intvar = 0
 

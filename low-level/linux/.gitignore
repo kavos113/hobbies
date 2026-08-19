@@ -1,0 +1,4 @@
+*.o
+pipe
+poll
+eventfd

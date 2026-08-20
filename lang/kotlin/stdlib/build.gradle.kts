@@ -1,22 +1,7 @@
 plugins {
-    kotlin("jvm") version "2.4.0"
-}
-
-group = "com.github.kavos113"
-version = "1.0-SNAPSHOT"
-
-repositories {
-    mavenCentral()
+    alias(libs.plugins.kotlin.jvm)
 }
 
 dependencies {
     testImplementation(kotlin("test"))
-}
-
-kotlin {
-    jvmToolchain(25)
-}
-
-tasks.test {
-    useJUnitPlatform()
 }

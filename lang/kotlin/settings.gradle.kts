@@ -8,11 +8,11 @@ dependencyResolutionManagement {
     }
 }
 
-include("ai-agent-test")
-include("ai-test")
-include("codegentest")
-include("diff-test")
-include("jssample")
-include("sqlitesamples")
+include("ai-agent")
+include("ai")
+include("codegen")
+include("diff")
+include("js")
+include("sqlite")
 include("stdlib")
-include("vmsamples")
+include("graaljs")

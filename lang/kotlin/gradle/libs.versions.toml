@@ -1,28 +1,29 @@
 [versions]
 kotlin = "2.4.0"
 kotlinx-coroutines = "1.11.0"
-jackson = "2.19.2"
-log4j = "2.25.1"
-sqlite = "3.49.1.0"
-flyway = "11.4.0"
-openai = "3.0.2"
-anthropic = "0.8.0"
-shadow = "9.2.2"
-protobuf = "4.33.4"
-kotlinpoet = "2.2.0"
-diff-utils = "4.15"
-jgit = "7.2.0.202503040940-r"
-ktreesitter = "0.24.1"
-tree-sitter-java = "0.24.5"
-tree-sitter-ts = "0.21.1"
-graalvm = "24.1.2"
+jackson = "3.2.2"
+jackson-annotation = "2.22"
+log4j = "2.26.1"
+sqlite = "3.53.2.1"
+flyway = "13.3.0"
+openai = "4.50.0"
+anthropic = "2.54.0"
+shadow = "9.6.1"
+protobuf = "4.35.1"
+kotlinpoet = "2.3.0"
+diff-utils = "4.17"
+jgit = "7.7.1.202607240634-r"
+ktreesitter = "0.25.1"
+tree-sitter-java = "0.26.6"
+tree-sitter-ts = "0.23.2"
+graalvm = "25.2.4"
 
 [libraries]
 kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
-jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson" }
-jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
-jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson" }
-jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
+jackson-core = { group = "tools.jackson.core", name = "jackson-core", version.ref = "jackson" }
+jackson-databind = { group = "tools.jackson.core", name = "jackson-databind", version.ref = "jackson" }
+jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson-annotation" }
+jackson-module-kotlin = { group = "tools.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
 log4j-core = { group = "org.apache.logging.log4j", name = "log4j-core", version.ref = "log4j" }
 sqlite = { group = "org.xerial", name = "sqlite-jdbc", version.ref = "sqlite" }
 flyway-core = { group = "org.flywaydb", name = "flyway-core", version.ref = "flyway" }

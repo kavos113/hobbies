@@ -4,6 +4,8 @@ project(cpp_playground)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(GLOBAL PROPERTY USE_FOLDERS ON)
+
 add_subdirectory(freetype)
 add_subdirectory(grpc)
 add_subdirectory(stdlib)

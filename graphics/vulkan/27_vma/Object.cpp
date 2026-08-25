@@ -93,17 +93,14 @@ void Object::createVertexBuffer()
     stagingBuffer.create(
         m_context,
         bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT
     );
     memcpy(stagingBuffer.mappedData, vertices.data(), bufferSize);
-    stagingBuffer.unmap(m_context);
 
     m_vertexBuffer.create(
         m_context,
         bufferSize,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
     );
     VkCommandBuffer commandBuffer = m_context->beginSingleTimeCommands();
     m_vertexBuffer.copyFrom(commandBuffer, stagingBuffer);
@@ -120,17 +117,14 @@ void Object::createIndexBuffer()
     stagingBuffer.create(
         m_context,
         bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT
     );
     memcpy(stagingBuffer.mappedData, indices.data(), bufferSize);
-    stagingBuffer.unmap(m_context);
 
     m_indexBuffer.create(
         m_context,
         bufferSize,
-        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
     );
     VkCommandBuffer commandBuffer = m_context->beginSingleTimeCommands();
     m_indexBuffer.copyFrom(commandBuffer, stagingBuffer);
@@ -149,8 +143,7 @@ void Object::createUniformBuffers()
         m_uniformBuffers[i].create(
             m_context,
             bufferSize,
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
         );
     }
 }
@@ -169,11 +162,9 @@ void Object::createTextureImage()
     stagingBuffer.create(
         m_context,
         bufSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT
     );
     memcpy(stagingBuffer.mappedData, pixels, bufSize);
-    stagingBuffer.unmap(m_context);
 
     stbi_image_free(pixels);
 
@@ -183,7 +174,6 @@ void Object::createTextureImage()
         VK_FORMAT_R8G8B8A8_SRGB,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT
     );
 

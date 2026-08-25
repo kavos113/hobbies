@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 
 #include "VulkanContext.h"
 
@@ -11,7 +12,7 @@ template <typename T>
 struct VulkanMappedBuffer
 {
     VkBuffer buffer = VK_NULL_HANDLE;
-    VkDeviceMemory memory = VK_NULL_HANDLE;
+    VmaAllocation allocation = VK_NULL_HANDLE;
     VkDeviceSize size = 0;
     T *mappedData = nullptr;
 
@@ -21,10 +22,10 @@ struct VulkanMappedBuffer
     VulkanMappedBuffer& operator=(VulkanMappedBuffer&&) = delete;
 
     VulkanMappedBuffer(VulkanMappedBuffer&& other) noexcept
-        : buffer(other.buffer), memory(other.memory), size(other.size), mappedData(other.mappedData)
+        : buffer(other.buffer), allocation(other.allocation), size(other.size), mappedData(other.mappedData)
     {
         other.buffer = VK_NULL_HANDLE;
-        other.memory = VK_NULL_HANDLE;
+        other.allocation = VK_NULL_HANDLE;
         other.mappedData = nullptr;
         other.size = 0;
     }
@@ -32,8 +33,7 @@ struct VulkanMappedBuffer
     void create(
         const VulkanContext *context,
         VkDeviceSize bufSize,
-        VkBufferUsageFlags usage,
-        VkMemoryPropertyFlags properties
+        VkBufferUsageFlags usage
     )
     {
         size = bufSize;
@@ -44,107 +44,50 @@ struct VulkanMappedBuffer
             .usage = usage,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE
         };
-        VkResult r = vkCreateBuffer(context->device(), &bufferInfo, nullptr, &buffer);
-        if (r != VK_SUCCESS)
-        {
-            throw std::runtime_error("Failed to create buffer");
-        }
-
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(context->device(), buffer, &memRequirements);
-
-        VkMemoryAllocateInfo allocInfo = {
-            .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-            .allocationSize = memRequirements.size,
-            .memoryTypeIndex = findMemoryType(context, memRequirements.memoryTypeBits, properties)
+        VmaAllocationCreateInfo allocInfo = {
+            .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
+            .usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
         };
-        r = vkAllocateMemory(context->device(), &allocInfo, nullptr, &memory);
+        VmaAllocationInfo allocationInfo;
+        VkResult r = vmaCreateBuffer(context->allocator(), &bufferInfo, &allocInfo, &buffer, &allocation, &allocationInfo);
         if (r != VK_SUCCESS)
         {
-            throw std::runtime_error("Failed to allocate buffer memory");
+            throw std::runtime_error("failed to create buffer");
         }
 
-        vkBindBufferMemory(context->device(), buffer, memory, 0);
-
-        r = vkMapMemory(context->device(), memory, 0, size, 0, &mappedData);
-        if (r != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to map buffer");
-        }
+        mappedData = static_cast<T*>(allocationInfo.pMappedData);
     }
 
     void destroy(const VulkanContext *context)
     {
         if (buffer != VK_NULL_HANDLE)
         {
-            vkDestroyBuffer(context->device(), buffer, nullptr);
+            vmaDestroyBuffer(context->allocator(), buffer, allocation);
             buffer = VK_NULL_HANDLE;
-        }
-        if (memory != VK_NULL_HANDLE)
-        {
-            vkFreeMemory(context->device(), memory, nullptr);
+            allocation = VK_NULL_HANDLE;
         }
     }
 
     bool allocated() const
     {
-        return buffer != VK_NULL_HANDLE && memory != VK_NULL_HANDLE;
-    }
-
-    bool mapped() const
-    {
-        return mappedData != nullptr;
-    }
-
-    void map(const VulkanContext *context)
-    {
-        if (mappedData == nullptr)
-        {
-            vkMapMemory(context->device(), memory, 0, size, 0, &mappedData);
-        }
-    }
-
-    void unmap(const VulkanContext *context)
-    {
-        if (mappedData != nullptr)
-        {
-            vkUnmapMemory(context->device(), memory);
-            mappedData = nullptr;
-        }
-    }
-
-private:
-    static uint32_t findMemoryType(const VulkanContext *context, uint32_t typeFilter, VkMemoryPropertyFlags properties)
-    {
-        VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(context->physicalDevice(), &memProperties);
-
-        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
-        {
-            if (typeFilter & 1 << i && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-            {
-                return i;
-            }
-        }
-
-        throw std::runtime_error("Failed to find suitable memory type");
+        return buffer != VK_NULL_HANDLE && allocation != VK_NULL_HANDLE;
     }
 };
 
 struct VulkanBuffer
 {
     VkBuffer buffer = VK_NULL_HANDLE;
-    VkDeviceMemory memory = VK_NULL_HANDLE;
+    VmaAllocation allocation = VK_NULL_HANDLE;
 
     VulkanBuffer() = default;
     VulkanBuffer(const VulkanBuffer&) = delete;
     VulkanBuffer& operator=(const VulkanBuffer&) = delete;
 
     VulkanBuffer(VulkanBuffer&& other) noexcept
-        : buffer(other.buffer), memory(other.memory)
+        : buffer(other.buffer), allocation(other.allocation)
     {
         other.buffer = VK_NULL_HANDLE;
-        other.memory = VK_NULL_HANDLE;
+        other.allocation = VK_NULL_HANDLE;
     }
 
     VulkanBuffer& operator=(VulkanBuffer&&) = delete;
@@ -152,8 +95,7 @@ struct VulkanBuffer
     void create(
         const VulkanContext *context,
         VkDeviceSize size,
-        VkBufferUsageFlags usage,
-        VkMemoryPropertyFlags properties
+        VkBufferUsageFlags usage
     )
     {
         VkBufferCreateInfo bufferInfo = {
@@ -162,45 +104,29 @@ struct VulkanBuffer
             .usage = usage,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE
         };
-        VkResult r = vkCreateBuffer(context->device(), &bufferInfo, nullptr, &buffer);
+        VmaAllocationCreateInfo allocInfo = {
+            .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
+        };
+        VkResult r = vmaCreateBuffer(context->allocator(), &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
         if (r != VK_SUCCESS)
         {
             throw std::runtime_error("Failed to create buffer");
         }
-
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(context->device(), buffer, &memRequirements);
-
-        VkMemoryAllocateInfo allocInfo = {
-            .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-            .allocationSize = memRequirements.size,
-            .memoryTypeIndex = findMemoryType(context, memRequirements.memoryTypeBits, properties)
-        };
-        r = vkAllocateMemory(context->device(), &allocInfo, nullptr, &memory);
-        if (r != VK_SUCCESS)
-        {
-            throw std::runtime_error("Failed to allocate buffer memory");
-        }
-
-        vkBindBufferMemory(context->device(), buffer, memory, 0);
     }
 
     void destroy(const VulkanContext *context)
     {
         if (buffer != VK_NULL_HANDLE)
         {
-            vkDestroyBuffer(context->device(), buffer, nullptr);
+            vmaDestroyBuffer(context->allocator(), buffer, allocation);
             buffer = VK_NULL_HANDLE;
-        }
-        if (memory != VK_NULL_HANDLE)
-        {
-            vkFreeMemory(context->device(), memory, nullptr);
+            allocation = VK_NULL_HANDLE;
         }
     }
 
     bool allocated() const
     {
-        return buffer != VK_NULL_HANDLE && memory != VK_NULL_HANDLE;
+        return buffer != VK_NULL_HANDLE && allocation != VK_NULL_HANDLE;
     }
 
     template <typename T>
@@ -213,30 +139,13 @@ struct VulkanBuffer
         };
         vkCmdCopyBuffer(commandBuffer, staging.buffer, buffer, 1, &copyRegion);
     }
-
-private:
-    static uint32_t findMemoryType(const VulkanContext *context, uint32_t typeFilter, VkMemoryPropertyFlags properties)
-    {
-        VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(context->physicalDevice(), &memProperties);
-
-        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
-        {
-            if (typeFilter & 1 << i && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-            {
-                return i;
-            }
-        }
-
-        throw std::runtime_error("Failed to find suitable memory type");
-    }
 };
 
 struct VulkanImage
 {
     VkImage image = VK_NULL_HANDLE;
     VkImageView imageView = VK_NULL_HANDLE;
-    VkDeviceMemory memory = VK_NULL_HANDLE;
+    VmaAllocation allocation = VK_NULL_HANDLE;
     uint32_t width = 0;
     uint32_t height = 0;
 
@@ -246,11 +155,11 @@ struct VulkanImage
     VulkanImage& operator=(VulkanImage&&) = delete;
 
     VulkanImage(VulkanImage&& other) noexcept
-        : image(other.image), imageView(other.imageView), memory(other.memory), width(other.width), height(other.height)
+        : image(other.image), imageView(other.imageView), allocation(other.allocation), width(other.width), height(other.height)
     {
         other.image = VK_NULL_HANDLE;
         other.imageView = VK_NULL_HANDLE;
-        other.memory = nullptr;
+        other.allocation = nullptr;
         other.width = 0;
         other.height = 0;
     }
@@ -262,7 +171,6 @@ struct VulkanImage
         VkFormat format,
         VkImageTiling tiling,
         VkImageUsageFlags usage,
-        VkMemoryPropertyFlags properties,
         VkImageAspectFlags imageAspect
     )
     {
@@ -286,26 +194,14 @@ struct VulkanImage
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
         };
-        VkResult r = vkCreateImage(context->device(), &imageInfo, nullptr, &image);
+        VmaAllocationCreateInfo allocInfo = {
+            .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
+        };
+        VkResult r = vmaCreateImage(context->allocator(), &imageInfo, &allocInfo, &image, &allocation, nullptr);
         if (r != VK_SUCCESS)
         {
             throw std::runtime_error("Failed to create texture image");
         }
-
-        VkMemoryRequirements memRequirements;
-        vkGetImageMemoryRequirements(context->device(), image, &memRequirements);
-        VkMemoryAllocateInfo allocInfo = {
-            .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-            .allocationSize = memRequirements.size,
-            .memoryTypeIndex = findMemoryType(context, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-        };
-        r = vkAllocateMemory(context->device(), &allocInfo, nullptr, &memory);
-        if (r != VK_SUCCESS)
-        {
-            throw std::runtime_error("Failed to allocate texture image memory");
-        }
-
-        vkBindImageMemory(context->device(), image, memory, 0);
 
         VkImageViewCreateInfo createInfo = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -337,8 +233,9 @@ struct VulkanImage
     {
         if (image != VK_NULL_HANDLE)
         {
-            vkDestroyImage(context->device(), image, nullptr);
+            vmaDestroyImage(context->allocator(), image, allocation);
             image = VK_NULL_HANDLE;
+            allocation = VK_NULL_HANDLE;
         }
 
         if (imageView != VK_NULL_HANDLE)
@@ -346,17 +243,11 @@ struct VulkanImage
             vkDestroyImageView(context->device(), imageView, nullptr);
             imageView = VK_NULL_HANDLE;
         }
-
-        if (memory != VK_NULL_HANDLE)
-        {
-            vkFreeMemory(context->device(), memory, nullptr);
-            memory = VK_NULL_HANDLE;
-        }
     }
 
     bool allocated() const
     {
-        return image != VK_NULL_HANDLE && imageView != VK_NULL_HANDLE && memory != VK_NULL_HANDLE;
+        return image != VK_NULL_HANDLE && imageView != VK_NULL_HANDLE && allocation != VK_NULL_HANDLE;
     }
 
     template <typename T>
@@ -387,23 +278,6 @@ struct VulkanImage
             1,
             &region
         );
-    }
-
-private:
-    static uint32_t findMemoryType(const VulkanContext *context, uint32_t typeFilter, VkMemoryPropertyFlags properties)
-    {
-        VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(context->physicalDevice(), &memProperties);
-
-        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
-        {
-            if (typeFilter & 1 << i && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-            {
-                return i;
-            }
-        }
-
-        throw std::runtime_error("Failed to find suitable memory type");
     }
 };
 

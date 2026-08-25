@@ -50,6 +50,7 @@ VulkanEngine::~VulkanEngine()
     vkDestroyPipeline(m_context->device(), m_graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_context->device(), m_pipelineLayout, nullptr);
 
+    m_msaaColorImage.destroy(m_context);
     m_depthImage.destroy(m_context);
     cleanupSwapchain();
     vkDestroySurfaceKHR(m_context->instance(), m_surface, nullptr);

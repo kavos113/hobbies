@@ -18,12 +18,14 @@ add_executable(${EXAMPLE_NAME}
         VulkanBuffer.h
         Object.cpp
         Object.h
+        vma.cpp
 )
 target_link_libraries(${EXAMPLE_NAME} PRIVATE
         glfw
         glm::glm
         Vulkan::Vulkan
         tinyobjloader::tinyobjloader
+        GPUOpen::VulkanMemoryAllocator
 )
 target_include_directories(${EXAMPLE_NAME} PRIVATE
         ${THIRD_PARTY_DIR}

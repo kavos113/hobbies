@@ -91,6 +91,7 @@ VulkanContext::VulkanContext()
     createLogicalDevice();
     createDescriptorPool();
     createCommandPool();
+    createVmaAllocator();
 }
 
 VulkanContext::~VulkanContext()
@@ -356,5 +357,20 @@ void VulkanContext::createDescriptorPool()
     if (r != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create descriptor pool");
+    }
+}
+
+void VulkanContext::createVmaAllocator()
+{
+    VmaAllocatorCreateInfo info = {
+        .flags = 0,
+        .physicalDevice = m_physicalDevice,
+        .device = m_device,
+        .instance = m_instance
+    };
+    VkResult r = vmaCreateAllocator(&info, &m_allocator);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create VMA allocator");
     }
 }

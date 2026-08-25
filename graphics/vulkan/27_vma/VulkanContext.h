@@ -4,6 +4,7 @@
 #include <memory>
 
 #include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 
 #include "VulkanDebug.h"
 
@@ -48,12 +49,18 @@ public:
         return m_commandPool;
     }
 
+    VmaAllocator allocator() const
+    {
+        return m_allocator;
+    }
+
 private:
     void createInstance();
     void pickPhysicalDevice();
     void createLogicalDevice();
     void createCommandPool();
     void createDescriptorPool();
+    void createVmaAllocator();
 
     std::unique_ptr<VulkanDebug> m_debug;
 
@@ -61,6 +68,7 @@ private:
     VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
     VkDevice m_device = VK_NULL_HANDLE;
     VkQueue m_graphicsQueue = VK_NULL_HANDLE;
+    VmaAllocator m_allocator = VK_NULL_HANDLE;
 
     VkCommandPool m_commandPool = VK_NULL_HANDLE;
     VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;

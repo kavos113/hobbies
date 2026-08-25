@@ -96,6 +96,7 @@ VulkanContext::VulkanContext()
 
 VulkanContext::~VulkanContext()
 {
+    vmaDestroyAllocator(m_allocator);
     vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
     vkDestroyCommandPool(m_device, m_commandPool, nullptr);
 

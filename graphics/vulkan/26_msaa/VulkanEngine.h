@@ -36,6 +36,7 @@ private:
     void createCommandBuffer();
     void createSyncObjects();
     void createDepthResources();
+    void createMsaaResources();
 
     void recordCommandBuffer(uint32_t imageIndex) const;
     void recreateSwapchain();
@@ -58,6 +59,7 @@ private:
     std::vector<VkImageView> m_swapchainImageViews;
     VkSurfaceFormatKHR m_swapchainImageFormat;
     VkExtent2D m_swapchainExtent;
+    VulkanImage m_msaaColorImage;
 
     VulkanImage m_depthImage;
     VkFormat m_depthFormat;

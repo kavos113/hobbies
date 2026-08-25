@@ -48,9 +48,15 @@ public:
         return m_commandPool;
     }
 
+    VkSampleCountFlagBits msaaSamples() const
+    {
+        return m_msaaSamples;
+    }
+
 private:
     void createInstance();
     void pickPhysicalDevice();
+    VkSampleCountFlagBits getMaxSampleCount() const;
     void createLogicalDevice();
     void createCommandPool();
     void createDescriptorPool();
@@ -64,6 +70,8 @@ private:
 
     VkCommandPool m_commandPool = VK_NULL_HANDLE;
     VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
+
+    VkSampleCountFlagBits m_msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 

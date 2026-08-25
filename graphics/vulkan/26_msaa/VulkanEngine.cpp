@@ -20,6 +20,7 @@ VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context)
     createSurface();
     createSwapchain();
     createSwapchainImageViews();
+    createMsaaResources();
     createDepthResources();
 
     m_object = std::make_unique<Object>(m_context);
@@ -351,7 +352,7 @@ void VulkanEngine::createPipeline()
 
     VkPipelineMultisampleStateCreateInfo multisampling = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .rasterizationSamples = m_context->msaaSamples(),
         .sampleShadingEnable = VK_FALSE
     };
 
@@ -505,14 +506,28 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
         VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
         VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT
     );
+    transitionImageLayout(
+        commandBuffer,
+        m_msaaColorImage.image,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+    );
 
     VkClearValue clearColor = {
         .color = {{0.0f, 0.0f, 0.0f, 1.0f}}
     };
     VkRenderingAttachmentInfo colorAttachment = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .imageView = m_swapchainImageViews[imageIndex],
+        .imageView = m_msaaColorImage.imageView,
         .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT,
+        .resolveImageView = m_swapchainImageViews[imageIndex],
+        .resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .clearValue = clearColor
@@ -622,9 +637,11 @@ void VulkanEngine::recreateSwapchain()
     vkDeviceWaitIdle(m_context->device());
 
     m_depthImage.destroy(m_context);
+    m_msaaColorImage.destroy(m_context);
     cleanupSwapchain();
     createSwapchain();
     createSwapchainImageViews();
+    createMsaaResources();
     createDepthResources();
 }
 
@@ -656,7 +673,8 @@ void VulkanEngine::createDepthResources()
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        VK_IMAGE_ASPECT_DEPTH_BIT
+        VK_IMAGE_ASPECT_DEPTH_BIT,
+        m_context->msaaSamples()
     );
 }
 
@@ -681,4 +699,18 @@ VkFormat VulkanEngine::findSupportedFormat(
     }
 
     throw std::runtime_error("failed to find supported format");
+}
+
+void VulkanEngine::createMsaaResources()
+{
+    m_msaaColorImage.create(
+        m_context,
+        m_swapchainExtent.width, m_swapchainExtent.height,
+        m_swapchainImageFormat.format,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        m_context->msaaSamples()
+    );
 }

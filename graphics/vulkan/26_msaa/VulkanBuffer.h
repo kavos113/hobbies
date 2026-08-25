@@ -263,7 +263,8 @@ struct VulkanImage
         VkImageTiling tiling,
         VkImageUsageFlags usage,
         VkMemoryPropertyFlags properties,
-        VkImageAspectFlags imageAspect
+        VkImageAspectFlags imageAspect,
+        VkSampleCountFlagBits samples
     )
     {
         width = w;
@@ -280,7 +281,7 @@ struct VulkanImage
             },
             .mipLevels = 1,
             .arrayLayers = 1,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .samples = samples,
             .tiling = tiling,
             .usage = usage,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,

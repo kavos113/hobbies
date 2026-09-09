@@ -1,47 +1,37 @@
 package com.github.kavos113.trafficmonitor
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.github.kavos113.trafficmonitor.ui.theme.TrafficmonitorTheme
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 
 class MainActivity : ComponentActivity() {
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    enableEdgeToEdge()
-    setContent {
-      TrafficmonitorTheme {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-          Greeting(
-            name = "Android",
-            modifier = Modifier.padding(innerPadding)
-          )
-        }
-      }
+  private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+    if (isGranted) {
+      startTrafficService()
     }
   }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-  Text(
-    text = "Hello $name!",
-    modifier = modifier
-  )
-}
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-  TrafficmonitorTheme {
-    Greeting("Android")
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+        startTrafficService()
+      } else {
+        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+      }
+    } else {
+      startTrafficService()
+    }
+  }
+
+  private fun startTrafficService() {
+    val intent = Intent(this, TrafficSpeedService::class.java)
+    ContextCompat.startForegroundService(this, intent)
   }
 }

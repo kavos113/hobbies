@@ -45,6 +45,11 @@ export const loadLanguageInfo = async (): Promise<
   );
 };
 
+if (process.argv.length < 4) {
+  console.log("Usage: node main.js <lang json> <out svg>");
+  process.exit(1);
+}
+
 loadLanguageInfo().then((info) => {
   generateStats(info, process.argv[3]);
 });

@@ -24,12 +24,12 @@
     "line": 118
   },
   {
-    "name": "Makefile",
-    "line": 194
-  },
-  {
     "name": "Shell",
     "line": 215
+  },
+  {
+    "name": "Makefile",
+    "line": 219
   },
   {
     "name": "Vue",
@@ -56,8 +56,12 @@
     "line": 614
   },
   {
+    "name": "Batch File",
+    "line": 643
+  },
+  {
     "name": "Slang",
-    "line": 663
+    "line": 771
   },
   {
     "name": "CUDA",
@@ -77,11 +81,7 @@
   },
   {
     "name": "Markdown",
-    "line": 962
-  },
-  {
-    "name": "Batch File",
-    "line": 1090
+    "line": 965
   },
   {
     "name": "CSS",
@@ -97,7 +97,7 @@
   },
   {
     "name": "Go",
-    "line": 2082
+    "line": 2165
   },
   {
     "name": "HLSL",
@@ -109,22 +109,22 @@
   },
   {
     "name": "CMake",
-    "line": 4292
+    "line": 4586
   },
   {
     "name": "Java",
-    "line": 6593
+    "line": 6638
   },
   {
     "name": "Kotlin",
-    "line": 6668
+    "line": 7137
   },
   {
     "name": "C",
-    "line": 9298
+    "line": 9663
   },
   {
     "name": "C++",
-    "line": 210572
+    "line": 218054
   }
 ]

@@ -369,7 +369,7 @@
       "include": []
     }
   ],
-  "graphql": [
+  ".graphql": [
     {
       "name": "GraphQL",
       "include": []

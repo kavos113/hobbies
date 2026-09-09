@@ -7,7 +7,7 @@
     "build": "node ./esbuild.mjs",
     "generate": "pnpm build && pnpm run-go && pnpm run-ts",
     "run-go": "go run . ../../ lang.json",
-    "run-ts": "node ./dist/main.js"
+    "run-ts": "node ./dist/main.js ./lang.json ./stats.svg"
   },
   "keywords": [],
   "author": "",

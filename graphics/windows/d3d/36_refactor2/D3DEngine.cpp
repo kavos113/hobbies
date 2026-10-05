@@ -18,9 +18,8 @@ D3DEngine::D3DEngine(HWND hwnd, D3DContext *context)
     GetClientRect(hwnd, &rc);
 
     m_model = std::make_unique<Model>(
-        m_context->device(),
-        m_context->allocator(),
         rc,
+        m_context,
         m_descHeapManager.get()
     );
 

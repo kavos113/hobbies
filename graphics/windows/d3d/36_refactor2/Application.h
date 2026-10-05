@@ -1,13 +1,15 @@
 #ifndef WIN32_02_SPLIT_CLASS_APPLICATION_H
 #define WIN32_02_SPLIT_CLASS_APPLICATION_H
 
+#include <memory>
+
 #ifndef UNICODE
 #define UNICODE
 #endif
 #include <windows.h>
 
-#include <memory>
 #include "D3DEngine.h"
+#include "D3DContext.h"
 
 class Application
 {
@@ -24,6 +26,7 @@ private:
     LRESULT handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     std::unique_ptr<D3DEngine> m_engine;
+    std::unique_ptr<D3DContext> m_context;
     HWND m_hwnd;
 
     const wchar_t* className = L"ApplicationWindowClass";

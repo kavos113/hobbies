@@ -23,6 +23,8 @@ D3DEngine::D3DEngine(HWND hwnd, D3DContext *context)
         m_descHeapManager.get()
     );
 
+    m_context->buffer()->executeCopy();
+
     createPipelineState();
     createViewport(hwnd);
 

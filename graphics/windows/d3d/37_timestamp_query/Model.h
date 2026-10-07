@@ -22,7 +22,7 @@ public:
         DescriptorHeapManager *descHeapManager
     );
     void cleanup();
-    void executeBarrier(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList) const;
+    void executeBarrier(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 
     void render(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &commandList);
 
@@ -91,8 +91,6 @@ private:
         DirectX::XMFLOAT3 ambient;
     };
 
-    void createCopyCommands();
-
     void loadModel(const std::string &path);
     void createVertexBuffer();
     void createIndexBuffer();
@@ -100,21 +98,6 @@ private:
     void createLightBuffer();
 
     void loadTexture(const std::wstring& path);
-    void createBuffer(
-        UINT64 size,
-        D3D12MA::Allocation **buffer,
-        D3D12_HEAP_TYPE heapType,
-        D3D12_RESOURCE_STATES initialState
-    );
-    void copyTexture(
-        const Microsoft::WRL::ComPtr<D3D12MA::Allocation> &srcBuffer,
-        const Microsoft::WRL::ComPtr<D3D12MA::Allocation> &dstBuffer
-    ) const;
-    void copyBuffer(
-        const Microsoft::WRL::ComPtr<D3D12MA::Allocation> &srcBuffer,
-        const Microsoft::WRL::ComPtr<D3D12MA::Allocation> &dstBuffer
-    ) const;
-    void executeCopy();
 
     void barrier(
         const Microsoft::WRL::ComPtr<D3D12MA::Allocation> &resource,
@@ -124,13 +107,6 @@ private:
 
     D3DContext *m_context;
     DescriptorHeapManager *m_descHeapManager;
-
-    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_copyCommandAllocator;
-    Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_copyCommandQueue;
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_copyCommandList;
-    Microsoft::WRL::ComPtr<ID3D12Fence> m_copyFence;
-    UINT64 m_copyFenceValue = 0;
-    HANDLE m_copyFenceEvent = nullptr;
 
     std::vector<Vertex> m_vertices;
     std::vector<unsigned short> m_indices;
@@ -145,10 +121,8 @@ private:
     MatrixBuffer *m_matrixBufferData = nullptr;
 
     Microsoft::WRL::ComPtr<D3D12MA::Allocation> m_lightBuffer;
-
     Microsoft::WRL::ComPtr<D3D12MA::Allocation> m_texture;
 
-    std::vector<Microsoft::WRL::ComPtr<D3D12MA::Allocation>> m_waitForCopyResources;
     std::vector<D3D12_RESOURCE_BARRIER> m_barriers;
 
     const std::string MODEL_PATH = "security_camera_01_2k.obj";

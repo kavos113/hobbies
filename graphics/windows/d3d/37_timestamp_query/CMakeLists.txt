@@ -8,11 +8,19 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(d3d_${EXAMPLE_NAME}
         main.cpp
         Application.cpp
+        Application.h
         D3DEngine.cpp
+        D3DEngine.h
         D3DDebug.cpp
+        D3DDebug.h
         Model.cpp
+        Model.h
         D3DDescriptorHeap.cpp
+        D3DDescriptorHeap.h
         D3DContext.cpp
+        D3DContext.h
+        D3DBuffer.cpp
+        D3DBuffer.h
 )
 target_link_libraries(d3d_${EXAMPLE_NAME} PRIVATE d3d12 dxgi d3dcompiler)
 target_compile_definitions(d3d_${EXAMPLE_NAME} PRIVATE DEBUG)

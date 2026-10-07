@@ -7,7 +7,9 @@
 #include <wrl/client.h>
 #include <D3D12MemAlloc.h>
 
-#include "D3DContext.h"
+#define AlignCBuffer(x) (((x) + 0xff) & ~0xff)
+
+class D3DContext;
 
 class D3DBuffer
 {
@@ -27,6 +29,22 @@ public:
 
     void executeCopy();
     void registerWaitForCopyResource(const Microsoft::WRL::ComPtr<D3D12MA::Allocation> &buffer);
+
+    static D3D12_RESOURCE_DESC ResourceDesc_Buffer(UINT64 size)
+    {
+        return D3D12_RESOURCE_DESC{
+            .Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
+            .Alignment = 0,
+            .Width = size,
+            .Height = 1,
+            .DepthOrArraySize = 1,
+            .MipLevels = 1,
+            .Format = DXGI_FORMAT_UNKNOWN,
+            .SampleDesc = {1, 0},
+            .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+            .Flags = D3D12_RESOURCE_FLAG_NONE
+        };
+    }
 
 private:
     void createCommandResources();

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <array>
 
+#include "D3DContext.h"
+
 D3DBuffer::D3DBuffer(D3DContext* context)
     : m_context(context)
 {
@@ -11,6 +13,7 @@ D3DBuffer::D3DBuffer(D3DContext* context)
 
 D3DBuffer::~D3DBuffer()
 {
+    CloseHandle(m_copyFenceEvent);
 }
 
 void D3DBuffer::createBuffer(

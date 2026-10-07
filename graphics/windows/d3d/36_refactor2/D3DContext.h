@@ -9,8 +9,7 @@
 #include <D3D12MemAlloc.h>
 
 #include "D3DDebug.h"
-
-class D3DBuffer;
+#include "D3DBuffer.h"
 
 class D3DContext
 {

@@ -6,21 +6,26 @@
 D3DContext::D3DContext()
 {
     createDXGIFactory();
-    createDevice();
 
 #ifdef DEBUG
     m_debug = std::make_unique<D3DDebug>();
     D3DDebug::enableDebugLayer();
 #endif
 
+    getAdapter();
+    createDevice();
+    createAllocator();
     m_debug->setupCallback(m_device);
 }
 
 D3DContext::~D3DContext()
 {
+#ifdef DEBUG
     m_debug->cleanup(m_device);
     m_debug.reset();
+#endif
 
+    m_allocator.Reset();
     m_device.Reset();
     m_dxgiFactory.Reset();
 }

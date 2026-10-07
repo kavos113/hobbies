@@ -4,6 +4,7 @@
 
 #include <array>
 #include <iostream>
+#include <format>
 
 D3DEngine::D3DEngine(HWND hwnd, D3DContext *context)
     : m_context(context)
@@ -27,6 +28,7 @@ D3DEngine::D3DEngine(HWND hwnd, D3DContext *context)
 
     createPipelineState();
     createViewport(hwnd);
+    createQueryResources();
 
     m_model->executeBarrier(m_commandList);
     executeCommand(0);
@@ -217,6 +219,27 @@ void D3DEngine::createFence()
     }
 }
 
+void D3DEngine::createQueryResources()
+{
+    D3D12_QUERY_HEAP_DESC desc = {
+        .Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
+        .Count = 2,
+    };
+    HRESULT hr = m_context->device()->CreateQueryHeap(&desc, IID_PPV_ARGS(&m_queryHeap));
+    if (FAILED(hr))
+    {
+        std::cerr << "failed to create query heap" << std::endl;
+        return;
+    }
+
+    m_context->buffer()->createBuffer(
+        D3DBuffer::ResourceDesc_Buffer(16), // uint64 * 2
+        D3D12_HEAP_TYPE_READBACK,
+        D3D12_RESOURCE_STATE_COPY_DEST,
+        &m_queryResult
+    );
+}
+
 void D3DEngine::beginFrame(UINT frameIndex)
 {
     HRESULT hr = m_commandAllocators[frameIndex]->Reset();
@@ -261,12 +284,22 @@ void D3DEngine::recordCommands(UINT frameIndex) const
     m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-
     m_descHeapManager->bind(m_commandList);
-
     m_commandList->SetPipelineState(m_pipelineState.Get());
 
+    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0);
+
     m_model->render(m_commandList);
+
+    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 1);
+
+    m_commandList->ResolveQueryData(
+        m_queryHeap.Get(),
+        D3D12_QUERY_TYPE_TIMESTAMP,
+        0, 2,
+        m_queryResult->GetResource(),
+        0
+    );
 }
 
 void D3DEngine::endFrame(UINT frameIndex)
@@ -284,6 +317,28 @@ void D3DEngine::endFrame(UINT frameIndex)
     m_commandList->ResourceBarrier(1, &barrier);
 
     executeCommand(frameIndex);
+
+    uint64_t *queryResult = nullptr;
+    HRESULT hr = m_queryResult->GetResource()->Map(
+        0,
+        nullptr,
+        reinterpret_cast<void**>(&queryResult)
+    );
+    if (FAILED(hr))
+    {
+        std::cerr << "failed to map query result buffer" << std::endl;
+        return;
+    }
+
+    uint64_t start = *queryResult;
+    uint64_t end = *(queryResult + 1);
+
+    UINT64 frequency;
+    m_commandQueue->GetTimestampFrequency(&frequency);
+
+    double ms = static_cast<double>(end - start) * 1000 / static_cast<double>(frequency);
+
+    std::cout << std::format("GPU command: {:.3f} ms", ms) << std::endl;
 }
 
 void D3DEngine::executeCommand(UINT frameIndex)

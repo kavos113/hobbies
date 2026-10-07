@@ -38,6 +38,8 @@ private:
     void createDepthResources(UINT width, UINT height);
     void createFence();
 
+    void createQueryResources();
+
     static Microsoft::WRL::ComPtr<ID3D10Blob> compileShader(
         const wchar_t *fileName,
         const char *entryPoint,
@@ -85,6 +87,9 @@ private:
 
     D3D12_VIEWPORT m_viewport = {};
     D3D12_RECT m_scissorRect = {};
+
+    Microsoft::WRL::ComPtr<ID3D12QueryHeap> m_queryHeap;
+    Microsoft::WRL::ComPtr<D3D12MA::Allocation> m_queryResult;
 };
 
 

@@ -21,7 +21,7 @@ public:
     void createView(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descHeap);
 
     void cleanup();
-    void executeBarrier(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList) const;
+    void executeBarrier(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 
     D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc() const
     {

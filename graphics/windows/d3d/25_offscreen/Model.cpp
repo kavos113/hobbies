@@ -70,7 +70,7 @@ void Model::renderScreen(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>
     commandList->DrawIndexedInstanced(m_screenIndices.size(), 1, 0, 0, 0);
 }
 
-void Model::executeBarrier(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList) const
+void Model::executeBarrier(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
     commandList->ResourceBarrier(
         m_barriers.size(),

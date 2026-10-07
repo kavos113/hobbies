@@ -10,6 +10,8 @@
 
 #include "D3DDebug.h"
 
+class D3DBuffer;
+
 class D3DContext
 {
 public:
@@ -36,6 +38,11 @@ public:
         return m_allocator;
     }
 
+    D3DBuffer *buffer() const
+    {
+        return m_buffer.get();
+    }
+
 private:
     void createDXGIFactory();
     void getAdapter();
@@ -48,6 +55,7 @@ private:
     Microsoft::WRL::ComPtr<D3D12MA::Allocator> m_allocator;
 
     std::unique_ptr<D3DDebug> m_debug;
+    std::unique_ptr<D3DBuffer> m_buffer;
 };
 
 

@@ -22,7 +22,7 @@ public:
         DescriptorHeapManager *descHeapManager
     );
     void cleanup();
-    void executeBarrier(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList) const;
+    void executeBarrier(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 
     void render(const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> &commandList);
 

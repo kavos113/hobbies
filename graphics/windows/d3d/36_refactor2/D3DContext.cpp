@@ -3,6 +3,8 @@
 #include <iostream>
 #include <array>
 
+#include "D3DBuffer.h"
+
 D3DContext::D3DContext()
 {
     createDXGIFactory();
@@ -16,6 +18,8 @@ D3DContext::D3DContext()
     createDevice();
     createAllocator();
     m_debug->setupCallback(m_device);
+
+    m_buffer = std::make_unique<D3DBuffer>(this);
 }
 
 D3DContext::~D3DContext()

@@ -90,6 +90,7 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12QueryHeap> m_queryHeap;
     Microsoft::WRL::ComPtr<D3D12MA::Allocation> m_queryResult;
+    uint64_t *m_queryResultMap = nullptr;
 };
 
 

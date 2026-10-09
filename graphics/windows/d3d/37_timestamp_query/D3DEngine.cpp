@@ -233,11 +233,22 @@ void D3DEngine::createQueryResources()
     }
 
     m_context->buffer()->createBuffer(
-        D3DBuffer::ResourceDesc_Buffer(16), // uint64 * 2
+        D3DBuffer::ResourceDesc_Buffer(16 * FRAME_COUNT), // uint64 * 4
         D3D12_HEAP_TYPE_READBACK,
         D3D12_RESOURCE_STATE_COPY_DEST,
         &m_queryResult
     );
+
+    hr = m_queryResult->GetResource()->Map(
+        0,
+        nullptr,
+        reinterpret_cast<void**>(&m_queryResultMap)
+    );
+    if (FAILED(hr))
+    {
+        std::cerr << "failed to map query result buffer" << std::endl;
+        return;
+    }
 }
 
 void D3DEngine::beginFrame(UINT frameIndex)
@@ -287,11 +298,11 @@ void D3DEngine::recordCommands(UINT frameIndex) const
     m_descHeapManager->bind(m_commandList);
     m_commandList->SetPipelineState(m_pipelineState.Get());
 
-    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0);
+    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0 + frameIndex * FRAME_COUNT);
 
     m_model->render(m_commandList);
 
-    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 1);
+    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 1 + frameIndex * FRAME_COUNT);
 
     m_commandList->ResolveQueryData(
         m_queryHeap.Get(),
@@ -318,20 +329,8 @@ void D3DEngine::endFrame(UINT frameIndex)
 
     executeCommand(frameIndex);
 
-    uint64_t *queryResult = nullptr;
-    HRESULT hr = m_queryResult->GetResource()->Map(
-        0,
-        nullptr,
-        reinterpret_cast<void**>(&queryResult)
-    );
-    if (FAILED(hr))
-    {
-        std::cerr << "failed to map query result buffer" << std::endl;
-        return;
-    }
-
-    uint64_t start = *queryResult;
-    uint64_t end = *(queryResult + 1);
+    uint64_t start = *m_queryResultMap + frameIndex * FRAME_COUNT;
+    uint64_t end = *(m_queryResultMap + 1 + frameIndex * FRAME_COUNT);
 
     UINT64 frequency;
     m_commandQueue->GetTimestampFrequency(&frequency);

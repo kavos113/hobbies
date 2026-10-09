@@ -60,7 +60,7 @@ private:
     void recordCommands(UINT frameIndex) const;
     void endFrame(UINT frameIndex);
 
-    void waitForFence(const Microsoft::WRL::ComPtr<ID3D12CommandQueue>& queue, UINT frameIndex);
+    void waitForFence(UINT frameIndex) const;
     void executeCommand(UINT frameIndex);
 
     D3DContext *m_context;

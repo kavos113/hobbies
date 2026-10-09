@@ -41,7 +41,7 @@ void D3DEngine::cleanup()
 {
     for (UINT i = 0; i < FRAME_COUNT; ++i)
     {
-        waitForFence(m_commandQueue, i);
+        waitForFence(i);
     }
 
     for (const auto & event : m_fenceEvents)
@@ -83,14 +83,7 @@ void D3DEngine::render()
 {
     UINT frameIndex = m_swapchain->GetCurrentBackBufferIndex();
 
-    auto start_cpu = std::chrono::steady_clock::now();
-
-    beginFrame(frameIndex);
-    recordCommands(frameIndex);
-    endFrame(frameIndex);
-
-    auto end_cpu = std::chrono::steady_clock::now();
-    auto ms_cpu = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cpu - start_cpu).count()) / 1000;
+    waitForFence(frameIndex);
 
     uint64_t start = *m_queryResultMap;
     uint64_t end = *(m_queryResultMap + 1);
@@ -100,7 +93,16 @@ void D3DEngine::render()
 
     double ms = static_cast<double>(end - start) * 1000 / static_cast<double>(frequency);
 
-    std::cout << std::format("GPU command: {:.3f} ms, CPU recording: {:.3f} ms", ms, ms_cpu) << std::endl;
+    auto start_cpu = std::chrono::steady_clock::now();
+
+    beginFrame(frameIndex);
+    recordCommands(frameIndex);
+    endFrame(frameIndex);
+
+    auto end_cpu = std::chrono::steady_clock::now();
+    auto ms_cpu = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cpu - start_cpu).count()) / 1000;
+
+    std::cout << std::format("GPU: {:.3f} ms, CPU: {:.3f} ms", ms, ms_cpu) << std::endl;
 }
 
 void D3DEngine::createCommandResources()
@@ -283,7 +285,7 @@ void D3DEngine::beginFrame(UINT frameIndex)
         return;
     }
 
-    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0);
+    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0 + frameIndex * FRAME_COUNT);
 
     D3D12_RESOURCE_BARRIER barrier = {
         .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
@@ -333,11 +335,11 @@ void D3DEngine::endFrame(UINT frameIndex)
     };
     m_commandList->ResourceBarrier(1, &barrier);
 
-    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 1);
+    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 1 + frameIndex * FRAME_COUNT);
     m_commandList->ResolveQueryData(
         m_queryHeap.Get(),
         D3D12_QUERY_TYPE_TIMESTAMP,
-        0, 2,
+        0 + frameIndex * FRAME_COUNT, 2,
         m_queryResult->GetResource(),
         0
     );
@@ -357,7 +359,14 @@ void D3DEngine::executeCommand(UINT frameIndex)
     std::array<ID3D12CommandList*, 1> commandLists = { m_commandList.Get() };
     m_commandQueue->ExecuteCommandLists(commandLists.size(), commandLists.data());
 
-    waitForFence(m_commandQueue, frameIndex);
+    m_fenceValues[frameIndex]++;
+    UINT64 fenceValue = m_fenceValues[frameIndex];
+    hr = m_commandQueue->Signal(m_fence[frameIndex].Get(), fenceValue);
+    if (FAILED(hr))
+    {
+        std::cerr << "Failed to signal command queue." << std::endl;
+        return;
+    }
 
     hr = m_swapchain->Present(1, 0);
     if (FAILED(hr))
@@ -367,20 +376,12 @@ void D3DEngine::executeCommand(UINT frameIndex)
     }
 }
 
-void D3DEngine::waitForFence(const Microsoft::WRL::ComPtr<ID3D12CommandQueue>& queue, UINT frameIndex)
+void D3DEngine::waitForFence(UINT frameIndex) const
 {
-    m_fenceValues[frameIndex]++;
     UINT64 fenceValue = m_fenceValues[frameIndex];
-    HRESULT hr = queue->Signal(m_fence[frameIndex].Get(), fenceValue);
-    if (FAILED(hr))
-    {
-        std::cerr << "Failed to signal command queue." << std::endl;
-        return;
-    }
-
     if (m_fence[frameIndex]->GetCompletedValue() < fenceValue)
     {
-        hr = m_fence[frameIndex]->SetEventOnCompletion(fenceValue, m_fenceEvents[frameIndex]);
+        HRESULT hr = m_fence[frameIndex]->SetEventOnCompletion(fenceValue, m_fenceEvents[frameIndex]);
         if (FAILED(hr))
         {
             std::cerr << "Failed to set event on fence completion." << std::endl;

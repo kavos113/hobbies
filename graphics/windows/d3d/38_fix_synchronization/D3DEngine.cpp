@@ -38,7 +38,7 @@ void D3DEngine::cleanup()
 {
     for (UINT i = 0; i < FRAME_COUNT; ++i)
     {
-        waitForFence(m_commandQueue, i);
+        waitForFence(i);
     }
 
     for (const auto & event : m_fenceEvents)
@@ -219,6 +219,8 @@ void D3DEngine::createFence()
 
 void D3DEngine::beginFrame(UINT frameIndex)
 {
+   waitForFence(frameIndex);
+
     HRESULT hr = m_commandAllocators[frameIndex]->Reset();
     if (FAILED(hr))
     {
@@ -286,6 +288,21 @@ void D3DEngine::endFrame(UINT frameIndex)
     executeCommand(frameIndex);
 }
 
+void D3DEngine::waitForFence(UINT frameIndex) const
+{
+    UINT64 fenceValue = m_fenceValues[frameIndex];
+    if (m_fence[frameIndex]->GetCompletedValue() < fenceValue)
+    {
+        HRESULT hr = m_fence[frameIndex]->SetEventOnCompletion(fenceValue, m_fenceEvents[frameIndex]);
+        if (FAILED(hr))
+        {
+            std::cerr << "Failed to set event on fence completion." << std::endl;
+            return;
+        }
+        WaitForSingleObject(m_fenceEvents[frameIndex], INFINITE);
+    }
+}
+
 void D3DEngine::executeCommand(UINT frameIndex)
 {
     HRESULT hr = m_commandList->Close();
@@ -298,36 +315,20 @@ void D3DEngine::executeCommand(UINT frameIndex)
     std::array<ID3D12CommandList*, 1> commandLists = { m_commandList.Get() };
     m_commandQueue->ExecuteCommandLists(commandLists.size(), commandLists.data());
 
-    waitForFence(m_commandQueue, frameIndex);
-
-    hr = m_swapchain->Present(1, 0);
-    if (FAILED(hr))
-    {
-        std::cerr << "Failed to present swap chain." << std::endl;
-        return;
-    }
-}
-
-void D3DEngine::waitForFence(const Microsoft::WRL::ComPtr<ID3D12CommandQueue>& queue, UINT frameIndex)
-{
     m_fenceValues[frameIndex]++;
     UINT64 fenceValue = m_fenceValues[frameIndex];
-    HRESULT hr = queue->Signal(m_fence[frameIndex].Get(), fenceValue);
+    m_commandQueue->Signal(m_fence[frameIndex].Get(), fenceValue);
     if (FAILED(hr))
     {
         std::cerr << "Failed to signal command queue." << std::endl;
         return;
     }
 
-    if (m_fence[frameIndex]->GetCompletedValue() < fenceValue)
+    hr = m_swapchain->Present(1, 0);
+    if (FAILED(hr))
     {
-        hr = m_fence[frameIndex]->SetEventOnCompletion(fenceValue, m_fenceEvents[frameIndex]);
-        if (FAILED(hr))
-        {
-            std::cerr << "Failed to set event on fence completion." << std::endl;
-            return;
-        }
-        WaitForSingleObject(m_fenceEvents[frameIndex], INFINITE);
+        std::cerr << "Failed to present swap chain." << std::endl;
+        return;
     }
 }
 

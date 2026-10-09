@@ -223,7 +223,7 @@ void D3DEngine::createQueryResources()
 {
     D3D12_QUERY_HEAP_DESC desc = {
         .Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
-        .Count = 2,
+        .Count = 4,
     };
     HRESULT hr = m_context->device()->CreateQueryHeap(&desc, IID_PPV_ARGS(&m_queryHeap));
     if (FAILED(hr))
@@ -307,9 +307,9 @@ void D3DEngine::recordCommands(UINT frameIndex) const
     m_commandList->ResolveQueryData(
         m_queryHeap.Get(),
         D3D12_QUERY_TYPE_TIMESTAMP,
-        0, 2,
+        frameIndex * FRAME_COUNT, 2,
         m_queryResult->GetResource(),
-        0
+        frameIndex * FRAME_COUNT * sizeof(uint64_t)
     );
 }
 

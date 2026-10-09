@@ -5,6 +5,7 @@
 #include <array>
 #include <iostream>
 #include <format>
+#include <chrono>
 
 D3DEngine::D3DEngine(HWND hwnd, D3DContext *context)
     : m_context(context)
@@ -82,9 +83,24 @@ void D3DEngine::render()
 {
     UINT frameIndex = m_swapchain->GetCurrentBackBufferIndex();
 
+    auto start_cpu = std::chrono::steady_clock::now();
+
     beginFrame(frameIndex);
     recordCommands(frameIndex);
     endFrame(frameIndex);
+
+    auto end_cpu = std::chrono::steady_clock::now();
+    auto ms_cpu = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cpu - start_cpu).count()) / 1000;
+
+    uint64_t start = *m_queryResultMap;
+    uint64_t end = *(m_queryResultMap + 1);
+
+    UINT64 frequency;
+    m_commandQueue->GetTimestampFrequency(&frequency);
+
+    double ms = static_cast<double>(end - start) * 1000 / static_cast<double>(frequency);
+
+    std::cout << std::format("GPU command: {:.3f} ms, CPU recording: {:.3f} ms", ms, ms_cpu) << std::endl;
 }
 
 void D3DEngine::createCommandResources()
@@ -267,6 +283,8 @@ void D3DEngine::beginFrame(UINT frameIndex)
         return;
     }
 
+    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0);
+
     D3D12_RESOURCE_BARRIER barrier = {
         .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
         .Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
@@ -298,19 +316,7 @@ void D3DEngine::recordCommands(UINT frameIndex) const
     m_descHeapManager->bind(m_commandList);
     m_commandList->SetPipelineState(m_pipelineState.Get());
 
-    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0 + frameIndex * FRAME_COUNT);
-
     m_model->render(m_commandList);
-
-    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 1 + frameIndex * FRAME_COUNT);
-
-    m_commandList->ResolveQueryData(
-        m_queryHeap.Get(),
-        D3D12_QUERY_TYPE_TIMESTAMP,
-        frameIndex * FRAME_COUNT, 2,
-        m_queryResult->GetResource(),
-        frameIndex * FRAME_COUNT * sizeof(uint64_t)
-    );
 }
 
 void D3DEngine::endFrame(UINT frameIndex)
@@ -327,17 +333,16 @@ void D3DEngine::endFrame(UINT frameIndex)
     };
     m_commandList->ResourceBarrier(1, &barrier);
 
+    m_commandList->EndQuery(m_queryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 1);
+    m_commandList->ResolveQueryData(
+        m_queryHeap.Get(),
+        D3D12_QUERY_TYPE_TIMESTAMP,
+        0, 2,
+        m_queryResult->GetResource(),
+        0
+    );
+
     executeCommand(frameIndex);
-
-    uint64_t start = *m_queryResultMap + frameIndex * FRAME_COUNT;
-    uint64_t end = *(m_queryResultMap + 1 + frameIndex * FRAME_COUNT);
-
-    UINT64 frequency;
-    m_commandQueue->GetTimestampFrequency(&frequency);
-
-    double ms = static_cast<double>(end - start) * 1000 / static_cast<double>(frequency);
-
-    std::cout << std::format("GPU command: {:.3f} ms", ms) << std::endl;
 }
 
 void D3DEngine::executeCommand(UINT frameIndex)

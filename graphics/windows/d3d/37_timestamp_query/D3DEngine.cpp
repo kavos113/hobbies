@@ -85,8 +85,8 @@ void D3DEngine::render()
 
     waitForFence(frameIndex);
 
-    uint64_t start = *m_queryResultMap;
-    uint64_t end = *(m_queryResultMap + 1);
+    uint64_t start = *(m_queryResultMap + FRAME_COUNT * frameIndex);
+    uint64_t end = *(m_queryResultMap + 1 + FRAME_COUNT * frameIndex);
 
     UINT64 frequency;
     m_commandQueue->GetTimestampFrequency(&frequency);
@@ -341,7 +341,7 @@ void D3DEngine::endFrame(UINT frameIndex)
         D3D12_QUERY_TYPE_TIMESTAMP,
         0 + frameIndex * FRAME_COUNT, 2,
         m_queryResult->GetResource(),
-        0
+        frameIndex * FRAME_COUNT * sizeof(uint64_t)
     );
 
     executeCommand(frameIndex);

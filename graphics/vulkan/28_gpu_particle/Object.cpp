@@ -9,6 +9,7 @@
 #include <stb_image.h>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <numbers>
+#include <print>
 #include <tiny_obj_loader.h>
 
 #include "VulkanHelper.h"
@@ -76,14 +77,14 @@ void Object::createShaderStorageBuffers()
     std::vector<Particle> particles(PARTICLE_COUNT);
     for (auto &p : particles)
     {
-        float r = 0.25f * sqrtf(dist(gen));
+        float r = 1.5f * sqrtf(dist(gen));
         float theta = dist(gen) * 2.0f * std::numbers::pi;
 
         float x = r * cosf(theta);
         float y = r * sinf(theta);
 
         p.position = glm::vec2(x, y);
-        p.velocity = glm::normalize(glm::vec2(x, y)) * 0.00025f;
+        p.velocity = glm::normalize(glm::vec2(x, y)) * 0.25f;
         p.color = glm::vec4(dist(gen), dist(gen), dist(gen), 1.0f);
     }
 

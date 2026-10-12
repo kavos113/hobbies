@@ -35,7 +35,6 @@ private:
     void createPipeline();
     void createCommandBuffer();
     void createSyncObjects();
-    void createDepthResources();
 
     void recordCommandBuffer(uint32_t imageIndex) const;
     void recordComputeCommandBuffer() const;
@@ -59,9 +58,6 @@ private:
     std::vector<VkImageView> m_swapchainImageViews;
     VkSurfaceFormatKHR m_swapchainImageFormat;
     VkExtent2D m_swapchainExtent;
-
-    VulkanImage m_depthImage;
-    VkFormat m_depthFormat;
 
     VkViewport m_viewport;
     VkRect2D m_scissor;

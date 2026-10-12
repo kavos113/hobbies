@@ -20,7 +20,6 @@ VulkanEngine::VulkanEngine(GLFWwindow* window, VulkanContext *context)
     createSurface();
     createSwapchain();
     createSwapchainImageViews();
-    createDepthResources();
 
     m_object = std::make_unique<Object>(m_context);
 
@@ -53,7 +52,6 @@ VulkanEngine::~VulkanEngine()
     vkDestroyPipeline(m_context->device(), m_computePipeline, nullptr);
     vkDestroyPipelineLayout(m_context->device(), m_computePipelineLayout, nullptr);
 
-    m_depthImage.destroy(m_context);
     cleanupSwapchain();
     vkDestroySurfaceKHR(m_context->instance(), m_surface, nullptr);
 }
@@ -358,7 +356,7 @@ void VulkanEngine::createPipeline()
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
         .primitiveRestartEnable = VK_FALSE
     };
 
@@ -399,7 +397,13 @@ void VulkanEngine::createPipeline()
     };
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {
-        .blendEnable = VK_FALSE,
+        .blendEnable = VK_TRUE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
         .colorWriteMask = VK_COLOR_COMPONENT_R_BIT
                         | VK_COLOR_COMPONENT_G_BIT
                         | VK_COLOR_COMPONENT_B_BIT
@@ -423,21 +427,10 @@ void VulkanEngine::createPipeline()
         throw std::runtime_error("Failed to create pipeline layout");
     }
 
-    VkPipelineDepthStencilStateCreateInfo depthStencil = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .depthTestEnable = VK_TRUE,
-        .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = VK_COMPARE_OP_LESS,
-        .depthBoundsTestEnable = VK_FALSE,
-        .stencilTestEnable = VK_FALSE
-    };
-
     VkPipelineRenderingCreateInfo renderingCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .colorAttachmentCount = 1,
         .pColorAttachmentFormats = &m_swapchainImageFormat.format,
-        .depthAttachmentFormat = m_depthFormat
     };
 
     VkGraphicsPipelineCreateInfo pipelineInfo = {
@@ -450,7 +443,6 @@ void VulkanEngine::createPipeline()
         .pViewportState = &viewportState,
         .pRasterizationState = &rasterizer,
         .pMultisampleState = &multisampling,
-        .pDepthStencilState = &depthStencil,
         .pColorBlendState = &colorBlending,
         .pDynamicState = &dynamicStateCreateInfo,
         .layout = m_pipelineLayout,
@@ -566,17 +558,6 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
     );
-    transitionImageLayout(
-        commandBuffer,
-        m_depthImage.image,
-        VK_IMAGE_ASPECT_DEPTH_BIT,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT
-    );
 
     VkClearValue clearColor = {
         .color = {{0.0f, 0.0f, 0.0f, 1.0f}}
@@ -589,17 +570,6 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .clearValue = clearColor
     };
-    VkClearValue clearDepth = {
-        .depthStencil = {1.0f, 0}
-    };
-    VkRenderingAttachmentInfo depthAttachment = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .imageView = m_depthImage.imageView,
-        .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue = clearDepth
-    };
 
     VkRenderingInfo renderingInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
@@ -611,7 +581,6 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
         .viewMask = 0,
         .colorAttachmentCount = 1,
         .pColorAttachments = &colorAttachment,
-        .pDepthAttachment = &depthAttachment
     };
 
     vkCmdBeginRendering(commandBuffer, &renderingInfo);
@@ -730,11 +699,9 @@ void VulkanEngine::recreateSwapchain()
 
     vkDeviceWaitIdle(m_context->device());
 
-    m_depthImage.destroy(m_context);
     cleanupSwapchain();
     createSwapchain();
     createSwapchainImageViews();
-    createDepthResources();
 }
 
 void VulkanEngine::cleanupSwapchain()
@@ -747,25 +714,6 @@ void VulkanEngine::cleanupSwapchain()
 
     vkDestroySwapchainKHR(m_context->device(), m_swapchain, nullptr);
     m_swapchain = VK_NULL_HANDLE;
-}
-
-void VulkanEngine::createDepthResources()
-{
-    VkFormat depthFormat = findSupportedFormat(
-        {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-    );
-    m_depthFormat = depthFormat;
-
-    m_depthImage.create(
-        m_context,
-        m_swapchainExtent.width, m_swapchainExtent.height,
-        depthFormat,
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        VK_IMAGE_ASPECT_DEPTH_BIT
-    );
 }
 
 VkFormat VulkanEngine::findSupportedFormat(

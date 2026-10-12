@@ -25,18 +25,18 @@ int _findQueueFamilies(VkPhysicalDevice device)
     std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
-    auto graphicsQueueFamilyIt = std::ranges::find_if(queueFamilies, [](const VkQueueFamilyProperties& queueFamily)
+    auto queueFamilyIt = std::ranges::find_if(queueFamilies, [](const VkQueueFamilyProperties& queueFamily)
     {
-        return queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT;
+        return queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT && queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT;
     });
 
-    if (graphicsQueueFamilyIt == queueFamilies.end())
+    if (queueFamilyIt == queueFamilies.end())
     {
         return -1;
     }
     else
     {
-        return static_cast<int>(std::distance(queueFamilies.begin(), graphicsQueueFamilyIt));
+        return static_cast<int>(std::distance(queueFamilies.begin(), queueFamilyIt));
     }
 }
 
@@ -258,8 +258,8 @@ void VulkanContext::pickPhysicalDevice()
 
 void VulkanContext::createLogicalDevice()
 {
-    int graphicsQueueFamilyIndex = _findQueueFamilies(m_physicalDevice);
-    if (graphicsQueueFamilyIndex == -1)
+    int queueFamilyIndex = _findQueueFamilies(m_physicalDevice);
+    if (queueFamilyIndex == -1)
     {
         throw std::runtime_error("Failed to find a queue family that supports graphics commands");
     }
@@ -267,7 +267,7 @@ void VulkanContext::createLogicalDevice()
     float queuePriority = 1.0f;
     VkDeviceQueueCreateInfo queueCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .queueFamilyIndex = static_cast<uint32_t>(graphicsQueueFamilyIndex),
+        .queueFamilyIndex = static_cast<uint32_t>(queueFamilyIndex),
         .queueCount = 1,
         .pQueuePriorities = &queuePriority
     };
@@ -313,13 +313,13 @@ void VulkanContext::createLogicalDevice()
         throw std::runtime_error("Failed to create logical device");
     }
 
-    vkGetDeviceQueue(m_device, graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
+    vkGetDeviceQueue(m_device, queueFamilyIndex, 0, &m_graphicsQueue);
 }
 
 void VulkanContext::createCommandPool()
 {
-    int graphicsQueueFamilyIndex = _findQueueFamilies(m_physicalDevice);
-    if (graphicsQueueFamilyIndex == -1)
+    int queueFamilyIndex = _findQueueFamilies(m_physicalDevice);
+    if (queueFamilyIndex == -1)
     {
         throw std::runtime_error("Failed to find a queue family that supports graphics commands");
     }
@@ -327,7 +327,7 @@ void VulkanContext::createCommandPool()
     VkCommandPoolCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = static_cast<uint32_t>(graphicsQueueFamilyIndex)
+        .queueFamilyIndex = static_cast<uint32_t>(queueFamilyIndex)
     };
     VkResult r = vkCreateCommandPool(m_device, &createInfo, nullptr, &m_commandPool);
     if (r != VK_SUCCESS)
@@ -344,8 +344,8 @@ void VulkanContext::createDescriptorPool()
             .descriptorCount = MAX_FRAMES_IN_FLIGHT
         },
         VkDescriptorPoolSize{
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = MAX_FRAMES_IN_FLIGHT
+            .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorCount = MAX_FRAMES_IN_FLIGHT * 2
         }
     };
     VkDescriptorPoolCreateInfo poolInfo = {

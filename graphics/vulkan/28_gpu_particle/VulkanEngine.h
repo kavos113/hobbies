@@ -38,6 +38,7 @@ private:
     void createDepthResources();
 
     void recordCommandBuffer(uint32_t imageIndex) const;
+    void recordComputeCommandBuffer() const;
     void recreateSwapchain();
     void cleanupSwapchain();
 
@@ -68,10 +69,16 @@ private:
     VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
     VkPipeline m_graphicsPipeline = VK_NULL_HANDLE;
 
+    VkPipelineLayout m_computePipelineLayout = VK_NULL_HANDLE;
+    VkPipeline m_computePipeline = VK_NULL_HANDLE;
+
     std::vector<VkCommandBuffer> m_commandBuffers;
+    std::vector<VkCommandBuffer> m_computeCommandBuffers;
     std::vector<VkSemaphore> m_imageAvailableSemaphores;
     std::vector<VkSemaphore> m_renderCompleteSemaphores;
     std::vector<VkFence> m_drawFences;
+    std::vector<VkSemaphore> m_computeFinishedSemaphores;
+    std::vector<VkFence> m_computeFences;
 
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
     uint32_t m_currentFrame = 0;

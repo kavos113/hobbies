@@ -2,6 +2,7 @@
 #define REFACTOR_OBJECT_H
 
 #include <array>
+#include <chrono>
 #include <vector>
 #include <utility>
 
@@ -17,96 +18,77 @@ public:
     Object(VulkanContext *context);
     ~Object();
 
-    void beforeRender(uint32_t currentFrame, float windowWidth, float windowHeight) const;
-    void render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t imageIndex) const;
+    void beforeRender(uint32_t currentFrame, float windowWidth, float windowHeight);
+    void render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t frameIndex) const;
+    void dispatch(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t frameIndex) const;
 
-    VkDescriptorSetLayout descriptorSetLayout() const
+    VkDescriptorSetLayout computeDescriptorSetLayout() const
     {
-        return m_descriptorSetLayout;
+        return m_computeDescriptorSetLayout;
     }
 
-    struct Vertex
+    struct Particle
     {
-        glm::vec3 pos;
-        glm::vec2 uv;
+        glm::vec2 position;
+        glm::vec2 velocity;
+        glm::vec4 color;
 
-        static VkVertexInputBindingDescription getBindingDescription()
+        static VkVertexInputBindingDescription bindingDescription()
         {
             return {
                 .binding = 0,
-                .stride = sizeof(Vertex),
-                .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+                .stride = sizeof(Particle),
+                .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
             };
         }
 
-        static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+        static std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions()
         {
             return {
                 VkVertexInputAttributeDescription{
                     .location = 0,
                     .binding = 0,
-                    .format = VK_FORMAT_R32G32B32_SFLOAT,
-                    .offset = offsetof(Vertex, pos)
+                    .format = VK_FORMAT_R32G32_SFLOAT,
+                    .offset = offsetof(Particle, position)
                 },
                 VkVertexInputAttributeDescription{
                     .location = 1,
                     .binding = 0,
-                    .format = VK_FORMAT_R32G32_SFLOAT,
-                    .offset = offsetof(Vertex, uv)
-                },
+                    .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+                    .offset = offsetof(Particle, color)
+                }
             };
-        }
-
-        bool operator<(const Vertex& other) const
-        {
-            return pos.x < other.pos.x ||
-                   (pos.x == other.pos.x && pos.y < other.pos.y) ||
-                   (pos.x == other.pos.x && pos.y == other.pos.y && pos.z < other.pos.z) ||
-                   (pos.x == other.pos.x && pos.y == other.pos.y && pos.z == other.pos.z && uv.x < other.uv.x) ||
-                   (pos.x == other.pos.x && pos.y == other.pos.y && pos.z == other.pos.z && uv.x == other.uv.x && uv.y < other.uv.y);
         }
     };
 
 private:
     struct UniformBufferObject
     {
-        glm::mat4 model;
-        glm::mat4 view;
-        glm::mat4 proj;
+        float deltaTime = 1.0f;
     };
 
 private:
-    void createVertexBuffer();
-    void createIndexBuffer();
+    void createShaderStorageBuffers();
+
     void createUniformBuffers();
 
-    void createTextureImage();
-    void createTextureSampler();
-    void loadModel();
+    void createComputeDescriptorSetLayout();
+    void createComputeDescriptorSets();
 
-    void createDescriptorSetLayout();
-    void createDescriptorSets();
-
-    void updateUniformBuffer(uint32_t currentFrame, float windowWidth, float windowHeight) const;
+    void updateUniformBuffer(uint32_t currentFrame);
 
     VulkanContext *m_context;
 
-    VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
-    std::vector<VkDescriptorSet> m_descriptorSets;
+    VkDescriptorSetLayout m_computeDescriptorSetLayout = VK_NULL_HANDLE;
+    std::vector<VkDescriptorSet> m_computeDescriptorSets;
 
-    VulkanBuffer m_vertexBuffer;
-    VulkanBuffer m_indexBuffer;
     std::vector<VulkanMappedBuffer<void>> m_uniformBuffers;
-
-    std::vector<Vertex> vertices;
-    std::vector<uint16_t> indices;
-
-    VulkanImage m_textureImage;
-    VkSampler m_textureSampler = VK_NULL_HANDLE;
+    std::vector<VulkanBuffer> m_shaderStorageBuffers;
 
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
-    const std::string TEXTURE_PATH = "resources/models/textures/utility_box_02_diff_1k.jpg";
-    const std::string MODEL_PATH = "resources/models/utility_box.obj";
+    static constexpr int PARTICLE_COUNT = 8192;
+
+    std::chrono::time_point<std::chrono::steady_clock> m_lastTime;
 };
 
 

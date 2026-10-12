@@ -40,6 +40,8 @@ VulkanEngine::~VulkanEngine()
     {
         vkDestroySemaphore(m_context->device(), m_imageAvailableSemaphores[i], nullptr);
         vkDestroyFence(m_context->device(), m_drawFences[i], nullptr);
+        vkDestroySemaphore(m_context->device(), m_computeFinishedSemaphores[i], nullptr);
+        vkDestroyFence(m_context->device(), m_computeFences[i], nullptr);
     }
     for (size_t i = 0; i < m_swapchainImages.size(); i++)
     {
@@ -48,6 +50,8 @@ VulkanEngine::~VulkanEngine()
 
     vkDestroyPipeline(m_context->device(), m_graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_context->device(), m_pipelineLayout, nullptr);
+    vkDestroyPipeline(m_context->device(), m_computePipeline, nullptr);
+    vkDestroyPipelineLayout(m_context->device(), m_computePipelineLayout, nullptr);
 
     m_depthImage.destroy(m_context);
     cleanupSwapchain();
@@ -56,7 +60,41 @@ VulkanEngine::~VulkanEngine()
 
 void VulkanEngine::render()
 {
-    VkResult r = vkWaitForFences(m_context->device(), 1, &m_drawFences[m_currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+    // compute
+    VkResult r = vkWaitForFences(m_context->device(), 1, &m_computeFences[m_currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to wait compute fence");
+    }
+
+    m_object->beforeRender(m_currentFrame, static_cast<float>(m_swapchainExtent.width), static_cast<float>(m_swapchainExtent.height));
+
+    r = vkResetFences(m_context->device(), 1, &m_computeFences[m_currentFrame]);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to reset compute fence");
+    }
+
+    vkResetCommandBuffer(m_computeCommandBuffers[m_currentFrame], 0);
+    recordComputeCommandBuffer();
+
+    VkSubmitInfo computeSubmitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .waitSemaphoreCount = 0,
+        .pWaitDstStageMask = nullptr,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &m_computeCommandBuffers[m_currentFrame],
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &m_computeFinishedSemaphores[m_currentFrame]
+    };
+    r = vkQueueSubmit(m_context->graphicsQueue(), 1, &computeSubmitInfo, m_computeFences[m_currentFrame]);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to submit queue compute");
+    }
+
+    // graphics
+    r = vkWaitForFences(m_context->device(), 1, &m_drawFences[m_currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
     if (r != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to wait for draw fence");
@@ -82,8 +120,6 @@ void VulkanEngine::render()
         throw std::runtime_error("Failed to acquire next image from swapchain");
     }
 
-    m_object->beforeRender(m_currentFrame, static_cast<float>(m_swapchainExtent.width), static_cast<float>(m_swapchainExtent.height));
-
     r = vkResetFences(m_context->device(), 1, &m_drawFences[m_currentFrame]);
     if (r != VK_SUCCESS)
     {
@@ -93,11 +129,12 @@ void VulkanEngine::render()
     vkResetCommandBuffer(m_commandBuffers[m_currentFrame], 0);
     recordCommandBuffer(imageIndex);
 
-    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT};
+    VkSemaphore waitSemaphores[] = {m_imageAvailableSemaphores[m_currentFrame], m_computeFinishedSemaphores[m_currentFrame]};
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &m_imageAvailableSemaphores[m_currentFrame],
+        .waitSemaphoreCount = 2,
+        .pWaitSemaphores = waitSemaphores,
         .pWaitDstStageMask = waitStages,
         .commandBufferCount = 1,
         .pCommandBuffers = &m_commandBuffers[m_currentFrame],
@@ -290,6 +327,12 @@ void VulkanEngine::createPipeline()
         .module = module,
         .pName = "fragMain"
     };
+    VkPipelineShaderStageCreateInfo compShaderStageInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+        .module = module,
+        .pName = "compMain"
+    };
 
     std::array shaderStages = {vertShaderStageInfo, fragShaderStageInfo};
 
@@ -303,8 +346,8 @@ void VulkanEngine::createPipeline()
         .pDynamicStates = dynamicStates.data()
     };
 
-    VkVertexInputBindingDescription bindingDescription = Object::Vertex::getBindingDescription();
-    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = Object::Vertex::getAttributeDescriptions();
+    VkVertexInputBindingDescription bindingDescription = Object::Particle::bindingDescription();
+    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = Object::Particle::attributeDescriptions();
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,
@@ -369,11 +412,9 @@ void VulkanEngine::createPipeline()
         .pAttachments = &colorBlendAttachment
     };
 
-    VkDescriptorSetLayout descriptorSetLayout = m_object->descriptorSetLayout();
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 1,
-        .pSetLayouts = &descriptorSetLayout,
+        .setLayoutCount = 0,
         .pushConstantRangeCount = 0
     };
     VkResult r = vkCreatePipelineLayout(m_context->device(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
@@ -423,6 +464,30 @@ void VulkanEngine::createPipeline()
         throw std::runtime_error("Failed to create graphics pipeline");
     }
 
+    VkDescriptorSetLayout computeDescriptorSetLayout = m_object->computeDescriptorSetLayout();
+    VkPipelineLayoutCreateInfo computePipelineLayoutInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = 1,
+        .pSetLayouts = &computeDescriptorSetLayout,
+        .pushConstantRangeCount = 0,
+    };
+    r = vkCreatePipelineLayout(m_context->device(), &computePipelineLayoutInfo, nullptr, &m_computePipelineLayout);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create compute pipeline layout");
+    }
+
+    VkComputePipelineCreateInfo computePipelineInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+        .stage = compShaderStageInfo,
+        .layout = m_computePipelineLayout
+    };
+    r = vkCreateComputePipelines(m_context->device(), VK_NULL_HANDLE, 1, &computePipelineInfo, nullptr, &m_computePipeline);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create compute pipeline");
+    }
+
     vkDestroyShaderModule(m_context->device(), module, nullptr);
 }
 
@@ -467,6 +532,13 @@ void VulkanEngine::createCommandBuffer()
     if (r != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to allocate command buffers");
+    }
+
+    m_computeCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    r = vkAllocateCommandBuffers(m_context->device(), &allocInfo, m_computeCommandBuffers.data());
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to allocate compute command buffers");
     }
 }
 
@@ -572,6 +644,29 @@ void VulkanEngine::recordCommandBuffer(uint32_t imageIndex) const
     }
 }
 
+void VulkanEngine::recordComputeCommandBuffer() const
+{
+    VkCommandBuffer commandBuffer = m_computeCommandBuffers[m_currentFrame];
+
+    VkCommandBufferBeginInfo beginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+    };
+    VkResult r = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to begin recording compute command buffer");
+    }
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_computePipeline);
+    m_object->dispatch(commandBuffer, m_computePipelineLayout, m_currentFrame);
+
+    r = vkEndCommandBuffer(commandBuffer);
+    if (r != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to record compute command buffer");
+    }
+}
+
 void VulkanEngine::createSyncObjects()
 {
     VkSemaphoreCreateInfo semaphoreInfo = {
@@ -584,6 +679,8 @@ void VulkanEngine::createSyncObjects()
     
     m_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     m_renderCompleteSemaphores.resize(m_swapchainImages.size());
+    m_computeFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    m_computeFences.resize(MAX_FRAMES_IN_FLIGHT);
     m_drawFences.resize(MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -597,6 +694,18 @@ void VulkanEngine::createSyncObjects()
         if (r != VK_SUCCESS)
         {
             throw std::runtime_error("Failed to create draw fence");
+        }
+
+        r = vkCreateSemaphore(m_context->device(), &semaphoreInfo, nullptr, &m_computeFinishedSemaphores[i]);
+        if (r != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create compute semaphore");
+        }
+
+        r = vkCreateFence(m_context->device(), &fenceInfo, nullptr, &m_computeFences[i]);
+        if (r != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create compute fence");
         }
     }
     for (size_t i = 0; i < m_swapchainImages.size(); i++)

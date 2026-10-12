@@ -18,7 +18,7 @@ public:
     ~Object();
 
     void beforeRender(uint32_t currentFrame, float windowWidth, float windowHeight) const;
-    void render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t imageIndex) const;
+    void render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t frameIndex) const;
 
     struct Vertex
     {

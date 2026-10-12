@@ -64,7 +64,7 @@ void Object::beforeRender(uint32_t currentFrame, float windowWidth, float window
     updateUniformBuffer(currentFrame, windowWidth, windowHeight);
 }
 
-void Object::render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t imageIndex) const
+void Object::render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t frameIndex) const
 {
     using namespace std::chrono;
 
@@ -81,7 +81,7 @@ void Object::render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayo
             pipelineLayout,
             0,
             1,
-            &m_descriptorSets[imageIndex],
+            &m_descriptorSets[frameIndex],
             1,
             &offset
         );
@@ -95,7 +95,7 @@ void Object::render(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayo
             pipelineLayout,
             0,
             1,
-            &m_descriptorSets[imageIndex],
+            &m_descriptorSets[frameIndex],
             1,
             &offset
         );

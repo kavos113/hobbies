@@ -58,6 +58,8 @@ main(int argc, char **argv)
 
   int size = n * sizeof(float);
 
+  HIP_CHECK(hipSetDevice(1));
+
   HIP_CHECK(hipMalloc((void **)&a_d, size));
   HIP_CHECK(hipMalloc((void **)&b_d, size));
   HIP_CHECK(hipMalloc((void **)&c_d, size));
@@ -66,6 +68,8 @@ main(int argc, char **argv)
   HIP_CHECK(hipMemcpy(b_d, b.data(), size, hipMemcpyHostToDevice));
 
   vecAdd<<<std::ceil(n / 256.0), 256>>>(a_d, b_d, c_d, n);
+
+  HIP_CHECK(hipGetLastError());
 
   std::vector<float> c(n);
   HIP_CHECK(hipMemcpy(c.data(), c_d, size, hipMemcpyDeviceToHost));

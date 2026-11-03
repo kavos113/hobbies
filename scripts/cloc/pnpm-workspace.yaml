@@ -1,2 +1,6 @@
 allowBuilds:
   esbuild: false
+minimumReleaseAgeExclude:
+  - satori@0.33.5
+overrides:
+  satori@>=0.0.27 <0.33.5: ^0.33.5

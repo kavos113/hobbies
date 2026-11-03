@@ -10,7 +10,7 @@ foreach ($dir in $packageDirs) {
     try {
         if (Test-Path "pnpm-lock.yaml") {
             pnpm audit --fix override
-            pnpm up --lockfile-only
+            pnpm install
         }
     }
     catch {

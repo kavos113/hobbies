@@ -105,15 +105,15 @@ main(int argc, char **argv)
   for (size_t i = 0; i < n; i++)
   {
     float expected = a[i] + b[i];
-    if (std::abs(c[i] - expected) > 1e4)
+    if (std::abs(c[i] - expected) > 1e-4)
     {
       std::cout << "wrong result: " << a[i] << " + " << b[i] << " != " << c[i] << std::endl;
       break;
     }
   }
 
-  std::cout << "GPU time: " << ms << " ms" << std::endl;
-  std::cout << "CPU time: " << static_cast<double>(us_cpu.count()) / 1000.0 << " ms" << std::endl;
+  std::cout << "GPU time (100 iter): " << ms << " ms" << std::endl;
+  std::cout << "CPU time (100 iter): " << static_cast<double>(us_cpu.count()) / 1000.0 << " ms" << std::endl;
 
   HIP_CHECK(hipFree(a_d));
   HIP_CHECK(hipFree(b_d));

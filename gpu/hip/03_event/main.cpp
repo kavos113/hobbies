@@ -89,10 +89,10 @@ main(int argc, char **argv)
     HIP_CHECK(hipGetLastError());
   }
 
+  std::chrono::steady_clock::time_point e_cpu = std::chrono::steady_clock::now();
+
   HIP_CHECK(hipEventRecord(end));
   HIP_CHECK(hipEventSynchronize(end));
-
-  std::chrono::steady_clock::time_point e_cpu = std::chrono::steady_clock::now();
 
   float ms;
   HIP_CHECK(hipEventElapsedTime(&ms, start, end));
@@ -102,12 +102,25 @@ main(int argc, char **argv)
   std::vector<float> c(n);
   HIP_CHECK(hipMemcpy(c.data(), c_d, size, hipMemcpyDeviceToHost));
 
+  for (size_t i = 0; i < n; i++)
+  {
+    float expected = a[i] + b[i];
+    if (std::abs(c[i] - expected) > 1e4)
+    {
+      std::cout << "wrong result: " << a[i] << " + " << b[i] << " != " << c[i] << std::endl;
+      break;
+    }
+  }
+
   std::cout << "GPU time: " << ms << " ms" << std::endl;
   std::cout << "CPU time: " << static_cast<double>(us_cpu.count()) / 1000.0 << " ms" << std::endl;
 
   HIP_CHECK(hipFree(a_d));
   HIP_CHECK(hipFree(b_d));
   HIP_CHECK(hipFree(c_d));
+
+  HIP_CHECK(hipEventDestroy(start));
+  HIP_CHECK(hipEventDestroy(end));
 
   return 0;
 }

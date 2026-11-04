@@ -16,13 +16,16 @@ hipEventSynchronize(end);
 
 float ms;
 hipEventElapsedTime(&ms, start, end);
+
+hipEventDestroy(start);
+hipEventDestroy(end);
 ```
 
-実行結果例
+実行結果例 (vecadd * 100回)
 
 | block size | CPU Time | GPU Time |
 | ---------- | -------- | -------- |
-| 32         | 6.676 ms | 6.266 ms |
-| 64         | 5.680 ms | 5.269 ms |
-| 128        | 5.138 ms | 4.643 ms |
-| 256        | 4.744 ms | 4.337 ms | 
+| 32         | 0.070 ms | 6.162 ms |
+| 64         | 0.072 ms | 4.487 ms |
+| 128        | 0.080 ms | 4.589 ms |
+| 256        | 0.070 ms | 4.680 ms | 
